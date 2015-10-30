@@ -54,33 +54,14 @@ cursorPosCallback camTVar mouseTVar win x y =
        (Just bstate) ->
          do size <- W.windowSize win
             let pos = GL.Position (floor x) (floor y)
-            atomically $ modifyTVar' camTVar (drag size pos bstate)
+            atomically $ modifyTVar' camTVar (mouseDrag size pos bstate)
 
 
 mouseScrollCallback :: TVar CameraState -> GLFW.ScrollCallback
-mouseScrollCallback cam win _ ds =
-  do state <- readTVarIO cam
-     (xpx, xpy) <- GLFW.getCursorPos win
-     (wp, hp) <- GLFW.getWindowSize win
-     let f = 1 - 0.1 * ds  -- Zoom factor
-         w = realToFrac $ width state
-         h = realToFrac $ height state
-         w' = w * f
-         h' = h * f
-
-         -- Translate center
-         (x', y') = mapToWorld (xpx, xpy) (wp, hp) state
-         x = L.V2 (realToFrac x') (realToFrac y')
-         dx = x - c
-         dx' = dx * realToFrac f
-         c = center state
-         c' = x - dx'
-
-         newState = state { center = c'
-                          , width = realToFrac w'
-                          , height = realToFrac h' }
-
-     atomically $ writeTVar cam newState
+mouseScrollCallback camTVar win _ ds =
+  do size  <- W.windowSize win
+     pos   <- W.cursorPos win
+     atomically $ modifyTVar' camTVar (mouseZoom size pos ds)
 
 draw :: TVar CameraState -> LineProgram -> GLFW.Window -> IO ()
 draw camMVar lp win =
@@ -97,15 +78,7 @@ draw camMVar lp win =
      let m  = transformM camState
      drawLine lp m
 
-mapToWorld :: (Double, Double) -> (Int, Int) -> CameraState -> (Double, Double)
-mapToWorld (xp, yp) (w, h) (CameraState (L.V2 cx cy) cw ch) = (x, y)
-  where (w', h')   = (fromIntegral w, fromIntegral h)
-        (cxp, cyp) = (w' / 2, h' / 2)  -- Camera center in pixels
-        (dxp, dyp) = (xp - cxp, yp - cyp)
-        (cw', ch') = (fromRational $ toRational cw, fromRational $ toRational ch)
-        (cx', cy') = (fromRational $ toRational cx, fromRational $ toRational cy)
-        (dx, dy)   = (dxp * cw' / w', dyp * ch' / h' * (-1))
-        (x, y)     = (cx' + dx, cy' + dy) :: (Double, Double)
+
 
 
 transformM :: CameraState -> L.M44 GL.GLfloat

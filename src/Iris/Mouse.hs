@@ -5,7 +5,8 @@ module Iris.Mouse
        , MouseButtonState (..)
        , PressedButtons (..)
        , buttonPressed
-       , drag
+       , mouseDrag
+       , mouseZoom
        , pressedButtons
        , recordClick
        ) where
@@ -63,15 +64,46 @@ recordClick _ button Released _ (PressedButtons bmap) =
 
 
 -- | Change the camera state with a mouse drag.
-drag :: GL.Size ->
-        GL.Position ->
-        ButtonPressState ->
-        CameraState ->
-        CameraState
-drag (GL.Size w h) (GL.Position x y) (ox, oy, ocs) cs = cs { center = c }
+mouseDrag :: GL.Size ->
+             GL.Position ->
+             ButtonPressState ->
+             CameraState ->
+             CameraState
+mouseDrag (GL.Size w h) (GL.Position x y) (ox, oy, ocs) cs = cs { center = c }
   where
     (dx, dy) = (x - ox, y - oy)
     (cw, ch) = (width cs, height cs)
     dxw = realToFrac $ fromIntegral dx * cw / fromIntegral w
     dyw = realToFrac $ fromIntegral dy * ch / fromIntegral h
     c   = ocs + L.V2 (-dxw) dyw
+
+
+mouseZoom :: GL.Size -> GL.Position -> Double -> CameraState -> CameraState
+mouseZoom s p z cs =
+  cs { center = c' , width = w' , height = h' }
+  where
+    f = realToFrac $ 1 - 0.1 * z  -- Zoom factor
+    w = width cs
+    h = height cs
+    w' = w * f
+    h' = h * f
+
+    -- Translate center
+    (x', y') = mapToWorld s p cs
+    x = L.V2 (realToFrac x') (realToFrac y')
+    dx = x - c
+    dx' = dx * realToFrac f
+    c = center cs
+    c' = x - dx'
+
+
+mapToWorld :: GL.Size -> GL.Position -> CameraState -> (GL.GLfloat, GL.GLfloat)
+mapToWorld (GL.Size w h) (GL.Position xp yp) (CameraState (L.V2 cx cy) cw ch) = (x, y)
+  where (w', h')   = (fromIntegral w, fromIntegral h)
+        (cxp, cyp) = (w' / 2, h' / 2)  -- Camera center in pixels
+        (xp', yp') = (fromIntegral xp, fromIntegral yp)
+        (dxp, dyp) = (xp' - cxp, yp' - cyp)
+        (cw', ch') = (cw, ch)
+        (cx', cy') = (cx, cy)
+        (dx, dy)   = (dxp * cw' / w', dyp * ch' / h' * (-1))
+        (x, y)     = (cx' + dx, cy' + dy)
