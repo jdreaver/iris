@@ -6,14 +6,14 @@
 module Main where
 
 import           Control.Concurrent.STM
-import           Control.Monad (unless, when)
-import qualified Data.Map.Strict as Map
 import           Graphics.Rendering.OpenGL (($=))
 import qualified Graphics.Rendering.OpenGL as GL
 import qualified Graphics.UI.GLFW as GLFW
 import qualified Linear as L
 
+import           Iris.Camera
 import           Iris.Line
+import           Iris.Mouse
 import qualified Iris.Util.GLFW as W
 
 main :: IO ()
@@ -21,39 +21,40 @@ main =
   do win <- W.initialize "Line Plot" (640, 480)
 
      cameraState <- newTVarIO $ CameraState (L.V2 1 2) 10 7
-     mouseState <- newTVarIO $ MouseState (Map.fromList [])
-     GLFW.setMouseButtonCallback win $ Just (mouseButtonCallback cameraState mouseState)
-     GLFW.setCursorPosCallback win $ Just (cursorPosCallback cameraState mouseState)
+     buttonState <- newTVarIO pressedButtons
+     GLFW.setMouseButtonCallback win $ Just (mouseButtonCallback cameraState buttonState)
+     GLFW.setCursorPosCallback win $ Just (cursorPosCallback cameraState buttonState)
      GLFW.setScrollCallback win $ Just (mouseScrollCallback cameraState)
 
      lineProg <- initLine lineVerts
      W.mainLoop (draw cameraState lineProg win) win
 
 
-mouseButtonCallback :: TVar CameraState -> TVar MouseState -> GLFW.MouseButtonCallback
-mouseButtonCallback camTVar mouseTVar win button GLFW.MouseButtonState'Pressed  _ =
-  do (MouseState buttonMap) <- readTVarIO mouseTVar
-     unless (Map.member button buttonMap) $
-       do (x, y) <- GLFW.getCursorPos win
-          cameraState <- readTVarIO camTVar
-          let newMap = Map.insert button (x, y, center cameraState) buttonMap
-          atomically $ writeTVar mouseTVar (MouseState newMap)
-mouseButtonCallback _ mouseTVar _ button GLFW.MouseButtonState'Released  _ =
-  atomically $ modifyTVar' mouseTVar (MouseState . Map.delete button . buttons)
+mouseButtonCallback :: TVar CameraState -> TVar PressedButtons -> GLFW.MouseButtonCallback
+mouseButtonCallback camTVar mouseTVar win button state  _ =
+  do let mbutton = W.mouseButton button
+     case mbutton of
+       Nothing        -> return ()
+       (Just button') ->
+         do cameraState <- readTVarIO camTVar
+            pos <- W.cursorPos win
+            let state'    = W.mouseButtonState state
+                camCenter = center cameraState
+                f         = recordClick camCenter button' state' pos
+            atomically $ modifyTVar' mouseTVar f
 
-cursorPosCallback :: TVar CameraState -> TVar MouseState -> GLFW.CursorPosCallback
-cursorPosCallback camTVar mouse win x y =
-  do (w, h) <- GLFW.getWindowSize win
-     cameraState <- readTVarIO camTVar
-     (MouseState buttonMap) <- readTVarIO mouse
-     when (Map.member GLFW.MouseButton'1 buttonMap) $
-       do let (ox, oy, ocs) = buttonMap Map.! GLFW.MouseButton'1
-              (dx, dy) = (x - ox, y - oy)
-              (cw, ch) = (realToFrac $ width cameraState, realToFrac $ height cameraState)
-              dxw = realToFrac $ dx * cw / fromIntegral w
-              dyw = realToFrac $ dy * ch / fromIntegral h
-              c   = ocs + L.V2 (-dxw) dyw
-          atomically $ modifyTVar' camTVar (\cs -> cs { center = c })
+
+cursorPosCallback :: TVar CameraState -> TVar PressedButtons -> GLFW.CursorPosCallback
+cursorPosCallback camTVar mouseTVar win x y =
+  do
+     buttonState <- readTVarIO mouseTVar
+     let leftButtonState = buttonPressed MouseButtonLeft buttonState
+     case leftButtonState of
+       Nothing       -> return ()
+       (Just bstate) ->
+         do size <- W.windowSize win
+            let pos = GL.Position (floor x) (floor y)
+            atomically $ modifyTVar' camTVar (drag size pos bstate)
 
 
 mouseScrollCallback :: TVar CameraState -> GLFW.ScrollCallback
@@ -106,20 +107,6 @@ mapToWorld (xp, yp) (w, h) (CameraState (L.V2 cx cy) cw ch) = (x, y)
         (dx, dy)   = (dxp * cw' / w', dyp * ch' / h' * (-1))
         (x, y)     = (cx' + dx, cy' + dy) :: (Double, Double)
 
-type CameraCenter = L.V2 GL.GLfloat
-
-data CameraState = CameraState
-  { center :: CameraCenter
-  , width  :: GL.GLfloat
-  , height :: GL.GLfloat
-  } deriving (Show)
-
-
--- | Stores currently pressed buttons and the coordinates when they were
--- pressed
-newtype MouseState = MouseState
-  { buttons :: Map.Map GLFW.MouseButton (Double, Double, CameraCenter) }
-  deriving (Show)
 
 transformM :: CameraState -> L.M44 GL.GLfloat
 transformM (CameraState (L.V2 cx cy) w h) = scale L.!*! trans L.!*! model where

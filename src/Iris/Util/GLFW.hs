@@ -4,15 +4,21 @@
 
 
 module Iris.Util.GLFW
-       ( initialize
+       ( cursorPos
+       , initialize
        , mainLoop
+       , mouseButton
+       , mouseButtonState
+       , windowSize
        ) where
 
-import Control.Monad
+import           Control.Monad
+import qualified Graphics.Rendering.OpenGL as GL
 import qualified Graphics.UI.GLFW as GLFW
-import System.Exit
-import System.IO
+import           System.Exit
+import           System.IO
 
+import           Iris.Mouse
 
 -- | Create a GLFW window with the given name and (width, height).
 initialize :: String -> (Int, Int) -> IO GLFW.Window
@@ -60,3 +66,28 @@ cleanup win = do
     GLFW.destroyWindow win
     GLFW.terminate
     exitSuccess
+
+-- | Overload of `GLFW.getWindowSize` to return `GL.Size`
+windowSize :: GLFW.Window -> IO GL.Size
+windowSize win =
+  do (w, h) <- GLFW.getWindowSize win
+     return $ GL.Size (fromIntegral w) (fromIntegral h)
+
+-- | Overload of `GLFW.getCursorPos` to return `GL.Position`
+cursorPos :: GLFW.Window -> IO GL.Position
+cursorPos win =
+  do (x, y) <- GLFW.getCursorPos win
+     return $ GL.Position (floor x) (floor y)
+
+
+-- | Convert from GLFW mouse buttons to iris mouse buttons
+mouseButton :: GLFW.MouseButton -> Maybe MouseButton
+mouseButton GLFW.MouseButton'1 = Just MouseButtonLeft
+mouseButton GLFW.MouseButton'2 = Just MouseButtonRight
+mouseButton GLFW.MouseButton'3 = Just MouseButtonMiddle
+mouseButton _                  = Nothing
+
+-- | Convert from GLFW MouseButtonState to MouseButtonState
+mouseButtonState :: GLFW.MouseButtonState -> MouseButtonState
+mouseButtonState GLFW.MouseButtonState'Pressed = Pressed
+mouseButtonState GLFW.MouseButtonState'Released = Released

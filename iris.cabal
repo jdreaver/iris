@@ -20,12 +20,15 @@ extra-source-files:
 
 library
   exposed-modules:     Iris
+                     , Iris.Camera
                      , Iris.Line
+                     , Iris.Mouse
                      , Iris.Util.GLFW
   -- other-modules:
   -- other-extensions:
   build-depends:       base >=4.8 && <4.9
                      , bytestring == 0.10.*
+                     , containers == 0.5.*
                      , GLFW-b == 1.*
                      , GLUtil >= 0.8.7
                      , linear == 1.20.*
@@ -44,7 +47,6 @@ executable line
     main-is:          Line.hs
     build-depends:    base -any
                     , iris -any
-                    , containers == 0.5.*
                     , GLFW-b == 1.*
                     , linear == 1.20.*
                     , OpenGL >= 2.13.1
