@@ -5,16 +5,15 @@
 
 module Main where
 
-import qualified Data.ByteString as BS
 import           Control.Concurrent.STM
 import           Control.Monad (unless, when)
 import qualified Data.Map.Strict as Map
-import qualified Graphics.GLUtil as U
 import           Graphics.Rendering.OpenGL (($=))
 import qualified Graphics.Rendering.OpenGL as GL
 import qualified Graphics.UI.GLFW as GLFW
 import qualified Linear as L
 
+import           Iris.Line
 import qualified Iris.Util.GLFW as W
 
 main :: IO ()
@@ -27,7 +26,7 @@ main =
      GLFW.setCursorPosCallback win $ Just (cursorPosCallback cameraState mouseState)
      GLFW.setScrollCallback win $ Just (mouseScrollCallback cameraState)
 
-     lineProg <- initLine
+     lineProg <- initLine lineVerts
      W.mainLoop (draw cameraState lineProg win) win
 
 
@@ -128,53 +127,8 @@ transformM (CameraState (L.V2 cx cy) w h) = scale L.!*! trans L.!*! model where
   trans = L.V4 (L.V4 1 0 0 (-cx)) (L.V4 0 1 0 (-cy)) (L.V4 0 0 1 0) (L.V4 0 0 0 1)
   scale = L.V4 (L.V4 (2/w) 0 0 0) (L.V4 0 (2/h) 0 0) (L.V4 0 0 1 0) (L.V4 0 0 0 1)
 
-
--- Line stuff
-data LineProgram = LineProgram U.ShaderProgram GL.BufferObject LineData
-type LineData = [L.V2 GL.GLfloat]
-
-lineVerts :: LineData
+lineVerts :: LineVertices
 lineVerts = [ L.V2 1 1
             , L.V2 1 2
             , L.V2 2 2
             ]
-
-
-initLine :: IO LineProgram
-initLine =
-  do prog <- U.simpleShaderProgramBS vsSource fsSource
-     vbuf <- U.makeBuffer GL.ArrayBuffer lineVerts
-     return $ LineProgram prog vbuf lineVerts
-
-
-drawLine :: LineProgram -> L.M44 GL.GLfloat -> IO ()
-drawLine (LineProgram prog vbuf verts) m =
-  do GL.currentProgram $= Just (U.program prog)
-     U.enableAttrib prog "coord2d"
-
-     GL.bindBuffer GL.ArrayBuffer $= Just vbuf
-     U.setAttrib prog "coord2d"
-        GL.ToFloat $ GL.VertexArrayDescriptor 2 GL.Float 0 U.offset0
-     U.asUniform m $ U.getUniform prog "mvp"
-     GL.drawArrays GL.LineStrip 0 (fromIntegral $ length verts)
-     GL.vertexAttribArray (U.getAttrib prog "coord2d") $= GL.Disabled
-
-
-vsSource, fsSource :: BS.ByteString
-vsSource = BS.intercalate "\n"
-           [
-             "attribute vec2 coord2d; "
-           , "uniform mat4 mvp;"
-           , ""
-           , "void main(void) { "
-           , "    gl_Position = mvp * vec4(coord2d, 0.0, 1.0); "
-           , "}"
-           ]
-
-fsSource = BS.intercalate "\n"
-           [
-             ""
-           , "void main(void) { "
-           , "    gl_FragColor = vec4(0.0, 0.0, 1.0, 1.0);"
-           , "}"
-           ]
