@@ -20,9 +20,11 @@ extra-source-files:
 
 library
   exposed-modules:     Iris
+                     , Iris.Util.GLFW
   -- other-modules:
   -- other-extensions:
   build-depends:       base >=4.8 && <4.9
+                     , GLFW-b == 1.*
   hs-source-dirs:      src
   default-language:    Haskell2010
   ghc-options:         -Wall
@@ -31,3 +33,21 @@ library
 source-repository head
   type:     git
   location: git://github.com/jdreaver/iris.git
+
+
+executable line
+    main-is:          Line.hs
+    build-depends:    base -any
+                    , iris -any
+                    , bytestring == 0.10.*
+                    , containers == 0.5.*
+                    , GLFW-b == 1.*
+                    , GLUtil >= 0.8.7
+                    , linear == 1.20.*
+                    , OpenGL >= 2.13.1
+                    , OpenGLRaw >= 2.6
+                    , stm == 2.4.*
+    default-language: Haskell2010
+    hs-source-dirs:   examples
+    ghc-prof-options: -auto-all -prof
+    ghc-options:      -Wall -O2
