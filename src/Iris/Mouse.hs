@@ -38,15 +38,19 @@ newtype PressedButtons = PressedButtons
   { buttonMap :: Map.Map MouseButton ButtonPressState }
   deriving (Show)
 
+-- | Default constructor for `PressedButtons`
+pressedButtons :: PressedButtons
+pressedButtons = PressedButtons (Map.fromList [])
+
+
 -- | Position and stored camera center when a button is pressed. Used for
 -- implementing camera movement with the mouse.
 type ButtonPressState = (GL.Position, CameraCenter)
 
+-- | If a button is pressed, then return the state when that button was
+-- pressed.
 buttonPressed :: MouseButton -> PressedButtons -> Maybe ButtonPressState
 buttonPressed b = Map.lookup b . buttonMap
-
-pressedButtons :: PressedButtons
-pressedButtons = PressedButtons (Map.fromList [])
 
 -- | Record when a button is pressed in the `PressedButtons` state.
 recordClick :: CameraCenter ->
@@ -78,7 +82,7 @@ mouseDrag (GL.Size w h) (GL.Position x y) (GL.Position ox oy, ocs) cs =
     dyw = realToFrac $ fromIntegral dy * ch / fromIntegral h
     c   = ocs + L.V2 (-dxw) dyw
 
-
+-- | Zoom a camera, keeping the point under the mouse still while zooming.
 mouseZoom :: GL.Size -> GL.Position -> Double -> CameraState -> CameraState
 mouseZoom s p z cs =
   cs { center = c' , width = w' , height = h' }
@@ -97,7 +101,7 @@ mouseZoom s p z cs =
     c = center cs
     c' = x - dx'
 
-
+-- | Map from pixel window coordinates to world coordinates.
 mapToWorld :: GL.Size -> GL.Position -> CameraState -> (GL.GLfloat, GL.GLfloat)
 mapToWorld (GL.Size w h) (GL.Position xp yp) (CameraState (L.V2 cx cy) cw ch) = (x, y)
   where (w', h')   = (fromIntegral w, fromIntegral h)
