@@ -4,8 +4,8 @@
 
 module Iris.Line
        ( lineItem
+       , LineItem
        , LineVertices
-       , LineProgram
        , vsSource
        , fsSource
        ) where
@@ -20,7 +20,7 @@ import Iris.Colors
 import Iris.SceneGraph
 
 -- | Shader program and buffer objects for a line
-data LineProgram = LineProgram U.ShaderProgram GL.BufferObject LineVertices Color
+data LineItem = LineItem U.ShaderProgram GL.BufferObject LineVertices Color
 
 -- | Input vertices for a line buffer object
 type LineVertices = [L.V2 GL.GLfloat]
@@ -32,15 +32,15 @@ lineItem verts color =
      return $ PlotItem (drawLine prog)
 
 -- | Create a line program
-initLine :: LineVertices -> Color -> IO LineProgram
+initLine :: LineVertices -> Color -> IO LineItem
 initLine vertices color =
   do prog <- U.simpleShaderProgramBS vsSource fsSource
      vbuf <- U.makeBuffer GL.ArrayBuffer vertices
-     return $ LineProgram prog vbuf vertices color
+     return $ LineItem prog vbuf vertices color
 
 -- | Draw a given line program to the current OpenGL context
-drawLine :: LineProgram -> L.M44 GL.GLfloat -> IO ()
-drawLine (LineProgram prog vbuf verts color) m =
+drawLine :: LineItem -> L.M44 GL.GLfloat -> IO ()
+drawLine (LineItem prog vbuf verts color) m =
   do GL.currentProgram $= Just (U.program prog)
      U.enableAttrib prog "coord2d"
 

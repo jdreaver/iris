@@ -1,7 +1,7 @@
 -- | Defines a triangle item for plots
 
 module Iris.Triangle
-       ( TriangleProgram (..)
+       ( TriangleItem (..)
        , TriangleVertices
        , triangleItem
        ) where
@@ -24,19 +24,19 @@ triangleItem verts color =
 type TriangleVertices = [L.V2 GL.GLfloat]
 
 -- | Shader program and buffer objects for a triangle
-data TriangleProgram = TriangleProgram U.ShaderProgram GL.BufferObject TriangleVertices Color
+data TriangleItem = TriangleItem U.ShaderProgram GL.BufferObject TriangleVertices Color
 
 -- | Create a triangle program
-initTriangle :: TriangleVertices -> Color -> IO TriangleProgram
+initTriangle :: TriangleVertices -> Color -> IO TriangleItem
 initTriangle vertices color =
   do prog <- U.simpleShaderProgramBS vsSource fsSource
      vbuf <- U.makeBuffer GL.ArrayBuffer vertices
-     return $ TriangleProgram prog vbuf vertices color
+     return $ TriangleItem prog vbuf vertices color
 
 
 -- | Draw a given triangle program to the current OpenGL context
-drawTriangle :: TriangleProgram -> L.M44 GL.GLfloat -> IO ()
-drawTriangle (TriangleProgram prog vbuf verts color) m =
+drawTriangle :: TriangleItem -> L.M44 GL.GLfloat -> IO ()
+drawTriangle (TriangleItem prog vbuf verts color) m =
   do GL.currentProgram $= Just (U.program prog)
      U.enableAttrib prog "coord2d"
 
