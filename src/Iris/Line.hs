@@ -16,30 +16,31 @@ import           Graphics.Rendering.OpenGL (($=))
 import qualified Graphics.Rendering.OpenGL as GL
 import qualified Linear as L
 
+import Iris.Colors
 import Iris.SceneGraph
 
 -- | Shader program and buffer objects for a line
-data LineProgram = LineProgram U.ShaderProgram GL.BufferObject LineVertices
+data LineProgram = LineProgram U.ShaderProgram GL.BufferObject LineVertices Color
 
 -- | Input vertices for a line buffer object
 type LineVertices = [L.V2 GL.GLfloat]
 
 -- | Create a shader program for a line and a PlotItem that can be plotted.
-lineItem :: LineVertices -> IO PlotItem
-lineItem verts =
-  do prog <- initLine verts
+lineItem :: LineVertices -> Color -> IO PlotItem
+lineItem verts color =
+  do prog <- initLine verts color
      return $ PlotItem (drawLine prog)
 
 -- | Create a line program
-initLine :: LineVertices -> IO LineProgram
-initLine vertices =
+initLine :: LineVertices -> Color -> IO LineProgram
+initLine vertices color =
   do prog <- U.simpleShaderProgramBS vsSource fsSource
      vbuf <- U.makeBuffer GL.ArrayBuffer vertices
-     return $ LineProgram prog vbuf vertices
+     return $ LineProgram prog vbuf vertices color
 
 -- | Draw a given line program to the current OpenGL context
 drawLine :: LineProgram -> L.M44 GL.GLfloat -> IO ()
-drawLine (LineProgram prog vbuf verts) m =
+drawLine (LineProgram prog vbuf verts color) m =
   do GL.currentProgram $= Just (U.program prog)
      U.enableAttrib prog "coord2d"
 
@@ -47,6 +48,8 @@ drawLine (LineProgram prog vbuf verts) m =
      U.setAttrib prog "coord2d"
         GL.ToFloat $ GL.VertexArrayDescriptor 2 GL.Float 0 U.offset0
      U.asUniform m $ U.getUniform prog "mvp"
+     U.asUniform color $ U.getUniform prog "f_color"
+
      GL.drawArrays GL.LineStrip 0 (fromIntegral $ length verts)
      GL.vertexAttribArray (U.getAttrib prog "coord2d") $= GL.Disabled
 
@@ -64,8 +67,8 @@ vsSource = BS.intercalate "\n"
 
 fsSource = BS.intercalate "\n"
            [
-             ""
+             "uniform vec3 f_color;"
            , "void main(void) { "
-           , "    gl_FragColor = vec4(0.0, 0.0, 1.0, 1.0);"
+           , "    gl_FragColor = vec4(f_color.xyz, 1.0);"
            , "}"
            ]

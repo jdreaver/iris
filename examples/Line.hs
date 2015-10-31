@@ -29,8 +29,8 @@ main =
      GLFW.setCursorPosCallback win $ Just (cursorPosCallback cameraState buttonState)
      GLFW.setScrollCallback win $ Just (mouseScrollCallback cameraState)
 
-     line <- lineItem lineVerts
-     tri <- triangleItem triVerts
+     line <- lineItem lineVerts (L.V3 0.2 0.5 1)
+     tri <- triangleItem triVerts (L.V3 0.2 1 0.1)
 
      let root = Collection [ Drawable line
                            , Drawable tri
