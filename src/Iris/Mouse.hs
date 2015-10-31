@@ -40,7 +40,7 @@ newtype PressedButtons = PressedButtons
 
 -- | Position and stored camera center when a button is pressed. Used for
 -- implementing camera movement with the mouse.
-type ButtonPressState = (GL.GLint, GL.GLint, CameraCenter)
+type ButtonPressState = (GL.Position, CameraCenter)
 
 buttonPressed :: MouseButton -> PressedButtons -> Maybe ButtonPressState
 buttonPressed b = Map.lookup b . buttonMap
@@ -55,10 +55,10 @@ recordClick :: CameraCenter ->
                GL.Position ->
                PressedButtons ->
                PressedButtons
-recordClick c button Pressed (GL.Position x y) (PressedButtons bmap) =
+recordClick c button Pressed p (PressedButtons bmap) =
   if Map.member button bmap
   then PressedButtons bmap
-  else PressedButtons $ Map.insert button (x, y, c) bmap
+  else PressedButtons $ Map.insert button (p, c) bmap
 recordClick _ button Released _ (PressedButtons bmap) =
   PressedButtons $ Map.delete button bmap
 
@@ -69,7 +69,8 @@ mouseDrag :: GL.Size ->
              ButtonPressState ->
              CameraState ->
              CameraState
-mouseDrag (GL.Size w h) (GL.Position x y) (ox, oy, ocs) cs = cs { center = c }
+mouseDrag (GL.Size w h) (GL.Position x y) (GL.Position ox oy, ocs) cs =
+  cs { center = c }
   where
     (dx, dy) = (x - ox, y - oy)
     (cw, ch) = (width cs, height cs)
