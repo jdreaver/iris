@@ -23,6 +23,7 @@ library
                      , Iris.Camera
                      , Iris.Line
                      , Iris.Mouse
+                     , Iris.Triangle
                      , Iris.Util.GLFW
   -- other-modules:
   -- other-extensions:

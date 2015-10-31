@@ -7,6 +7,8 @@ module Iris.Line
        , drawLine
        , LineVertices
        , LineProgram
+       , vsSource
+       , fsSource
        ) where
 
 import qualified Data.ByteString as BS

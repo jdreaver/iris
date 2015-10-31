@@ -14,6 +14,7 @@ import qualified Linear as L
 import           Iris.Camera
 import           Iris.Line
 import           Iris.Mouse
+import           Iris.Triangle
 import qualified Iris.Util.GLFW as W
 
 main :: IO ()
@@ -27,7 +28,9 @@ main =
      GLFW.setScrollCallback win $ Just (mouseScrollCallback cameraState)
 
      lineProg <- initLine lineVerts
-     W.mainLoop (draw cameraState lineProg win) win
+     triProg <- initTriangle triVerts
+
+     W.mainLoop (draw cameraState lineProg triProg win) win
 
 
 mouseButtonCallback :: TVar CameraState -> TVar PressedButtons -> GLFW.MouseButtonCallback
@@ -63,8 +66,8 @@ mouseScrollCallback camTVar win _ ds =
      pos   <- W.cursorPos win
      atomically $ modifyTVar' camTVar (mouseZoom size pos ds)
 
-draw :: TVar CameraState -> LineProgram -> GLFW.Window -> IO ()
-draw camMVar lp win =
+draw :: TVar CameraState -> LineProgram -> TriangleProgram -> GLFW.Window -> IO ()
+draw camMVar lp tp win =
   do GL.clearColor $= GL.Color4 0 0 0 1
      GL.depthFunc $= Just GL.Less
      GL.clear [GL.ColorBuffer, GL.DepthBuffer]
@@ -76,9 +79,9 @@ draw camMVar lp win =
 
      camState <- readTVarIO camMVar
      let m  = transformM camState
+
      drawLine lp m
-
-
+     drawTriangle tp m
 
 
 transformM :: CameraState -> L.M44 GL.GLfloat
@@ -92,3 +95,9 @@ lineVerts = [ L.V2 1 1
             , L.V2 1 2
             , L.V2 2 2
             ]
+
+triVerts :: TriangleVertices
+triVerts = [ L.V2 0 0
+           , L.V2 0 1
+           , L.V2 1 0
+           ]
