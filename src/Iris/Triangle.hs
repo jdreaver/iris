@@ -7,7 +7,6 @@ module Iris.Triangle
        , drawTriangle
        ) where
 
-import qualified Data.ByteString as BS
 import qualified Graphics.GLUtil as U
 import           Graphics.Rendering.OpenGL (($=))
 import qualified Graphics.Rendering.OpenGL as GL
