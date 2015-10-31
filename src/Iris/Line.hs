@@ -3,8 +3,7 @@
 -- | Defines data and functions for drawing a line.
 
 module Iris.Line
-       ( initLine
-       , drawLine
+       ( lineItem
        , LineVertices
        , LineProgram
        , vsSource
@@ -17,11 +16,19 @@ import           Graphics.Rendering.OpenGL (($=))
 import qualified Graphics.Rendering.OpenGL as GL
 import qualified Linear as L
 
+import Iris.Draw
+
 -- | Shader program and buffer objects for a line
 data LineProgram = LineProgram U.ShaderProgram GL.BufferObject LineVertices
 
 -- | Input vertices for a line buffer object
 type LineVertices = [L.V2 GL.GLfloat]
+
+-- | Create a shader program for a line and a PlotItem that can be plotted.
+lineItem :: LineVertices -> IO PlotItem
+lineItem verts =
+  do prog <- initLine verts
+     return $ PlotItem (drawLine prog)
 
 -- | Create a line program
 initLine :: LineVertices -> IO LineProgram

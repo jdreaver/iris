@@ -3,8 +3,7 @@
 module Iris.Triangle
        ( TriangleProgram (..)
        , TriangleVertices
-       , initTriangle
-       , drawTriangle
+       , triangleItem
        ) where
 
 import qualified Graphics.GLUtil as U
@@ -12,7 +11,14 @@ import           Graphics.Rendering.OpenGL (($=))
 import qualified Graphics.Rendering.OpenGL as GL
 import qualified Linear as L
 
+import Iris.Draw
 import Iris.Line (fsSource, vsSource)
+
+-- | Create a shader program for a triangle and a PlotItem that can be plotted.
+triangleItem :: TriangleVertices -> IO PlotItem
+triangleItem verts =
+  do prog <- initTriangle verts
+     return $ PlotItem (drawTriangle prog)
 
 type TriangleVertices = [L.V2 GL.GLfloat]
 

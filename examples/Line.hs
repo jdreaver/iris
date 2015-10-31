@@ -12,6 +12,7 @@ import qualified Graphics.UI.GLFW as GLFW
 import qualified Linear as L
 
 import           Iris.Camera
+import           Iris.Draw
 import           Iris.Line
 import           Iris.Mouse
 import           Iris.Triangle
@@ -27,10 +28,12 @@ main =
      GLFW.setCursorPosCallback win $ Just (cursorPosCallback cameraState buttonState)
      GLFW.setScrollCallback win $ Just (mouseScrollCallback cameraState)
 
-     lineProg <- initLine lineVerts
-     triProg <- initTriangle triVerts
+     line <- lineItem lineVerts
+     tri <- triangleItem triVerts
 
-     W.mainLoop (draw cameraState lineProg triProg win) win
+     let items = [line, tri]
+
+     W.mainLoop (draw' cameraState items win) win
 
 
 mouseButtonCallback :: TVar CameraState -> TVar PressedButtons -> GLFW.MouseButtonCallback
@@ -66,29 +69,16 @@ mouseScrollCallback camTVar win _ ds =
      pos   <- W.cursorPos win
      atomically $ modifyTVar' camTVar (mouseZoom size pos ds)
 
-draw :: TVar CameraState -> LineProgram -> TriangleProgram -> GLFW.Window -> IO ()
-draw camMVar lp tp win =
-  do GL.clearColor $= GL.Color4 0 0 0 1
-     GL.depthFunc $= Just GL.Less
-     GL.clear [GL.ColorBuffer, GL.DepthBuffer]
-
-     -- In C++ example GLUT handles this?
+draw' :: TVar CameraState -> [PlotItem] -> GLFW.Window -> IO ()
+draw' camMVar items win =
+  do -- In C++ example GLUT handles this?
      (winWidth, winHeight) <- GLFW.getFramebufferSize win
      GL.viewport $= (GL.Position 0 0,
                      GL.Size (fromIntegral winWidth) (fromIntegral winHeight))
 
      camState <- readTVarIO camMVar
-     let m  = transformM camState
 
-     drawLine lp m
-     drawTriangle tp m
-
-
-transformM :: CameraState -> L.M44 GL.GLfloat
-transformM (CameraState (L.V2 cx cy) w h) = scale L.!*! trans L.!*! model where
-  model = L.identity
-  trans = L.V4 (L.V4 1 0 0 (-cx)) (L.V4 0 1 0 (-cy)) (L.V4 0 0 1 0) (L.V4 0 0 0 1)
-  scale = L.V4 (L.V4 (2/w) 0 0 0) (L.V4 0 (2/h) 0 0) (L.V4 0 0 1 0) (L.V4 0 0 0 1)
+     draw camState items
 
 lineVerts :: LineVertices
 lineVerts = [ L.V2 1 1
