@@ -15,6 +15,7 @@ import           Iris.Camera
 import           Iris.Line
 import           Iris.Mouse
 import           Iris.SceneGraph
+import           Iris.Transformation
 import           Iris.Triangle
 import qualified Iris.Util.GLFW as W
 

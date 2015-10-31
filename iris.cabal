@@ -24,6 +24,7 @@ library
                      , Iris.Line
                      , Iris.Mouse
                      , Iris.SceneGraph
+                     , Iris.Transformation
                      , Iris.Triangle
                      , Iris.Util.GLFW
   -- other-modules:
