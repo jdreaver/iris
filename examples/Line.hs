@@ -12,9 +12,9 @@ import qualified Graphics.UI.GLFW as GLFW
 import qualified Linear as L
 
 import           Iris.Camera
-import           Iris.Draw
 import           Iris.Line
 import           Iris.Mouse
+import           Iris.SceneGraph
 import           Iris.Triangle
 import qualified Iris.Util.GLFW as W
 
@@ -31,9 +31,9 @@ main =
      line <- lineItem lineVerts
      tri <- triangleItem triVerts
 
-     let items = [line, tri]
+     let root = Collection [Drawable line, Drawable tri]
 
-     W.mainLoop (draw' cameraState items win) win
+     W.mainLoop (draw' cameraState root win) win
 
 
 mouseButtonCallback :: TVar CameraState -> TVar PressedButtons -> GLFW.MouseButtonCallback
@@ -69,16 +69,17 @@ mouseScrollCallback camTVar win _ ds =
      pos   <- W.cursorPos win
      atomically $ modifyTVar' camTVar (mouseZoom size pos ds)
 
-draw' :: TVar CameraState -> [PlotItem] -> GLFW.Window -> IO ()
-draw' camMVar items win =
+draw' :: TVar CameraState -> SceneNode -> GLFW.Window -> IO ()
+draw' camMVar root win =
   do -- In C++ example GLUT handles this?
      (winWidth, winHeight) <- GLFW.getFramebufferSize win
      GL.viewport $= (GL.Position 0 0,
                      GL.Size (fromIntegral winWidth) (fromIntegral winHeight))
 
-     camState <- readTVarIO camMVar
+     cam <- readTVarIO camMVar
+     let scene = Scene root cam
 
-     draw camState items
+     drawScene scene
 
 lineVerts :: LineVertices
 lineVerts = [ L.V2 1 1

@@ -11,8 +11,8 @@ import           Graphics.Rendering.OpenGL (($=))
 import qualified Graphics.Rendering.OpenGL as GL
 import qualified Linear as L
 
-import Iris.Draw
 import Iris.Line (fsSource, vsSource)
+import Iris.SceneGraph
 
 -- | Create a shader program for a triangle and a PlotItem that can be plotted.
 triangleItem :: TriangleVertices -> IO PlotItem

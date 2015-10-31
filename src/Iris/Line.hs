@@ -16,7 +16,7 @@ import           Graphics.Rendering.OpenGL (($=))
 import qualified Graphics.Rendering.OpenGL as GL
 import qualified Linear as L
 
-import Iris.Draw
+import Iris.SceneGraph
 
 -- | Shader program and buffer objects for a line
 data LineProgram = LineProgram U.ShaderProgram GL.BufferObject LineVertices

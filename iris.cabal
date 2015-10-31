@@ -21,9 +21,9 @@ extra-source-files:
 library
   exposed-modules:     Iris
                      , Iris.Camera
-                     , Iris.Draw
                      , Iris.Line
                      , Iris.Mouse
+                     , Iris.SceneGraph
                      , Iris.Triangle
                      , Iris.Util.GLFW
   -- other-modules:
