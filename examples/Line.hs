@@ -31,7 +31,9 @@ main =
      line <- lineItem lineVerts
      tri <- triangleItem triVerts
 
-     let root = Collection [Drawable line, Drawable tri]
+     let root = Collection [ Drawable line
+                           , Drawable tri
+                           , Transform (translation (L.V3 (-1) 1 0)) (Drawable tri)]
 
      W.mainLoop (draw' cameraState root win) win
 

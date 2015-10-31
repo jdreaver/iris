@@ -5,6 +5,7 @@ module Iris.SceneGraph
        , SceneNode (..)
        , PlotItem (..)
        , drawScene
+       , translation
        ) where
 
 
@@ -22,8 +23,9 @@ data Scene = Scene
   }
 
 -- | Recursive definition of a scene graph tree.
-data SceneNode = Drawable PlotItem
-               | Collection [SceneNode]
+data SceneNode = Collection [SceneNode]
+               | Transform Transformation SceneNode
+               | Drawable PlotItem
 
 -- | An wrapper around a function to plot an item.
 data PlotItem = PlotItem
@@ -43,6 +45,7 @@ drawScene (Scene root cam) =
 
 drawNode :: Transformation -> SceneNode -> IO ()
 drawNode t (Collection items) = mapM_ (drawNode t) items
+drawNode t (Transform t' n) = drawNode (t `apply` t') n
 drawNode t (Drawable item) = drawFunc item t
 
 
@@ -52,7 +55,7 @@ type Transformation = L.M44 GL.GLfloat
 cameraTrans :: CameraState -> Transformation
 cameraTrans (CameraState (L.V2 cx cy) w h) =
   foldl1' apply [scale', trans, identity]
-  where trans  = translation (L.V3 cx cy 0)
+  where trans  = translation (L.V3 (-cx) (-cy) 0)
         scale' = scale (L.V3 (2/w) (2/h) 1)
 
 identity :: Transformation
@@ -61,7 +64,7 @@ identity = L.identity
 
 translation :: L.V3 GL.GLfloat -> Transformation
 translation (L.V3 x y z) =
-  L.V4 (L.V4 1 0 0 (-x)) (L.V4 0 1 0 (-y)) (L.V4 0 0 1 (-z)) (L.V4 0 0 0 1)
+  L.V4 (L.V4 1 0 0 x) (L.V4 0 1 0 y) (L.V4 0 0 1 z) (L.V4 0 0 0 1)
 
 scale :: L.V3 GL.GLfloat -> Transformation
 scale (L.V3 xs ys zs) =
