@@ -13,7 +13,7 @@ import qualified Linear as L
 import           Reactive.Banana
 import           Reactive.Banana.Frameworks
 
-import qualified Iris.Backends.GLFW as W
+import qualified Iris.Backends as W
 import           Iris.Camera
 import           Iris.Line
 import           Iris.Mouse
@@ -24,7 +24,7 @@ import           Iris.Triangle
 
 main :: IO ()
 main =
-  do win <- W.initialize "Line Plot" (640, 480)
+  do win <- W.initGLFW "Line Plot" (640, 480)
 
      cameraState <- newTVarIO $ CameraState (L.V2 1 2) 10 7
 
@@ -38,7 +38,7 @@ main =
                            , Drawable tri
                            , Transform (translation (L.V3 (-1) 1 0)) (Drawable tri)]
 
-     W.mainLoop (draw' cameraState root win) win
+     W.drawLoop (draw' cameraState root win) win
 
 
 mouseNetwork :: TVar CameraState -> GLFW.Window -> MomentIO ()

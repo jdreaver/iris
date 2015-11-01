@@ -4,16 +4,14 @@
 
 
 module Iris.Backends.GLFW
-       ( cursorPos
-       , initialize
+       ( initGLFW
+       , windowSize'
        , mainLoop
-       , mouseButton
-       , mouseButtonState
-       , windowSize
-       , mousePosEvent
-       , mouseButtonEvent
-       , mouseScrollEvent
-       , windowSizeEvent
+       , cursorPos'
+       , mousePosEvent'
+       , mouseButtonEvent'
+       , mouseScrollEvent'
+       , windowSizeEvent'
        ) where
 
 import           Control.Monad
@@ -27,8 +25,8 @@ import           System.IO
 import           Iris.Mouse
 
 -- | Create a GLFW window with the given name and (width, height).
-initialize :: String -> (Int, Int) -> IO GLFW.Window
-initialize title (width, height) = do
+initGLFW :: String -> (Int, Int) -> IO GLFW.Window
+initGLFW title (width, height) = do
   GLFW.setErrorCallback (Just errorCallback)
   successfulInit <- GLFW.init
   -- if init failed, we exit the program
@@ -74,14 +72,14 @@ cleanup win = do
     exitSuccess
 
 -- | Overload of `GLFW.getWindowSize` to return `GL.Size`
-windowSize :: GLFW.Window -> IO GL.Size
-windowSize win =
+windowSize' :: GLFW.Window -> IO GL.Size
+windowSize' win =
   do (w, h) <- GLFW.getWindowSize win
      return $ GL.Size (fromIntegral w) (fromIntegral h)
 
 -- | Overload of `GLFW.getCursorPos` to return `GL.Position`
-cursorPos :: GLFW.Window -> IO GL.Position
-cursorPos win =
+cursorPos' :: GLFW.Window -> IO GL.Position
+cursorPos' win =
   do (x, y) <- GLFW.getCursorPos win
      return $ GL.Position (floor x) (floor y)
 
@@ -100,8 +98,8 @@ mouseButtonState GLFW.MouseButtonState'Released = Released
 
 -- | Create a reactive-banana event for the mouse position using the GLFW mouse
 -- position callback.
-mousePosEvent :: GLFW.Window -> MomentIO (Event GL.Position)
-mousePosEvent win =
+mousePosEvent' :: GLFW.Window -> MomentIO (Event GL.Position)
+mousePosEvent' win =
   do (event, handler) <- newEvent
      let callback :: GLFW.CursorPosCallback
          callback _ x y = handler pos
@@ -111,8 +109,8 @@ mousePosEvent win =
 
 -- | Create a reactive-banana event for pressed/released buttons using the GLFW mouse
 -- button callback.
-mouseButtonEvent :: GLFW.Window -> MomentIO (Event (MouseButton, MouseButtonState))
-mouseButtonEvent win =
+mouseButtonEvent' :: GLFW.Window -> MomentIO (Event (MouseButton, MouseButtonState))
+mouseButtonEvent' win =
   do (event, handler) <- newEvent
      let callback :: GLFW.MouseButtonCallback
          callback _ b s _ =
@@ -126,8 +124,8 @@ mouseButtonEvent win =
 
 -- | Create a reactive-banana event for scrolling using the GLFW scroll
 -- callback.
-mouseScrollEvent :: GLFW.Window -> MomentIO (Event GL.GLfloat)
-mouseScrollEvent win =
+mouseScrollEvent' :: GLFW.Window -> MomentIO (Event GL.GLfloat)
+mouseScrollEvent' win =
   do (event, handler) <- newEvent
      let callback :: GLFW.ScrollCallback
          callback _ _ ds = handler (realToFrac ds)
@@ -136,8 +134,8 @@ mouseScrollEvent win =
 
 -- | Create a reactive-banana event for the window size using the GLFW window size
 -- callback.
-windowSizeEvent :: GLFW.Window -> MomentIO (Event GL.Size)
-windowSizeEvent win =
+windowSizeEvent' :: GLFW.Window -> MomentIO (Event GL.Size)
+windowSizeEvent' win =
   do (event, handler) <- newEvent
      let callback :: GLFW.WindowSizeCallback
          callback _ x y = handler $ GL.Size (fromIntegral x) (fromIntegral y)
