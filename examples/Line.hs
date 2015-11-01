@@ -43,28 +43,35 @@ main =
 
 mouseNetwork :: TVar CameraState -> GLFW.Window -> MomentIO ()
 mouseNetwork camTVar win =
-  do eCursorPos <- mousePosEvent win
-     eButton <- mouseButtonEvent win
-     eWinSize <- windowSizeEvent win
-     eScroll <- mouseScrollEvent win
+  do -- Create events for the various window callbacks
+     eCursorPos <- mousePosEvent win
+     eButton    <- mouseButtonEvent win
+     eWinSize   <- windowSizeEvent win
+     eScroll    <- mouseScrollEvent win
 
-     bCursorPos <- stepper (GL.Position 0 0) eCursorPos
+     -- Create Behaviors for cursor position and window size, since they are
+     -- sampled when we do mouse clicks.
+     bCursorPos  <- stepper (GL.Position 0 0) eCursorPos
      currentSize <- liftIO $ W.windowSize win
-     bWinSize <- stepper currentSize eWinSize
+     bWinSize    <- stepper currentSize eWinSize
 
      -- Do we really need to create a new event? We need a recursive definition
      -- of camera state.
      (bCam, _, hCam) <- tVarBehavior camTVar
 
+     -- Create a Behavior for the currently pressed buttons and some state from
+     -- when the buttons were pressed. This state is needed to implement
+     -- dragging.
      let bCamPos = liftA2 (,) bCam bCursorPos
          eTagged = (,) <$> bCamPos <@> eButton
          applyClick :: ((CameraState, GL.Position), (MouseButton, MouseButtonState)) ->
                        PressedButtons ->
                        PressedButtons
          applyClick ((s, p), (b, bs)) = recordClick (center s) b bs p
-     ePressedButtons <- accumE pressedButtons (applyClick <$> eTagged)
-     bPressedButtons <- stepper pressedButtons ePressedButtons
+     bPressedButtons <- accumB pressedButtons (applyClick <$> eTagged)
 
+     -- Create the event and action for when the user drags the mouse and the
+     -- left mouse button is pressed.
      let bPressedSize = (,,) <$> bPressedButtons <*> bWinSize <*> bCam
          eDoMove = (,) <$> bPressedSize <@> eCursorPos
          doMove :: ((PressedButtons, GL.Size, CameraState), GL.Position) -> IO ()
@@ -73,13 +80,13 @@ mouseNetwork camTVar win =
               case bs of
                 Nothing    -> return ()
                 (Just bs') -> hCam $ mouseDrag size pos bs' cs
+     reactimate $ doMove <$> eDoMove
 
-         bPosSize = (,,) <$> bWinSize <*> bCursorPos <*> bCam
+     -- Create the event and action for scrolling
+     let bPosSize = (,,) <$> bWinSize <*> bCursorPos <*> bCam
          eDoScroll = (,) <$> bPosSize <@> eScroll
          doScroll :: ((GL.Size, GL.Position, CameraState), GL.GLfloat) -> IO ()
          doScroll ((size, pos, cs), ds) = hCam $ mouseZoom size pos ds cs
-
-     reactimate $ doMove <$> eDoMove
      reactimate $ doScroll <$> eDoScroll
 
 mousePosEvent :: GLFW.Window -> MomentIO (Event GL.Position)
