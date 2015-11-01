@@ -83,7 +83,7 @@ mouseDrag (GL.Size w h) (GL.Position x y) (GL.Position ox oy, ocs) cs =
     c   = ocs + L.V2 (-dxw) dyw
 
 -- | Zoom a camera, keeping the point under the mouse still while zooming.
-mouseZoom :: GL.Size -> GL.Position -> Double -> CameraState -> CameraState
+mouseZoom :: GL.Size -> GL.Position -> GL.GLfloat -> CameraState -> CameraState
 mouseZoom s p z cs =
   cs { center = c' , width = w' , height = h' }
   where
