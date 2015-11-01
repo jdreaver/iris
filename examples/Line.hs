@@ -6,6 +6,7 @@
 module Main where
 
 import           Control.Concurrent.STM
+import           Control.Lens
 import qualified Graphics.Rendering.OpenGL as GL
 import qualified Graphics.UI.GLFW as GLFW
 import qualified Linear as L
@@ -56,7 +57,9 @@ mouseNetwork camTVar win =
 
      -- Do we really need to create a new event? We need a recursive definition
      -- of camera state.
-     (bCam, _, hCam) <- tVarBehavior camTVar
+     sCam <- tVarSubject camTVar
+     let bCam = view behavior sCam
+         hCam = view handler sCam
 
      -- Create a Behavior for the currently pressed buttons and some state from
      -- when the buttons were pressed. This state is needed to implement

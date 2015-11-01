@@ -37,6 +37,7 @@ library
                      , containers == 0.5.*
                      , GLFW-b == 1.*
                      , GLUtil >= 0.8.7
+                     , lens == 4.13.*
                      , linear == 1.20.*
                      , OpenGL >= 2.13.1
                      , reactive-banana == 1.0.*
@@ -58,6 +59,7 @@ test-suite tests
                     , containers == 0.5.*
                     , GLFW-b == 1.*
                     , GLUtil >= 0.8.7
+                    , lens == 4.13.*
                     , linear == 1.20.*
                     , OpenGL >= 2.13.1
                     , reactive-banana == 1.0.*
@@ -97,6 +99,7 @@ executable line
                     , iris -any
                     , GLFW-b == 1.*
                     , linear == 1.20.*
+                    , lens == 4.13.*
                     , OpenGL >= 2.13.1
                     , OpenGLRaw >= 2.6
                     , reactive-banana == 1.0.*
