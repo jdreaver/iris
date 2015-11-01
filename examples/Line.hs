@@ -13,6 +13,7 @@ import qualified Linear as L
 import           Reactive.Banana
 import           Reactive.Banana.Frameworks
 
+import qualified Iris.Backends.GLFW as W
 import           Iris.Camera
 import           Iris.Line
 import           Iris.Mouse
@@ -20,7 +21,6 @@ import           Iris.Reactive
 import           Iris.SceneGraph
 import           Iris.Transformation
 import           Iris.Triangle
-import qualified Iris.Util.GLFW as W
 
 main :: IO ()
 main =

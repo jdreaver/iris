@@ -3,7 +3,7 @@
 -- We will probably replace this file once we have an official GLFW backend.
 
 
-module Iris.Util.GLFW
+module Iris.Backends.GLFW
        ( cursorPos
        , initialize
        , mainLoop

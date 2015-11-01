@@ -20,6 +20,7 @@ extra-source-files:
 
 library
   exposed-modules:     Iris
+                     , Iris.Backends.GLFW
                      , Iris.Camera
                      , Iris.Colors
                      , Iris.Line
@@ -28,7 +29,6 @@ library
                      , Iris.SceneGraph
                      , Iris.Transformation
                      , Iris.Triangle
-                     , Iris.Util.GLFW
   -- other-modules:
   -- other-extensions:
   build-depends:       base >=4.8 && <4.9
