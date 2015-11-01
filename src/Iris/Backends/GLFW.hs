@@ -6,6 +6,7 @@
 module Iris.Backends.GLFW
        ( initGLFW
        , windowSize'
+       , framebufferSize
        , mainLoop
        , cursorPos'
        , mousePosEvent'
@@ -76,6 +77,11 @@ windowSize' :: GLFW.Window -> IO GL.Size
 windowSize' win =
   do (w, h) <- GLFW.getWindowSize win
      return $ GL.Size (fromIntegral w) (fromIntegral h)
+
+framebufferSize :: GLFW.Window -> IO GL.Size
+framebufferSize win =
+  do (x, y) <- GLFW.getFramebufferSize win
+     return $ GL.Size (fromIntegral x) (fromIntegral y)
 
 -- | Overload of `GLFW.getCursorPos` to return `GL.Position`
 cursorPos' :: GLFW.Window -> IO GL.Position

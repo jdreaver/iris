@@ -11,6 +11,7 @@ module Iris.SceneGraph
 import           Graphics.Rendering.OpenGL (($=))
 import qualified Graphics.Rendering.OpenGL as GL
 
+import           Iris.Backends
 import           Iris.Camera
 import           Iris.Transformation
 
@@ -31,9 +32,12 @@ data PlotItem = PlotItem
   }
 
 -- | Traverse the scene and draw each item.
-drawScene :: Scene -> IO ()
-drawScene (Scene root cam) =
-  do GL.clearColor $= GL.Color4 0 0 0 1
+drawScene :: (Window a) => a -> Scene -> IO ()
+drawScene win (Scene root cam) =
+  do winSize <- framebufferSize win
+     GL.viewport $= (GL.Position 0 0, winSize)
+
+     GL.clearColor $= GL.Color4 0 0 0 1
      GL.depthFunc $= Just GL.Less
      GL.clear [GL.ColorBuffer, GL.DepthBuffer]
 

@@ -6,7 +6,6 @@
 module Main where
 
 import           Control.Concurrent.STM
-import           Graphics.Rendering.OpenGL (($=))
 import qualified Graphics.Rendering.OpenGL as GL
 import qualified Graphics.UI.GLFW as GLFW
 import qualified Linear as L
@@ -92,15 +91,8 @@ mouseNetwork camTVar win =
 
 draw' :: TVar CameraState -> SceneNode -> GLFW.Window -> IO ()
 draw' camMVar root win =
-  do -- In C++ example GLUT handles this?
-     (winWidth, winHeight) <- GLFW.getFramebufferSize win
-     GL.viewport $= (GL.Position 0 0,
-                     GL.Size (fromIntegral winWidth) (fromIntegral winHeight))
-
-     cam <- readTVarIO camMVar
-     let scene = Scene root cam
-
-     drawScene scene
+  do cam <- readTVarIO camMVar
+     drawScene win (Scene root cam)
 
 lineVerts :: LineVertices
 lineVerts = [ L.V2 1 1

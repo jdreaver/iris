@@ -17,6 +17,7 @@ import qualified Iris.Backends.GLFW as GB
 class Window a where
 
   windowSize :: a -> IO GL.Size
+  framebufferSize :: a -> IO GL.Size
   drawLoop :: IO () -> a -> IO ()
   cursorPos :: a -> IO GL.Position
 
@@ -28,6 +29,7 @@ class Window a where
 
 instance Window GLFW.Window where
   windowSize = GB.windowSize'
+  framebufferSize = GB.framebufferSize
   drawLoop = GB.mainLoop
   cursorPos = GB.cursorPos'
   mousePosEvent = GB.mousePosEvent'
