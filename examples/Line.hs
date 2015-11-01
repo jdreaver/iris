@@ -6,7 +6,6 @@
 module Main where
 
 import           Control.Concurrent.STM
-import           Control.Monad (void)
 import           Graphics.Rendering.OpenGL (($=))
 import qualified Graphics.Rendering.OpenGL as GL
 import qualified Graphics.UI.GLFW as GLFW
@@ -17,6 +16,7 @@ import           Reactive.Banana.Frameworks
 import           Iris.Camera
 import           Iris.Line
 import           Iris.Mouse
+import           Iris.Reactive
 import           Iris.SceneGraph
 import           Iris.Transformation
 import           Iris.Triangle
@@ -44,10 +44,10 @@ main =
 mouseNetwork :: TVar CameraState -> GLFW.Window -> MomentIO ()
 mouseNetwork camTVar win =
   do -- Create events for the various window callbacks
-     eCursorPos <- mousePosEvent win
-     eButton    <- mouseButtonEvent win
-     eWinSize   <- windowSizeEvent win
-     eScroll    <- mouseScrollEvent win
+     eCursorPos <- W.mousePosEvent win
+     eButton    <- W.mouseButtonEvent win
+     eWinSize   <- W.windowSizeEvent win
+     eScroll    <- W.mouseScrollEvent win
 
      -- Create Behaviors for cursor position and window size, since they are
      -- sampled when we do mouse clicks.
@@ -89,51 +89,6 @@ mouseNetwork camTVar win =
          doScroll ((size, pos, cs), ds) = hCam $ mouseZoom size pos ds cs
      reactimate $ doScroll <$> eDoScroll
 
-mousePosEvent :: GLFW.Window -> MomentIO (Event GL.Position)
-mousePosEvent win =
-  do (event, handler) <- newEvent
-     let callback :: GLFW.CursorPosCallback
-         callback _ x y = handler pos
-           where pos = GL.Position (floor x) (floor y)
-     liftIO $ GLFW.setCursorPosCallback win $ Just callback
-     return event
-
-mouseButtonEvent :: GLFW.Window -> MomentIO (Event (MouseButton, MouseButtonState))
-mouseButtonEvent win =
-  do (event, handler) <- newEvent
-     let callback :: GLFW.MouseButtonCallback
-         callback _ b s _ =
-           do let mbutton = W.mouseButton b
-                  state   = W.mouseButtonState s
-              case mbutton of
-                Nothing       -> return ()
-                (Just button) -> handler (button, state)
-     liftIO $ GLFW.setMouseButtonCallback win $ Just callback
-     return event
-
-mouseScrollEvent :: GLFW.Window -> MomentIO (Event GL.GLfloat)
-mouseScrollEvent win =
-  do (event, handler) <- newEvent
-     let callback :: GLFW.ScrollCallback
-         callback _ _ ds = handler (realToFrac ds)
-     liftIO $ GLFW.setScrollCallback win $ Just callback
-     return event
-
-windowSizeEvent :: GLFW.Window -> MomentIO (Event GL.Size)
-windowSizeEvent win =
-  do (event, handler) <- newEvent
-     let callback :: GLFW.WindowSizeCallback
-         callback _ x y = handler $ GL.Size (fromIntegral x) (fromIntegral y)
-     liftIO $ GLFW.setWindowSizeCallback win $ Just callback
-     return event
-
-tVarBehavior :: TVar a -> MomentIO (Behavior a, Event a, Handler a)
-tVarBehavior tvar =
-  do (event, handler) <- newEvent
-     currentVal <- liftIO $ readTVarIO tvar
-     behavior <- stepper currentVal event
-     reactimate $ (void . atomically . writeTVar tvar) <$> event
-     return (behavior, event, handler)
 
 draw' :: TVar CameraState -> SceneNode -> GLFW.Window -> IO ()
 draw' camMVar root win =

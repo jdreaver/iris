@@ -24,6 +24,7 @@ library
                      , Iris.Colors
                      , Iris.Line
                      , Iris.Mouse
+                     , Iris.Reactive
                      , Iris.SceneGraph
                      , Iris.Transformation
                      , Iris.Triangle
@@ -38,6 +39,7 @@ library
                      , linear == 1.20.*
                      , OpenGL >= 2.13.1
                      , reactive-banana == 1.0.*
+                     , stm == 2.4.*
   hs-source-dirs:      src
   default-language:    Haskell2010
   ghc-options:         -Wall
@@ -57,6 +59,8 @@ test-suite tests
                     , GLUtil >= 0.8.7
                     , linear == 1.20.*
                     , OpenGL >= 2.13.1
+                    , reactive-banana == 1.0.*
+                    , stm == 2.4.*
 
                     , hspec ==2.*
                     , HUnit -any
