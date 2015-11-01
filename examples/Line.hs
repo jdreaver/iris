@@ -44,16 +44,14 @@ main =
 mouseNetwork :: TVar CameraState -> GLFW.Window -> MomentIO ()
 mouseNetwork camTVar win =
   do -- Create events for the various window callbacks
-     eCursorPos <- W.mousePosEvent win
+     oCursorPos <- W.mousePosObservable win
      eButton    <- W.mouseButtonEvent win
-     eWinSize   <- W.windowSizeEvent win
+     oWinSize   <- W.windowSizeObservable win
      eScroll    <- W.mouseScrollEvent win
 
-     -- Create Behaviors for cursor position and window size, since they are
-     -- sampled when we do mouse clicks.
-     bCursorPos  <- stepper (GL.Position 0 0) eCursorPos
-     currentSize <- liftIO $ W.windowSize win
-     bWinSize    <- stepper currentSize eWinSize
+     let bCursorPos = view behavior oCursorPos
+         eCursorPos = view event oCursorPos
+         bWinSize   = view behavior oWinSize
 
      -- Do we really need to create a new event? We need a recursive definition
      -- of camera state.

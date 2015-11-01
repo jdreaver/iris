@@ -5,14 +5,14 @@
 
 module Iris.Backends.GLFW
        ( initGLFW
-       , windowSize'
+       , windowSize
        , framebufferSize
        , mainLoop
-       , cursorPos'
-       , mousePosEvent'
-       , mouseButtonEvent'
-       , mouseScrollEvent'
-       , windowSizeEvent'
+       , cursorPos
+       , mousePosObservable
+       , mouseButtonEvent
+       , mouseScrollEvent
+       , windowSizeObservable
        ) where
 
 import           Control.Monad
@@ -24,6 +24,7 @@ import           System.Exit
 import           System.IO
 
 import           Iris.Mouse
+import           Iris.Reactive
 
 -- | Create a GLFW window with the given name and (width, height).
 initGLFW :: String -> (Int, Int) -> IO GLFW.Window
@@ -73,8 +74,8 @@ cleanup win = do
     exitSuccess
 
 -- | Overload of `GLFW.getWindowSize` to return `GL.Size`
-windowSize' :: GLFW.Window -> IO GL.Size
-windowSize' win =
+windowSize :: GLFW.Window -> IO GL.Size
+windowSize win =
   do (w, h) <- GLFW.getWindowSize win
      return $ GL.Size (fromIntegral w) (fromIntegral h)
 
@@ -84,8 +85,8 @@ framebufferSize win =
      return $ GL.Size (fromIntegral x) (fromIntegral y)
 
 -- | Overload of `GLFW.getCursorPos` to return `GL.Position`
-cursorPos' :: GLFW.Window -> IO GL.Position
-cursorPos' win =
+cursorPos :: GLFW.Window -> IO GL.Position
+cursorPos win =
   do (x, y) <- GLFW.getCursorPos win
      return $ GL.Position (floor x) (floor y)
 
@@ -102,48 +103,51 @@ mouseButtonState :: GLFW.MouseButtonState -> MouseButtonState
 mouseButtonState GLFW.MouseButtonState'Pressed = Pressed
 mouseButtonState GLFW.MouseButtonState'Released = Released
 
--- | Create a reactive-banana event for the mouse position using the GLFW mouse
+-- | Create an Observable for the mouse position using the GLFW mouse
 -- position callback.
-mousePosEvent' :: GLFW.Window -> MomentIO (Event GL.Position)
-mousePosEvent' win =
-  do (event, handler) <- newEvent
+mousePosObservable :: GLFW.Window -> MomentIO (Observable GL.Position)
+mousePosObservable win =
+  do (e, h) <- newEvent
      let callback :: GLFW.CursorPosCallback
-         callback _ x y = handler pos
+         callback _ x y = h pos
            where pos = GL.Position (floor x) (floor y)
      liftIO $ GLFW.setCursorPosCallback win $ Just callback
-     return event
+     currentPos <- liftIO $ cursorPos win
+     b <- stepper currentPos e
+     return $ Observable b e
 
--- | Create a reactive-banana event for pressed/released buttons using the GLFW mouse
+-- | Create an Event for mouse button presses/releases using the GLFW mouse
 -- button callback.
-mouseButtonEvent' :: GLFW.Window -> MomentIO (Event (MouseButton, MouseButtonState))
-mouseButtonEvent' win =
-  do (event, handler) <- newEvent
+mouseButtonEvent :: GLFW.Window -> MomentIO (Event (MouseButton, MouseButtonState))
+mouseButtonEvent win =
+  do (e, h) <- newEvent
      let callback :: GLFW.MouseButtonCallback
          callback _ b s _ =
            do let mbutton = mouseButton b
                   state   = mouseButtonState s
               case mbutton of
                 Nothing       -> return ()
-                (Just button) -> handler (button, state)
+                (Just button) -> h (button, state)
      liftIO $ GLFW.setMouseButtonCallback win $ Just callback
-     return event
+     return e
 
--- | Create a reactive-banana event for scrolling using the GLFW scroll
--- callback.
-mouseScrollEvent' :: GLFW.Window -> MomentIO (Event GL.GLfloat)
-mouseScrollEvent' win =
-  do (event, handler) <- newEvent
+-- | Create an Event for mouse button scrolling using the GLFW scroll callback.
+mouseScrollEvent :: GLFW.Window -> MomentIO (Event GL.GLfloat)
+mouseScrollEvent win =
+  do (e, h) <- newEvent
      let callback :: GLFW.ScrollCallback
-         callback _ _ ds = handler (realToFrac ds)
+         callback _ _ ds = h (realToFrac ds)
      liftIO $ GLFW.setScrollCallback win $ Just callback
-     return event
+     return e
 
--- | Create a reactive-banana event for the window size using the GLFW window size
+-- | Create an Observable for the window size using the GLFW window size
 -- callback.
-windowSizeEvent' :: GLFW.Window -> MomentIO (Event GL.Size)
-windowSizeEvent' win =
-  do (event, handler) <- newEvent
+windowSizeObservable :: GLFW.Window -> MomentIO (Observable GL.Size)
+windowSizeObservable win =
+  do (e, h) <- newEvent
      let callback :: GLFW.WindowSizeCallback
-         callback _ x y = handler $ GL.Size (fromIntegral x) (fromIntegral y)
+         callback _ x y = h $ GL.Size (fromIntegral x) (fromIntegral y)
      liftIO $ GLFW.setWindowSizeCallback win $ Just callback
-     return event
+     currentSize <- liftIO $ windowSize win
+     b <- stepper currentSize e
+     return $ Observable b e

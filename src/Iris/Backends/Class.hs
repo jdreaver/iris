@@ -9,8 +9,9 @@ import qualified Graphics.UI.GLFW as GLFW
 import           Reactive.Banana
 import           Reactive.Banana.Frameworks
 
-import           Iris.Mouse
 import qualified Iris.Backends.GLFW as GB
+import           Iris.Mouse
+import           Iris.Reactive
 
 
 -- | Used for a common interface for OpenGL windows.
@@ -21,18 +22,18 @@ class Window a where
   drawLoop :: IO () -> a -> IO ()
   cursorPos :: a -> IO GL.Position
 
-  mousePosEvent :: a -> MomentIO (Event GL.Position)
+  mousePosObservable :: a -> MomentIO (Observable GL.Position)
   mouseButtonEvent :: a -> MomentIO (Event (MouseButton, MouseButtonState))
   mouseScrollEvent :: a -> MomentIO (Event GL.GLfloat)
-  windowSizeEvent :: a -> MomentIO (Event GL.Size)
+  windowSizeObservable :: a -> MomentIO (Observable GL.Size)
 
 
 instance Window GLFW.Window where
-  windowSize = GB.windowSize'
+  windowSize = GB.windowSize
   framebufferSize = GB.framebufferSize
   drawLoop = GB.mainLoop
-  cursorPos = GB.cursorPos'
-  mousePosEvent = GB.mousePosEvent'
-  mouseButtonEvent = GB.mouseButtonEvent'
-  mouseScrollEvent = GB.mouseScrollEvent'
-  windowSizeEvent = GB.windowSizeEvent'
+  cursorPos = GB.cursorPos
+  mousePosObservable = GB.mousePosObservable
+  mouseButtonEvent = GB.mouseButtonEvent
+  mouseScrollEvent = GB.mouseScrollEvent
+  windowSizeObservable = GB.windowSizeObservable
