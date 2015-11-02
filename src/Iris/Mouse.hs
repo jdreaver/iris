@@ -3,6 +3,7 @@
 module Iris.Mouse
        ( MouseButton (..)
        , MouseButtonState (..)
+       , MouseButtonEvent
        ) where
 
 
@@ -18,3 +19,7 @@ data MouseButton = MouseButtonLeft
 data MouseButtonState = Pressed
                       | Released
                       deriving (Show, Eq)
+
+
+-- | Used in backends to report when a mouse button is pressed or released.
+type MouseButtonEvent = (MouseButton, MouseButtonState)

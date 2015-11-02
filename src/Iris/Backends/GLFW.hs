@@ -118,7 +118,7 @@ mousePosObservable win =
 
 -- | Create an Event for mouse button presses/releases using the GLFW mouse
 -- button callback.
-mouseButtonEvent :: GLFW.Window -> MomentIO (Event (MouseButton, MouseButtonState))
+mouseButtonEvent :: GLFW.Window -> MomentIO (Event MouseButtonEvent)
 mouseButtonEvent win =
   do (e, h) <- newEvent
      let callback :: GLFW.MouseButtonCallback

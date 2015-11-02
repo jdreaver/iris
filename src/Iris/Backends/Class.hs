@@ -49,7 +49,7 @@ instance Window GLFW.Window where
 -- | Data type containing all needed events from a backend Window
 data WindowEvents a = WindowEvents
   { _windowEventsMousePosObservable   :: Observable GL.Position
-  , _windowEventsMouseButtonEvent     :: Event (MouseButton, MouseButtonState)
+  , _windowEventsMouseButtonEvent     :: Event MouseButtonEvent
   , _windowEventsMouseScrollEvent     :: Event GL.GLfloat
   , _windowEventsWindowSizeObservable :: Observable GL.Size
   }

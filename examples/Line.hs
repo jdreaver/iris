@@ -67,7 +67,7 @@ recordButtons events bCam =
   do let bCamPos = (,) <$> bCam
                        <*> (events ^. mousePosObservable ^. behavior)
          eTagged = (,) <$> bCamPos <@> (events ^. mouseButtonEvent)
-         applyClick :: ((CameraState, GL.Position), (MouseButton, MouseButtonState)) ->
+         applyClick :: ((CameraState, GL.Position), MouseButtonEvent) ->
                        PressedButtons ->
                        PressedButtons
          applyClick ((s, p), (b, bs)) = recordClick (center s) b bs p
