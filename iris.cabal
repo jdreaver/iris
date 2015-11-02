@@ -23,6 +23,8 @@ library
                      , Iris.Backends
                      , Iris.Backends.GLFW
                      , Iris.Camera
+                     , Iris.Camera.Class
+                     , Iris.Camera.PanZoom
                      , Iris.Colors
                      , Iris.Line
                      , Iris.Mouse

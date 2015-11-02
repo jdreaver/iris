@@ -16,9 +16,9 @@ import           Iris.Camera
 import           Iris.Transformation
 
 -- | Combination of a scene root and camera for that scene
-data Scene = Scene
+data (Camera a) => Scene a = Scene
   { sceneRoot :: SceneNode
-  , camera    :: CameraState
+  , camera    :: a
   }
 
 -- | Recursive definition of a scene graph tree.
@@ -32,7 +32,7 @@ data PlotItem = PlotItem
   }
 
 -- | Traverse the scene and draw each item.
-drawScene :: (Window a) => a -> Scene -> IO ()
+drawScene :: (Window w, Camera b) => w -> Scene b -> IO ()
 drawScene win (Scene root cam) =
   do winSize <- framebufferSize win
      GL.viewport $= (GL.Position 0 0, winSize)
