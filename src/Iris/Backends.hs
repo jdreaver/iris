@@ -1,7 +1,7 @@
 -- | Various backends for use in Iris
 
 module Iris.Backends
-       ( Window (..)
+       ( module Iris.Backends.Class
        , initGLFW
        ) where
 

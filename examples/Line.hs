@@ -6,6 +6,7 @@
 module Main where
 
 import           Control.Concurrent.STM
+import           Control.Lens
 import qualified Graphics.Rendering.OpenGL as GL
 import qualified Graphics.UI.GLFW as GLFW
 import qualified Linear as L
@@ -43,66 +44,65 @@ main =
 
 mouseNetwork :: (Window a) => TVar CameraState -> a -> MomentIO ()
 mouseNetwork camTVar win =
-  do -- Create events for the various window callbacks
-     (Observable bCursorPos eCursorPos) <- W.mousePosObservable win
-     (Observable bWinSize _)     <- W.windowSizeObservable win
-     eButton <- W.mouseButtonEvent win
-     eScroll <- W.mouseScrollEvent win
+  do events <- W.makeEvents win
 
      -- Do we really need to create a new event? We need a recursive definition
      -- of camera state.
-     (Subject bCam _ hCam) <- tVarSubject camTVar
+     sCam <- tVarSubject camTVar
 
-     bPressedButtons <- recordButtons bCam bCursorPos eButton
+     bPressedButtons <- recordButtons events (sCam ^. behavior)
 
-     eMove <- dragMove bPressedButtons bWinSize bCam eCursorPos hCam
+     eMove <- dragMove events bPressedButtons sCam
      reactimate eMove
 
-     doScroll <- scroll bWinSize bCursorPos bCam eScroll hCam
+     doScroll <- scroll events sCam
      reactimate doScroll
 
 
-recordButtons :: Behavior CameraState ->
-                 Behavior GL.Position ->
-                 Event (MouseButton, MouseButtonState) ->
+recordButtons :: (Window a) =>
+                 WindowEvents a ->
+                 Behavior CameraState ->
                  MomentIO (Behavior PressedButtons)
-recordButtons bCam bCursorPos eButton =
-  do let bCamPos = liftA2 (,) bCam bCursorPos
-         eTagged = (,) <$> bCamPos <@> eButton
+recordButtons events bCam =
+  do let bCamPos = liftA2 (,) bCam (events ^. mousePosObservable ^. behavior)
+         eTagged = (,) <$> bCamPos <@> (events ^. mouseButtonEvent)
          applyClick :: ((CameraState, GL.Position), (MouseButton, MouseButtonState)) ->
                        PressedButtons ->
                        PressedButtons
          applyClick ((s, p), (b, bs)) = recordClick (center s) b bs p
      accumB pressedButtons (applyClick <$> eTagged)
 
-dragMove :: Behavior PressedButtons ->
-            Behavior GL.Size ->
-            Behavior CameraState ->
-            Event GL.Position ->
-            Handler CameraState ->
+dragMove :: (Window a) =>
+            WindowEvents a ->
+            Behavior PressedButtons ->
+            Subject CameraState ->
             MomentIO (Event (IO ()))
-dragMove bPressedButtons bWinSize bCam eCursorPos hCam =
-  do let bPressedSize = (,,) <$> bPressedButtons <*> bWinSize <*> bCam
-         eDoMove = (,) <$> bPressedSize <@> eCursorPos
+dragMove events bPressedButtons sCam =
+  do let bPressedSize = (,,) <$> bPressedButtons
+                             <*> events ^. windowSizeObservable ^. behavior
+                             <*> sCam ^. behavior
+         eDoMove = (,) <$> bPressedSize
+                       <@> events ^. mousePosObservable ^. event
          doMove :: ((PressedButtons, GL.Size, CameraState), GL.Position) -> IO ()
          doMove ((pbs, size, cs), pos) =
            do let bs = buttonPressed MouseButtonLeft pbs
               case bs of
                 Nothing    -> return ()
-                (Just bs') -> hCam $ mouseDrag size pos bs' cs
+                (Just bs') -> (sCam ^. handler) $ mouseDrag size pos bs' cs
      return $ doMove <$> eDoMove
 
-scroll :: Behavior GL.Size ->
-          Behavior GL.Position ->
-          Behavior CameraState ->
-          Event GL.GLfloat ->
-          Handler CameraState ->
+scroll :: (Window a) =>
+          WindowEvents a ->
+          Subject CameraState ->
           MomentIO (Event (IO ()))
-scroll bWinSize bCursorPos bCam eScroll hCam =
-  do let bPosSize = (,,) <$> bWinSize <*> bCursorPos <*> bCam
-         eDoScroll = (,) <$> bPosSize <@> eScroll
+scroll events sCam =
+  do let bPosSize = (,,) <$> events ^. windowSizeObservable ^. behavior
+                         <*> events ^. mousePosObservable ^. behavior
+                         <*> sCam ^. behavior
+         eDoScroll = (,) <$> bPosSize
+                         <@> events ^. mouseScrollEvent
          doScroll :: ((GL.Size, GL.Position, CameraState), GL.GLfloat) -> IO ()
-         doScroll ((size, pos, cs), ds) = hCam $ mouseZoom size pos ds cs
+         doScroll ((size, pos, cs), ds) = (sCam ^. handler) $ mouseZoom size pos ds cs
      return $ doScroll <$> eDoScroll
 
 

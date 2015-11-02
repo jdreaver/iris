@@ -1,9 +1,21 @@
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE FunctionalDependencies #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TypeSynonymInstances #-}
+
 -- | Defines the interface that all backends need to conform to.
 
 module Iris.Backends.Class
        ( Window (..)
+       , WindowEvents (..)
+       , mousePosObservable
+       , mouseButtonEvent
+       , mouseScrollEvent
+       , windowSizeObservable
        ) where
 
+import           Control.Lens
 import qualified Graphics.Rendering.OpenGL as GL
 import qualified Graphics.UI.GLFW as GLFW
 import           Reactive.Banana
@@ -21,11 +33,7 @@ class Window a where
   framebufferSize :: a -> IO GL.Size
   drawLoop :: IO () -> a -> IO ()
   cursorPos :: a -> IO GL.Position
-
-  mousePosObservable :: a -> MomentIO (Observable GL.Position)
-  mouseButtonEvent :: a -> MomentIO (Event (MouseButton, MouseButtonState))
-  mouseScrollEvent :: a -> MomentIO (Event GL.GLfloat)
-  windowSizeObservable :: a -> MomentIO (Observable GL.Size)
+  makeEvents :: a -> MomentIO (WindowEvents a)
 
 
 instance Window GLFW.Window where
@@ -33,7 +41,17 @@ instance Window GLFW.Window where
   framebufferSize = GB.framebufferSize
   drawLoop = GB.mainLoop
   cursorPos = GB.cursorPos
-  mousePosObservable = GB.mousePosObservable
-  mouseButtonEvent = GB.mouseButtonEvent
-  mouseScrollEvent = GB.mouseScrollEvent
-  windowSizeObservable = GB.windowSizeObservable
+  makeEvents w = WindowEvents <$> GB.mousePosObservable w
+                              <*> GB.mouseButtonEvent w
+                              <*> GB.mouseScrollEvent w
+                              <*> GB.windowSizeObservable w
+
+-- | Data type containing all needed events from a backend Window
+data WindowEvents a = WindowEvents
+  { _windowEventsMousePosObservable   :: Observable GL.Position
+  , _windowEventsMouseButtonEvent     :: Event (MouseButton, MouseButtonState)
+  , _windowEventsMouseScrollEvent     :: Event GL.GLfloat
+  , _windowEventsWindowSizeObservable :: Observable GL.Size
+  }
+
+makeFields ''WindowEvents
