@@ -64,7 +64,8 @@ recordButtons :: (Window a) =>
                  Behavior CameraState ->
                  MomentIO (Behavior PressedButtons)
 recordButtons events bCam =
-  do let bCamPos = liftA2 (,) bCam (events ^. mousePosObservable ^. behavior)
+  do let bCamPos = (,) <$> bCam
+                       <*> (events ^. mousePosObservable ^. behavior)
          eTagged = (,) <$> bCamPos <@> (events ^. mouseButtonEvent)
          applyClick :: ((CameraState, GL.Position), (MouseButton, MouseButtonState)) ->
                        PressedButtons ->
