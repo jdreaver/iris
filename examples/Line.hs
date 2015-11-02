@@ -12,6 +12,7 @@ import qualified Linear as L
 import           Reactive.Banana
 import           Reactive.Banana.Frameworks
 
+import           Iris.Backends
 import qualified Iris.Backends as W
 import           Iris.Camera
 import           Iris.Line
@@ -40,7 +41,7 @@ main =
      W.drawLoop (draw' cameraState root win) win
 
 
-mouseNetwork :: TVar CameraState -> GLFW.Window -> MomentIO ()
+mouseNetwork :: (Window a) => TVar CameraState -> a -> MomentIO ()
 mouseNetwork camTVar win =
   do -- Create events for the various window callbacks
      (Observable bCursorPos eCursorPos) <- W.mousePosObservable win
