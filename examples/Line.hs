@@ -6,7 +6,6 @@
 module Main where
 
 import           Control.Concurrent.STM
-import           Control.Lens
 import qualified Graphics.Rendering.OpenGL as GL
 import qualified Graphics.UI.GLFW as GLFW
 import qualified Linear as L
@@ -44,20 +43,14 @@ main =
 mouseNetwork :: TVar CameraState -> GLFW.Window -> MomentIO ()
 mouseNetwork camTVar win =
   do -- Create events for the various window callbacks
-     oCursorPos <- W.mousePosObservable win
-     eButton    <- W.mouseButtonEvent win
-     oWinSize   <- W.windowSizeObservable win
-     eScroll    <- W.mouseScrollEvent win
-
-     let bCursorPos = view behavior oCursorPos
-         eCursorPos = view event oCursorPos
-         bWinSize   = view behavior oWinSize
+     (Observable bCursorPos eCursorPos) <- W.mousePosObservable win
+     (Observable bWinSize _)     <- W.windowSizeObservable win
+     eButton <- W.mouseButtonEvent win
+     eScroll <- W.mouseScrollEvent win
 
      -- Do we really need to create a new event? We need a recursive definition
      -- of camera state.
-     sCam <- tVarSubject camTVar
-     let bCam = view behavior sCam
-         hCam = view handler sCam
+     (Subject bCam _ hCam ) <- tVarSubject camTVar
 
      -- Create a Behavior for the currently pressed buttons and some state from
      -- when the buttons were pressed. This state is needed to implement
