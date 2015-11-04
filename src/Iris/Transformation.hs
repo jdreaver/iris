@@ -6,6 +6,7 @@ module Iris.Transformation
        , translation
        , scale
        , apply
+       , aspectTrans
        ) where
 
 import qualified Graphics.Rendering.OpenGL as GL
@@ -32,3 +33,12 @@ scale (L.V3 xs ys zs) =
 -- | Synonym for matrix multiplication.
 apply :: Transformation -> Transformation -> Transformation
 apply = (L.!*!)
+
+-- | Scales a view so the lengths are invariant to the window aspect ratio. If
+-- we have a viewport aspect ratio not equal to one, then the clip coordinates
+-- of -1 to 1 will have pixel lengths, making an image look distorted.
+aspectTrans :: GL.Size -> Transformation
+aspectTrans (GL.Size w h)
+  | aspect >= 1 = scale $ L.V3 1 aspect 1
+  | otherwise   = scale $ L.V3 (1 / aspect) 1 1
+  where aspect = fromIntegral w / fromIntegral h

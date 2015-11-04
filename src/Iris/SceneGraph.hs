@@ -41,7 +41,9 @@ drawScene win (Scene root cam) =
      GL.depthFunc $= Just GL.Less
      GL.clear [GL.ColorBuffer, GL.DepthBuffer]
 
-     let t = cameraTrans cam
+     let ct = cameraTrans cam
+         at = aspectTrans winSize
+         t  = at `apply` ct
      drawNode t root
 
 
