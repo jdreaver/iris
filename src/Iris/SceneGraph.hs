@@ -34,6 +34,7 @@ drawScene :: (Window w) => w -> SceneNode -> IO ()
 drawScene win root =
   do winSize <- framebufferSize win
      GL.viewport $= (GL.Position 0 0, winSize)
+     GL.scissor $= Just (GL.Position 0 0, winSize)
 
      GL.clearColor $= GL.Color4 0 0 0 1
      GL.depthFunc $= Just GL.Less
