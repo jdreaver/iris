@@ -49,9 +49,14 @@ drawNode t (Transform t' n) = drawNode (t `apply` t') n
 drawNode t (Drawable item) = drawFunc item t
 drawNode t (DynamicNode f) = f >>= drawNode t
 
-
+-- | Creates a DynamicNode for a camera
 cameraNode :: (Camera a) => TVar a -> SceneNode -> SceneNode
-cameraNode camTVar child = DynamicNode f
+cameraNode camTVar child = tVarNode camTVar (\c -> Transform (cameraTrans c) child)
+
+-- | Creates a DynamicNode given a TVar and a function to operate on the values
+-- of that TVar.
+tVarNode :: TVar a -> (a -> SceneNode) -> SceneNode
+tVarNode tvar func = DynamicNode f
   where f :: IO SceneNode
-        f = do c <- readTVarIO camTVar
-               return $ Transform (cameraTrans c) child
+        f = do c <- readTVarIO tvar
+               return $ func c
