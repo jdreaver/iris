@@ -6,7 +6,6 @@
 module Main where
 
 import           Control.Concurrent.STM
-import qualified Graphics.UI.GLFW as GLFW
 import qualified Linear as L
 import           Reactive.Banana
 import           Reactive.Banana.Frameworks
@@ -33,18 +32,13 @@ main =
      network <- compile $ mouseNetwork cameraState win
      actuate network
 
-     let root = Collection [ Drawable line
-                           , Drawable tri
-                           , Transform (translation (L.V3 (-1) 1 0)) (Drawable tri)]
+     let items = Collection [ Drawable line
+                            , Drawable tri
+                            , Transform (translation (L.V3 (-1) 1 0)) (Drawable tri)]
+         root = cameraNode cameraState items
 
-     W.drawLoop (draw' cameraState root win) win
+     W.drawLoop (drawScene win root) win
 
-
-
-draw' :: TVar PanZoomCamera -> SceneNode -> GLFW.Window -> IO ()
-draw' camMVar root win =
-  do cam <- readTVarIO camMVar
-     drawScene win (Scene root cam)
 
 lineVerts :: LineVertices
 lineVerts = [ L.V2 1 1
