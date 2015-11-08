@@ -1,4 +1,8 @@
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE FunctionalDependencies #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TemplateHaskell #-}
 
 -- | Defines data and functions for drawing a line.
 
@@ -10,13 +14,16 @@ module Iris.Line
        , fsSource
        ) where
 
+import           Control.Lens
 import qualified Data.ByteString as BS
 import qualified Graphics.GLUtil as U
 import           Graphics.Rendering.OpenGL (($=))
 import qualified Graphics.Rendering.OpenGL as GL
 import qualified Linear as L
+import           Reactive.Banana.Frameworks
 
 import Iris.Colors
+import Iris.Reactive
 import Iris.SceneGraph
 
 -- | Shader program and buffer objects for a line
@@ -72,3 +79,42 @@ fsSource = BS.intercalate "\n"
            , "    gl_FragColor = vec4(f_color.xyz, 1.0);"
            , "}"
            ]
+
+
+data LineSpec = LineSpec
+  { _lineSpecVertices :: [L.V2 GL.GLfloat]
+  , _lineSpecColors   :: Color
+  }
+
+lineSpec :: LineSpec
+lineSpec = LineSpec [] (L.V3 1 1 1)
+
+lineInit :: LineSpec -> MomentIO ReactiveLineItem
+lineInit (LineSpec verts color) =
+  do prog <- liftIO $ U.simpleShaderProgramBS vsSource fsSource
+     vs   <- subject verts
+     vbuf <- lineBuff vs
+     return $ ReactiveLineItem prog vs vbuf color
+
+lineBuff :: Subject [L.V2 GL.GLfloat] ->          -- ^ Input vertices subject
+            MomentIO (Observable GL.BufferObject) -- ^ Resulting buffer observable
+lineBuff s = mapObservableIO (asObservable s) makeBuffer
+  where makeBuffer :: [L.V2 GL.GLfloat] -> IO GL.BufferObject
+        makeBuffer = U.makeBuffer GL.ArrayBuffer
+
+
+data ReactiveLineItem = ReactiveLineItem
+  { _reactiveLineItemProgram  :: U.ShaderProgram
+  , _reactiveLineItemVerts    :: Subject [L.V2 GL.GLfloat]
+  , _reactiveLineItemBuffer   :: Observable GL.BufferObject
+  , _reactiveLineItemColor    :: Color
+  }
+
+makeFields ''ReactiveLineItem
+
+
+drawLineItem :: ReactiveLineItem -> L.M44 GL.GLfloat -> MomentIO ()
+drawLineItem (ReactiveLineItem prog vs bo c) t =
+  do vs' <- currentValue vs
+     bo' <- currentValue bo
+     liftIO $ drawLine (LineItem prog bo' vs' c) t
