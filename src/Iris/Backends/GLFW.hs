@@ -1,20 +1,22 @@
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE FunctionalDependencies #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TemplateHaskell #-}
+
 -- | Module to easily create a GLFW window and clean up when done. Most of this
 -- is copied verbatim from <https://github.com/bergey/haskell-OpenGL-examples>.
 -- We will probably replace this file once we have an official GLFW backend.
 
 
 module Iris.Backends.GLFW
-       ( initGLFW
-       , windowSize
-       , framebufferSize
-       , mainLoop
-       , cursorPos
-       , mousePosObservable
-       , mouseButtonEvent
-       , mouseScrollEvent
-       , windowSizeObservable
+       ( makeWindow
+       , GLFWCanvas (..)
+
+       , module Iris.Backends.Class
        ) where
 
+import           Control.Lens
 import           Control.Monad
 import qualified Graphics.Rendering.OpenGL as GL
 import qualified Graphics.UI.GLFW as GLFW
@@ -23,12 +25,29 @@ import           Reactive.Banana.Frameworks
 import           System.Exit
 import           System.IO
 
+import           Iris.Backends.Class
 import           Iris.Mouse
 import           Iris.Reactive
 
+data GLFWCanvas = GLFWCanvas
+  { _gLFWCanvasGlfwWindow :: GLFW.Window
+  }
+
+makeFields ''GLFWCanvas
+
+instance Window GLFWCanvas where
+  windowSize = windowSize'
+  framebufferSize = framebufferSize'
+  drawLoop = mainLoop
+  cursorPos = cursorPos'
+  makeEvents w = WindowEvents <$> mousePosObservable' w
+                              <*> mouseButtonEvent' (w ^. glfwWindow)
+                              <*> mouseScrollEvent' (w ^. glfwWindow)
+                              <*> windowSizeObservable' w
+
 -- | Create a GLFW window with the given name and (width, height).
-initGLFW :: String -> (Int, Int) -> IO GLFW.Window
-initGLFW title (width, height) = do
+makeWindow :: String -> (Int, Int) -> IO GLFW.Window
+makeWindow title (width, height) = do
   GLFW.setErrorCallback (Just errorCallback)
   successfulInit <- GLFW.init
   -- if init failed, we exit the program
@@ -56,14 +75,15 @@ keyCallback window key _ action _ =
 
 -- | Runs the given drawing function in GLFW's main loop, and cleans up the
 -- window when the user exits.
-mainLoop :: IO () -> GLFW.Window -> IO ()
-mainLoop draw w = do
+mainLoop :: IO () -> GLFWCanvas -> IO ()
+mainLoop draw c = do
+    let w = c ^. glfwWindow
     close <- GLFW.windowShouldClose w
     unless close $ do
                     draw
                     GLFW.swapBuffers w
                     GLFW.pollEvents
-                    mainLoop draw w
+                    mainLoop draw c
     cleanup w
 
 
@@ -74,20 +94,20 @@ cleanup win = do
     exitSuccess
 
 -- | Overload of `GLFW.getWindowSize` to return `GL.Size`
-windowSize :: GLFW.Window -> IO GL.Size
-windowSize win =
-  do (w, h) <- GLFW.getWindowSize win
+windowSize' :: GLFWCanvas -> IO GL.Size
+windowSize' c =
+  do (w, h) <- GLFW.getWindowSize (c ^. glfwWindow)
      return $ GL.Size (fromIntegral w) (fromIntegral h)
 
-framebufferSize :: GLFW.Window -> IO GL.Size
-framebufferSize win =
-  do (x, y) <- GLFW.getFramebufferSize win
+framebufferSize' :: GLFWCanvas -> IO GL.Size
+framebufferSize' c =
+  do (x, y) <- GLFW.getFramebufferSize (c ^. glfwWindow)
      return $ GL.Size (fromIntegral x) (fromIntegral y)
 
 -- | Overload of `GLFW.getCursorPos` to return `GL.Position`
-cursorPos :: GLFW.Window -> IO GL.Position
-cursorPos win =
-  do (x, y) <- GLFW.getCursorPos win
+cursorPos' :: GLFWCanvas -> IO GL.Position
+cursorPos' c =
+  do (x, y) <- GLFW.getCursorPos (c ^. glfwWindow)
      return $ GL.Position (floor x) (floor y)
 
 
@@ -105,21 +125,22 @@ mouseButtonState GLFW.MouseButtonState'Released = Released
 
 -- | Create an Observable for the mouse position using the GLFW mouse
 -- position callback.
-mousePosObservable :: GLFW.Window -> MomentIO (Observable GL.Position)
-mousePosObservable win =
-  do (e, h) <- newEvent
+mousePosObservable' :: GLFWCanvas -> MomentIO (Observable GL.Position)
+mousePosObservable' c =
+  do let win = c ^.glfwWindow
+     (e, h) <- newEvent
      let callback :: GLFW.CursorPosCallback
          callback _ x y = h pos
            where pos = GL.Position (floor x) (floor y)
      liftIO $ GLFW.setCursorPosCallback win $ Just callback
-     currentPos <- liftIO $ cursorPos win
+     currentPos <- liftIO $ cursorPos c
      b <- stepper currentPos e
      return $ Observable b e
 
 -- | Create an Event for mouse button presses/releases using the GLFW mouse
 -- button callback.
-mouseButtonEvent :: GLFW.Window -> MomentIO (Event MouseButtonEvent)
-mouseButtonEvent win =
+mouseButtonEvent' :: GLFW.Window -> MomentIO (Event MouseButtonEvent)
+mouseButtonEvent' win =
   do (e, h) <- newEvent
      let callback :: GLFW.MouseButtonCallback
          callback _ b s _ =
@@ -132,8 +153,8 @@ mouseButtonEvent win =
      return e
 
 -- | Create an Event for mouse button scrolling using the GLFW scroll callback.
-mouseScrollEvent :: GLFW.Window -> MomentIO (Event GL.GLfloat)
-mouseScrollEvent win =
+mouseScrollEvent' :: GLFW.Window -> MomentIO (Event GL.GLfloat)
+mouseScrollEvent' win =
   do (e, h) <- newEvent
      let callback :: GLFW.ScrollCallback
          callback _ _ ds = h (realToFrac ds)
@@ -142,12 +163,13 @@ mouseScrollEvent win =
 
 -- | Create an Observable for the window size using the GLFW window size
 -- callback.
-windowSizeObservable :: GLFW.Window -> MomentIO (Observable GL.Size)
-windowSizeObservable win =
-  do (e, h) <- newEvent
+windowSizeObservable' :: GLFWCanvas -> MomentIO (Observable GL.Size)
+windowSizeObservable' c =
+  do let win = c ^. glfwWindow
+     (e, h) <- newEvent
      let callback :: GLFW.WindowSizeCallback
          callback _ x y = h $ GL.Size (fromIntegral x) (fromIntegral y)
      liftIO $ GLFW.setWindowSizeCallback win $ Just callback
-     currentSize <- liftIO $ windowSize win
+     currentSize <- liftIO $ windowSize c
      b <- stepper currentSize e
      return $ Observable b e

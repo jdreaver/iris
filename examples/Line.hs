@@ -10,7 +10,7 @@ import qualified Linear as L
 import           Reactive.Banana
 import           Reactive.Banana.Frameworks
 
-import qualified Iris.Backends as W
+import qualified Iris.Backends.GLFW as W
 import           Iris.Camera
 import           Iris.Line
 import           Iris.SceneGraph
@@ -19,7 +19,8 @@ import           Iris.Triangle
 
 main :: IO ()
 main =
-  do win <- W.initGLFW "Line Plot" (640, 480)
+  do win <- W.makeWindow "Line Plot" (640, 480)
+     let canvas = W.GLFWCanvas win
 
      cameraState <- newTVarIO $ panZoomCamera { center = L.V2 1 2
                                               , width = 10
@@ -29,7 +30,7 @@ main =
      line <- lineItem lineVerts (L.V3 0.2 0.5 1)
      tri <- triangleItem triVerts (L.V3 0.2 1 0.1)
 
-     network <- compile $ mouseNetwork cameraState win
+     network <- compile $ mouseNetwork cameraState canvas
      actuate network
 
      let items = Collection [ Drawable line
@@ -37,7 +38,7 @@ main =
                             , Transform (translation (L.V3 (-1) 1 0)) (Drawable tri)]
          root = cameraNode cameraState items
 
-     W.drawLoop (drawScene win root) win
+     W.drawLoop (drawScene canvas root) canvas
 
 
 lineVerts :: LineVertices
