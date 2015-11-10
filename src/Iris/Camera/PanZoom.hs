@@ -114,8 +114,7 @@ mouseNetwork camTVar win =
      reactimate doScroll
 
 
-recordButtons :: (Window a) =>
-                 WindowEvents a ->
+recordButtons :: WindowEvents ->
                  Behavior PanZoomCamera ->
                  MomentIO (Behavior (PressedButtons PanZoomCamera))
 recordButtons events bCam =
@@ -128,8 +127,7 @@ recordButtons events bCam =
          applyClick ((s, p), (b, bs)) = recordClick s b bs p
      accumB pressedButtons (applyClick <$> eTagged)
 
-dragMove :: (Window a) =>
-            WindowEvents a ->
+dragMove :: WindowEvents ->
             Behavior (PressedButtons PanZoomCamera) ->
             Subject PanZoomCamera ->
             MomentIO (Event (IO ()))
@@ -147,8 +145,7 @@ dragMove events bPressedButtons sCam =
                 (Just bs') -> (sCam ^. handler) $ mouseDrag size pos bs' cs
      return $ doMove <$> eDoMove
 
-scroll :: (Window a) =>
-          WindowEvents a ->
+scroll :: WindowEvents ->
           Subject PanZoomCamera ->
           MomentIO (Event (IO ()))
 scroll events sCam =

@@ -31,10 +31,10 @@ class Window a where
   framebufferSize :: a -> IO GL.Size
   drawLoop :: IO () -> a -> IO ()
   cursorPos :: a -> IO GL.Position
-  makeEvents :: a -> MomentIO (WindowEvents a)
+  makeEvents :: a -> MomentIO WindowEvents
 
 -- | Data type containing all needed events from a backend Window
-data WindowEvents a = WindowEvents
+data WindowEvents = WindowEvents
   { _windowEventsMousePosObservable   :: Observable GL.Position
   , _windowEventsMouseButtonEvent     :: Event MouseButtonEvent
   , _windowEventsMouseScrollEvent     :: Event GL.GLfloat
