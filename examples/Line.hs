@@ -39,7 +39,8 @@ main =
                             , Transform (translation (L.V3 (-1) 1 0)) (Drawable tri)]
          root = cameraNode cameraState items
 
-     drawNetwork <- compile $ do e <- canvas ^. W.glfwDrawEvent
+     drawNetwork <- compile $ do events <- W.makeEvents canvas
+                                 let e = events ^. W.drawEvent
                                  reactimate $ (\_ -> drawScene canvas root) <$> e
      actuate drawNetwork
 

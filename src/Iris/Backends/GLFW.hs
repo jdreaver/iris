@@ -14,7 +14,6 @@ module Iris.Backends.GLFW
        , initGLFW
        , GLFWCanvas (..)
        , mainLoop
-       , glfwDrawEvent
        , module Iris.Backends.Class
        ) where
 
@@ -32,23 +31,19 @@ import           Iris.Mouse
 import           Iris.Reactive
 
 data GLFWCanvas = GLFWCanvas
-  { _gLFWCanvasGlfwWindow :: GLFW.Window
-  , _gLFWCanvasGlfwDrawEvent  :: MomentIO (Event ())
-  , _gLFWCanvasFireDraw   :: Handler ()
+  { _gLFWCanvasGlfwWindow        :: GLFW.Window
+  , _gLFWCanvasGlfwWindowEvents  :: MomentIO WindowEvents
+  , _gLFWCanvasFireDraw          :: Handler ()
   }
 
 makeFields ''GLFWCanvas
 
 instance Window GLFWCanvas where
-  windowSize = windowSize'
+  windowSize = windowSize' . view glfwWindow
   framebufferSize = framebufferSize'
   drawLoop = mainLoop
-  cursorPos = cursorPos'
-  makeEvents w = WindowEvents <$> mousePosObservable' w
-                              <*> mouseButtonEvent' (w ^. glfwWindow)
-                              <*> mouseScrollEvent' (w ^. glfwWindow)
-                              <*> windowSizeObservable' w
-                              <*> w ^. glfwDrawEvent
+  cursorPos = cursorPos' . view glfwWindow
+  makeEvents = view glfwWindowEvents
 
 -- | Create a GLFWCanvas from a raw GLFW Window. The only point of this
 -- function is to create an event for the draw callback. GLFW doesn't have a
@@ -58,7 +53,16 @@ initGLFW :: GLFW.Window -> IO GLFWCanvas
 initGLFW w =
   do (addHandler, fire) <- newAddHandler
      let drawEvent' = fromAddHandler addHandler
-     return $ GLFWCanvas w drawEvent' fire
+     mousePosO    <- mousePosObservable' w
+     mouseButtonE <- mouseButtonEvent' w
+     mouseScrollE <- mouseScrollEvent' w
+     windowSizeO  <- windowSizeObservable' w
+     let events = WindowEvents <$> mousePosO
+                               <*> mouseButtonE
+                               <*> mouseScrollE
+                               <*> windowSizeO
+                               <*> drawEvent'
+     return $ GLFWCanvas w events fire
 
 
 -- | Create a GLFW window with the given name and (width, height).
@@ -111,9 +115,9 @@ cleanup win = do
     exitSuccess
 
 -- | Overload of `GLFW.getWindowSize` to return `GL.Size`
-windowSize' :: GLFWCanvas -> IO GL.Size
-windowSize' c =
-  do (w, h) <- GLFW.getWindowSize (c ^. glfwWindow)
+windowSize' :: GLFW.Window -> IO GL.Size
+windowSize' win =
+  do (w, h) <- GLFW.getWindowSize win
      return $ GL.Size (fromIntegral w) (fromIntegral h)
 
 framebufferSize' :: GLFWCanvas -> IO GL.Size
@@ -122,9 +126,9 @@ framebufferSize' c =
      return $ GL.Size (fromIntegral x) (fromIntegral y)
 
 -- | Overload of `GLFW.getCursorPos` to return `GL.Position`
-cursorPos' :: GLFWCanvas -> IO GL.Position
-cursorPos' c =
-  do (x, y) <- GLFW.getCursorPos (c ^. glfwWindow)
+cursorPos' :: GLFW.Window -> IO GL.Position
+cursorPos' w =
+  do (x, y) <- GLFW.getCursorPos w
      return $ GL.Position (floor x) (floor y)
 
 
@@ -142,51 +146,51 @@ mouseButtonState GLFW.MouseButtonState'Released = Released
 
 -- | Create an Observable for the mouse position using the GLFW mouse
 -- position callback.
-mousePosObservable' :: GLFWCanvas -> MomentIO (Observable GL.Position)
-mousePosObservable' c =
-  do let win = c ^.glfwWindow
-     (e, h) <- newEvent
+mousePosObservable' :: GLFW.Window -> IO (MomentIO (Observable GL.Position))
+mousePosObservable' win =
+  do (addHandler, fire) <- newAddHandler
      let callback :: GLFW.CursorPosCallback
-         callback _ x y = h pos
+         callback _ x y = fire pos
            where pos = GL.Position (floor x) (floor y)
      liftIO $ GLFW.setCursorPosCallback win $ Just callback
-     currentPos <- liftIO $ cursorPos c
-     b <- stepper currentPos e
-     return $ Observable b e
+     currentPos <- cursorPos' win
+     return $ do e <- fromAddHandler addHandler
+                 b <- stepper currentPos e
+                 return $ Observable b e
 
 -- | Create an Event for mouse button presses/releases using the GLFW mouse
 -- button callback.
-mouseButtonEvent' :: GLFW.Window -> MomentIO (Event MouseButtonEvent)
+mouseButtonEvent' :: GLFW.Window -> IO (MomentIO (Event MouseButtonEvent))
 mouseButtonEvent' win =
-  do (e, h) <- newEvent
+  do (addHandler, fire) <- newAddHandler
      let callback :: GLFW.MouseButtonCallback
          callback _ b s _ =
            do let mbutton = mouseButton b
                   state   = mouseButtonState s
               case mbutton of
                 Nothing       -> return ()
-                (Just button) -> h (button, state)
-     liftIO $ GLFW.setMouseButtonCallback win $ Just callback
-     return e
+                (Just button) -> fire (button, state)
+     GLFW.setMouseButtonCallback win $ Just callback
+     return $ fromAddHandler addHandler
 
 -- | Create an Event for mouse button scrolling using the GLFW scroll callback.
-mouseScrollEvent' :: GLFW.Window -> MomentIO (Event GL.GLfloat)
+mouseScrollEvent' :: GLFW.Window -> IO (MomentIO (Event GL.GLfloat))
 mouseScrollEvent' win =
-  do (e, h) <- newEvent
+  do (addHandler, fire) <- newAddHandler
      let callback :: GLFW.ScrollCallback
-         callback _ _ ds = h (realToFrac ds)
+         callback _ _ ds = fire (realToFrac ds)
      liftIO $ GLFW.setScrollCallback win $ Just callback
-     return e
+     return $ fromAddHandler addHandler
 
 -- | Create an Observable for the window size using the GLFW window size
 -- callback.
-windowSizeObservable' :: GLFWCanvas -> MomentIO (Observable GL.Size)
-windowSizeObservable' c =
-  do let win = c ^. glfwWindow
-     (e, h) <- newEvent
+windowSizeObservable' :: GLFW.Window -> IO (MomentIO (Observable GL.Size))
+windowSizeObservable' win =
+  do (addHandler, fire) <- newAddHandler
      let callback :: GLFW.WindowSizeCallback
-         callback _ x y = h $ GL.Size (fromIntegral x) (fromIntegral y)
+         callback _ x y = fire $ GL.Size (fromIntegral x) (fromIntegral y)
      liftIO $ GLFW.setWindowSizeCallback win $ Just callback
-     currentSize <- liftIO $ windowSize c
-     b <- stepper currentSize e
-     return $ Observable b e
+     currentSize <- windowSize' win
+     return $ do e <- fromAddHandler addHandler
+                 b <- stepper currentSize e
+                 return $ Observable b e
