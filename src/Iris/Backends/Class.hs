@@ -13,6 +13,7 @@ module Iris.Backends.Class
        , mouseButtonEvent
        , mouseScrollEvent
        , windowSizeObservable
+       , drawEvent
        ) where
 
 import           Control.Lens
@@ -27,11 +28,11 @@ import           Iris.Reactive
 -- | Used for a common interface for OpenGL windows.
 class Window a where
 
-  windowSize :: a -> IO GL.Size
+  windowSize      :: a -> IO GL.Size
   framebufferSize :: a -> IO GL.Size
-  drawLoop :: IO () -> a -> IO ()
-  cursorPos :: a -> IO GL.Position
-  makeEvents :: a -> MomentIO WindowEvents
+  drawLoop        :: a -> IO ()
+  cursorPos       :: a -> IO GL.Position
+  makeEvents      :: a -> MomentIO WindowEvents
 
 -- | Data type containing all needed events from a backend Window
 data WindowEvents = WindowEvents
@@ -39,6 +40,7 @@ data WindowEvents = WindowEvents
   , _windowEventsMouseButtonEvent     :: Event MouseButtonEvent
   , _windowEventsMouseScrollEvent     :: Event GL.GLfloat
   , _windowEventsWindowSizeObservable :: Observable GL.Size
+  , _windowEventsDrawEvent            :: Event ()
   }
 
 makeFields ''WindowEvents

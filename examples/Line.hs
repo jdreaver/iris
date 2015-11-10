@@ -6,6 +6,7 @@
 module Main where
 
 import           Control.Concurrent.STM
+import           Control.Lens
 import qualified Linear as L
 import           Reactive.Banana
 import           Reactive.Banana.Frameworks
@@ -20,7 +21,7 @@ import           Iris.Triangle
 main :: IO ()
 main =
   do win <- W.makeWindow "Line Plot" (640, 480)
-     let canvas = W.GLFWCanvas win
+     canvas <- W.initGLFW win
 
      cameraState <- newTVarIO $ panZoomCamera { center = L.V2 1 2
                                               , width = 10
@@ -38,7 +39,11 @@ main =
                             , Transform (translation (L.V3 (-1) 1 0)) (Drawable tri)]
          root = cameraNode cameraState items
 
-     W.drawLoop (drawScene canvas root) canvas
+     drawNetwork <- compile $ do e <- canvas ^. W.glfwDrawEvent
+                                 reactimate $ (\_ -> drawScene canvas root) <$> e
+     actuate drawNetwork
+
+     W.mainLoop canvas
 
 
 lineVerts :: LineVertices

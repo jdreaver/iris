@@ -11,8 +11,10 @@
 
 module Iris.Backends.GLFW
        ( makeWindow
+       , initGLFW
        , GLFWCanvas (..)
-
+       , mainLoop
+       , glfwDrawEvent
        , module Iris.Backends.Class
        ) where
 
@@ -31,6 +33,8 @@ import           Iris.Reactive
 
 data GLFWCanvas = GLFWCanvas
   { _gLFWCanvasGlfwWindow :: GLFW.Window
+  , _gLFWCanvasGlfwDrawEvent  :: MomentIO (Event ())
+  , _gLFWCanvasFireDraw   :: Handler ()
   }
 
 makeFields ''GLFWCanvas
@@ -44,6 +48,18 @@ instance Window GLFWCanvas where
                               <*> mouseButtonEvent' (w ^. glfwWindow)
                               <*> mouseScrollEvent' (w ^. glfwWindow)
                               <*> windowSizeObservable' w
+                              <*> w ^. glfwDrawEvent
+
+-- | Create a GLFWCanvas from a raw GLFW Window. The only point of this
+-- function is to create an event for the draw callback. GLFW doesn't have a
+-- general "draw" function that is called in an event loop, so the only way to
+-- imitate one is to use a handler and an event in a manual infinite loop.
+initGLFW :: GLFW.Window -> IO GLFWCanvas
+initGLFW w =
+  do (addHandler, fire) <- newAddHandler
+     let drawEvent' = fromAddHandler addHandler
+     return $ GLFWCanvas w drawEvent' fire
+
 
 -- | Create a GLFW window with the given name and (width, height).
 makeWindow :: String -> (Int, Int) -> IO GLFW.Window
@@ -75,15 +91,16 @@ keyCallback window key _ action _ =
 
 -- | Runs the given drawing function in GLFW's main loop, and cleans up the
 -- window when the user exits.
-mainLoop :: IO () -> GLFWCanvas -> IO ()
-mainLoop draw c = do
-    let w = c ^. glfwWindow
+mainLoop :: GLFWCanvas -> IO ()
+mainLoop c = do
+    let w    = c ^. glfwWindow
+        fire = c ^. fireDraw
     close <- GLFW.windowShouldClose w
     unless close $ do
-                    draw
+                    fire ()
                     GLFW.swapBuffers w
                     GLFW.pollEvents
-                    mainLoop draw c
+                    mainLoop c
     cleanup w
 
 
