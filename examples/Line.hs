@@ -31,7 +31,7 @@ main =
      line <- lineItem lineVerts (L.V3 0.2 0.5 1)
      tri <- triangleItem triVerts (L.V3 0.2 1 0.1)
 
-     network <- compile $ mouseNetwork cameraState canvas
+     network <- compile $ makeNetwork canvas cameraState
      actuate network
 
      let items = Collection [ Drawable line
@@ -45,6 +45,12 @@ main =
      actuate drawNetwork
 
      W.mainLoop canvas
+
+
+makeNetwork :: W.GLFWCanvas -> TVar PanZoomCamera -> MomentIO ()
+makeNetwork canvas camTVar =
+  do events <- W.makeEvents canvas
+     mouseNetwork camTVar events
 
 
 lineVerts :: LineVertices

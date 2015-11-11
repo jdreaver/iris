@@ -97,11 +97,9 @@ mapToWorld (GL.Size w h) (GL.Position xp yp) cam = (x, y)
         (x, y)     = (cx' + dx, cy' + dy)
 
 
-mouseNetwork :: (Window a) => TVar PanZoomCamera -> a -> MomentIO ()
-mouseNetwork camTVar win =
-  do events <- W.makeEvents win
-
-     -- Do we really need to create a new event? We need a recursive definition
+mouseNetwork :: TVar PanZoomCamera -> WindowEvents -> MomentIO ()
+mouseNetwork camTVar events =
+  do -- Do we really need to create a new event? We need a recursive definition
      -- of camera state.
      sCam <- tVarSubject camTVar
 
