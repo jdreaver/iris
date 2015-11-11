@@ -19,6 +19,7 @@ import           Reactive.Banana.Frameworks
 
 import           Iris.Backends as W
 import           Iris.Camera.Class
+import           Iris.Events
 import           Iris.Mouse
 import           Iris.Reactive
 import           Iris.Transformation
@@ -97,7 +98,8 @@ mapToWorld (GL.Size w h) (GL.Position xp yp) cam = (x, y)
         (x, y)     = (cx' + dx, cy' + dy)
 
 
-mouseNetwork :: TVar PanZoomCamera -> WindowEvents -> MomentIO ()
+mouseNetwork :: TVar PanZoomCamera -> WindowEvents ->
+                MomentIO (EventHandler GL.Position, EventHandler GL.GLfloat)
 mouseNetwork camTVar events =
   do -- Do we really need to create a new event? We need a recursive definition
      -- of camera state.
@@ -105,11 +107,22 @@ mouseNetwork camTVar events =
 
      bPressedButtons <- recordButtons events (sCam ^. behavior)
 
-     eMove <- dragMove events bPressedButtons sCam
+     -- Why are we creating new events? We need them to avoid the circular
+     -- dependency on window events and events passed to event handlers. More
+     -- specifically, we want to create event handlers for camera actions, but
+     -- we only have the root window events available. Therefore, we create
+     -- dummy events that we will fire with the event handlers.
+     (ePos, fPos) <- newEvent
+     let hPos e = reactimate (fPos <$> e) >> return NotAccepted
+     eMove <- dragMove events bPressedButtons sCam ePos
      reactimate eMove
 
-     doScroll <- scroll events sCam
+     (eScroll, fScroll) <- newEvent
+     let hScroll e = reactimate (fScroll <$> e) >> return NotAccepted
+     doScroll <- scroll events sCam eScroll
      reactimate doScroll
+
+     return (hPos, hScroll)
 
 
 recordButtons :: WindowEvents ->
@@ -128,13 +141,13 @@ recordButtons events bCam =
 dragMove :: WindowEvents ->
             Behavior (PressedButtons PanZoomCamera) ->
             Subject PanZoomCamera ->
+            Event GL.Position ->
             MomentIO (Event (IO ()))
-dragMove events bPressedButtons sCam =
+dragMove events bPressedButtons sCam ePos =
   do let bPressedSize = (,,) <$> bPressedButtons
                              <*> events ^. windowSizeObservable ^. behavior
                              <*> sCam ^. behavior
-         eDoMove = (,) <$> bPressedSize
-                       <@> events ^. mousePosObservable ^. event
+         eDoMove = (,) <$> bPressedSize <@> ePos
          doMove :: ((PressedButtons PanZoomCamera, GL.Size, PanZoomCamera), GL.Position) -> IO ()
          doMove ((pbs, size, cs), pos) =
            do let bs = Map.lookup MouseButtonLeft (buttonMap pbs)
@@ -145,13 +158,13 @@ dragMove events bPressedButtons sCam =
 
 scroll :: WindowEvents ->
           Subject PanZoomCamera ->
+          Event GL.GLfloat ->
           MomentIO (Event (IO ()))
-scroll events sCam =
+scroll events sCam eScroll =
   do let bPosSize = (,,) <$> events ^. windowSizeObservable ^. behavior
                          <*> events ^. mousePosObservable ^. behavior
                          <*> sCam ^. behavior
-         eDoScroll = (,) <$> bPosSize
-                         <@> events ^. mouseScrollEvent
+         eDoScroll = (,) <$> bPosSize <@> eScroll
          doScroll :: ((GL.Size, GL.Position, PanZoomCamera), GL.GLfloat) -> IO ()
          doScroll ((size, pos, cs), ds) = (sCam ^. handler) $ mouseZoom size pos ds cs
      return $ doScroll <$> eDoScroll

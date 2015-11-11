@@ -13,7 +13,9 @@ import           Reactive.Banana.Frameworks
 
 import qualified Iris.Backends.GLFW as W
 import           Iris.Camera
+import           Iris.Events
 import           Iris.Line
+import           Iris.Reactive
 import           Iris.SceneGraph
 import           Iris.Transformation
 import           Iris.Triangle
@@ -50,7 +52,9 @@ main =
 makeNetwork :: W.GLFWCanvas -> TVar PanZoomCamera -> MomentIO ()
 makeNetwork canvas camTVar =
   do events <- W.makeEvents canvas
-     mouseNetwork camTVar events
+     (hPos, hScroll) <- mouseNetwork camTVar events
+     handleEvent [hPos] (events ^. W.mousePosObservable ^. event)
+     handleEvent [hScroll] (events ^. W.mouseScrollEvent)
 
 
 lineVerts :: LineVertices
