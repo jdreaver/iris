@@ -25,6 +25,7 @@ library
                      , Iris.Camera
                      , Iris.Camera.Class
                      , Iris.Camera.PanZoom
+                     , Iris.Events
                      , Iris.Colors
                      , Iris.Line
                      , Iris.Mouse
