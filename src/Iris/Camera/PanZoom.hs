@@ -8,7 +8,6 @@ module Iris.Camera.PanZoom
        , mouseNetwork
        ) where
 
-import           Control.Concurrent.STM
 import           Control.Lens
 import           Data.List (foldl1')
 import qualified Data.Map.Strict as Map
@@ -50,21 +49,6 @@ cameraTrans' (PanZoomCamera (L.V2 cx cy) w h _) =
   where trans  = translation (L.V3 (-cx) (-cy) 0)
         scale' = scale (L.V3 (2/w) (2/h) 1)
 
--- | Change the camera state with a mouse drag.
-mouseDrag :: GL.Size ->
-             GL.Position ->
-             (GL.Position, PanZoomCamera) ->
-             PanZoomCamera ->
-             PanZoomCamera
-mouseDrag (GL.Size w h) (GL.Position x y) (GL.Position ox oy, ocs) cs =
-  cs { center = c }
-  where
-    (dx, dy) = (x - ox, y - oy)
-    (cw, ch) = (width cs, height cs)
-    dxw = realToFrac $ fromIntegral dx * cw / fromIntegral w
-    dyw = realToFrac $ fromIntegral dy * ch / fromIntegral h
-    c   = center ocs + L.V2 (-dxw) dyw
-
 -- | Zoom a camera, keeping the point under the mouse still while zooming.
 mouseZoom :: GL.Size -> GL.Position -> GL.GLfloat -> PanZoomCamera -> PanZoomCamera
 mouseZoom s p z cs =
@@ -98,12 +82,12 @@ mapToWorld (GL.Size w h) (GL.Position xp yp) cam = (x, y)
         (x, y)     = (cx' + dx, cy' + dy)
 
 
-mouseNetwork :: TVar PanZoomCamera -> WindowEvents ->
-                MomentIO (EventHandler GL.Position, EventHandler GL.GLfloat)
-mouseNetwork camTVar events =
-  do -- Do we really need to create a new event? We need a recursive definition
-     -- of camera state.
-     sCam <- tVarSubject camTVar
+mouseNetwork :: PanZoomCamera -> WindowEvents ->
+                MomentIO (Behavior PanZoomCamera,
+                          EventHandler GL.Position,
+                          EventHandler GL.GLfloat)
+mouseNetwork cam events =
+  do sCam <- subject cam
 
      bPressedButtons <- recordButtons events (sCam ^. behavior)
 
@@ -122,7 +106,7 @@ mouseNetwork camTVar events =
      doScroll <- scroll events sCam eScroll
      reactimate doScroll
 
-     return (hPos, hScroll)
+     return (sCam ^. behavior, hPos, hScroll)
 
 
 recordButtons :: WindowEvents ->
@@ -155,6 +139,22 @@ dragMove events bPressedButtons sCam ePos =
                 Nothing    -> return ()
                 (Just bs') -> (sCam ^. handler) $ mouseDrag size pos bs' cs
      return $ doMove <$> eDoMove
+
+-- | Change the camera state with a mouse drag.
+mouseDrag :: GL.Size ->
+             GL.Position ->
+             (GL.Position, PanZoomCamera) ->
+             PanZoomCamera ->
+             PanZoomCamera
+mouseDrag (GL.Size w h) (GL.Position x y) (GL.Position ox oy, ocs) cs =
+  cs { center = c }
+  where
+    (dx, dy) = (x - ox, y - oy)
+    (cw, ch) = (width cs, height cs)
+    dxw = realToFrac $ fromIntegral dx * cw / fromIntegral w
+    dyw = realToFrac $ fromIntegral dy * ch / fromIntegral h
+    c   = center ocs + L.V2 (-dxw) dyw
+
 
 scroll :: WindowEvents ->
           Subject PanZoomCamera ->

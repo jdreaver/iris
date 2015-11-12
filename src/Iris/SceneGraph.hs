@@ -3,25 +3,28 @@
 module Iris.SceneGraph
        ( SceneNode (..)
        , PlotItem (..)
-       , drawScene
        , cameraNode
+       , makeScene
        ) where
 
 
 import           Control.Concurrent.STM
+import           Control.Lens
 import           Graphics.Rendering.OpenGL (($=))
 import qualified Graphics.Rendering.OpenGL as GL
+import           Reactive.Banana
+import           Reactive.Banana.Frameworks
 
 import           Iris.Backends
 import           Iris.Camera
+import           Iris.Reactive
 import           Iris.Transformation
 
 
 -- | Recursive definition of a scene graph tree.
 data SceneNode = Collection [SceneNode]
-               | Transform Transformation SceneNode
+               | Transform (Behavior Transformation) SceneNode
                | Drawable PlotItem
-               | DynamicNode (IO SceneNode)
 
 
 -- | An wrapper around a function to plot an item.
@@ -29,9 +32,32 @@ data PlotItem = PlotItem
   { drawFunc :: Transformation -> IO ()
   }
 
--- | Traverse the scene and draw each item.
-drawScene :: (Window w) => w -> SceneNode -> IO ()
-drawScene win root =
+makeScene :: (Window a) => a ->
+             WindowEvents ->
+             Event () ->  -- ^ Draw event
+             SceneNode ->
+             MomentIO ()
+makeScene win events eDraw n =
+  do reactimate $ (\_ -> drawRoot win) <$> eDraw
+     let bTrans = aspectTrans <$> (events ^. windowSizeObservable ^. behavior)
+     makeNode eDraw bTrans n
+     return ()
+
+makeNode :: Event () ->
+            Behavior Transformation ->
+            SceneNode ->
+            MomentIO ()
+makeNode eDraw bTrans (Collection ns) = mapM_ (makeNode eDraw bTrans) ns
+makeNode eDraw bTrans (Drawable item) =
+  do let eTrans = bTrans <@ eDraw
+     reactimate $ drawFunc item <$> eTrans
+     return ()
+makeNode eDraw bTrans (Transform t n) = makeNode eDraw bTrans' n
+  where bTrans' = liftA2 Iris.Transformation.apply bTrans t
+
+
+drawRoot :: (Window a) => a -> IO ()
+drawRoot win =
   do winSize <- framebufferSize win
      GL.viewport $= (GL.Position 0 0, winSize)
      GL.scissor $= Just (GL.Position 0 0, winSize)
@@ -40,24 +66,7 @@ drawScene win root =
      GL.depthFunc $= Just GL.Less
      GL.clear [GL.ColorBuffer, GL.DepthBuffer]
 
-     let at = aspectTrans winSize
-     drawNode at root
-
-
-drawNode :: Transformation -> SceneNode -> IO ()
-drawNode t (Collection items) = mapM_ (drawNode t) items
-drawNode t (Transform t' n) = drawNode (t `apply` t') n
-drawNode t (Drawable item) = drawFunc item t
-drawNode t (DynamicNode f) = f >>= drawNode t
 
 -- | Creates a DynamicNode for a camera
-cameraNode :: (Camera a) => TVar a -> SceneNode -> SceneNode
-cameraNode camTVar child = tVarNode camTVar (\c -> Transform (cameraTrans c) child)
-
--- | Creates a DynamicNode given a TVar and a function to operate on the values
--- of that TVar.
-tVarNode :: TVar a -> (a -> SceneNode) -> SceneNode
-tVarNode tvar func = DynamicNode f
-  where f :: IO SceneNode
-        f = do c <- readTVarIO tvar
-               return $ func c
+cameraNode :: (Camera a) => Behavior a -> SceneNode -> SceneNode
+cameraNode bCam = Transform (cameraTrans <$> bCam)

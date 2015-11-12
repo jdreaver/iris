@@ -25,36 +25,32 @@ main =
   do win <- W.makeWindow "Line Plot" (640, 480)
      canvas <- W.initGLFW win
 
-     cameraState <- newTVarIO $ panZoomCamera { center = L.V2 1 2
-                                              , width = 10
-                                              , height = 7
-                                              }
+     let cam = panZoomCamera { center = L.V2 1 2 , width = 10 , height = 7 }
 
      line <- lineItem lineVerts (L.V3 0.2 0.5 1)
      tri <- triangleItem triVerts (L.V3 0.2 1 0.1)
 
-     network <- compile $ makeNetwork canvas cameraState
-     actuate network
-
      let items = Collection [ Drawable line
                             , Drawable tri
-                            , Transform (translation (L.V3 (-1) 1 0)) (Drawable tri)]
-         root = cameraNode cameraState items
+                            , Transform (pure $ translation (L.V3 (-1) 1 0)) (Drawable tri)]
 
-     drawNetwork <- compile $ do events <- W.makeEvents canvas
-                                 let e = events ^. W.drawEvent
-                                 reactimate $ (\_ -> drawScene canvas root) <$> e
-     actuate drawNetwork
+
+     network <- compile $ makeNetwork canvas cam items
+     actuate network
 
      W.mainLoop canvas
 
 
-makeNetwork :: W.GLFWCanvas -> TVar PanZoomCamera -> MomentIO ()
-makeNetwork canvas camTVar =
+makeNetwork :: W.GLFWCanvas -> PanZoomCamera -> SceneNode -> MomentIO ()
+makeNetwork canvas cam items =
   do events <- W.makeEvents canvas
-     (hPos, hScroll) <- mouseNetwork camTVar events
+     (bCam, hPos, hScroll) <- mouseNetwork cam events
      handleEvent [hPos] (events ^. W.mousePosObservable ^. event)
      handleEvent [hScroll] (events ^. W.mouseScrollEvent)
+
+     let eDraw = events ^. W.drawEvent
+         root = cameraNode bCam items
+     makeScene canvas events eDraw root
 
 
 lineVerts :: LineVertices
