@@ -7,11 +7,15 @@
 -- | Defines data and functions for drawing a line.
 
 module Iris.Line
-       ( lineItem
-       , LineItem
+       ( LineItem
        , LineVertices
        , vsSource
        , fsSource
+
+       , LineSpec (..)
+       , lineSpec
+       , lineInit
+       , lineNode
        ) where
 
 import           Control.Lens
@@ -20,30 +24,16 @@ import qualified Graphics.GLUtil as U
 import           Graphics.Rendering.OpenGL (($=))
 import qualified Graphics.Rendering.OpenGL as GL
 import qualified Linear as L
+import           Reactive.Banana
 import           Reactive.Banana.Frameworks
 
 import Iris.Colors
 import Iris.Reactive
+import Iris.Transformation
 import Iris.SceneGraph
-
--- | Shader program and buffer objects for a line
-data LineItem = LineItem U.ShaderProgram GL.BufferObject LineVertices Color
 
 -- | Input vertices for a line buffer object
 type LineVertices = [L.V2 GL.GLfloat]
-
--- | Create a shader program for a line and a PlotItem that can be plotted.
-lineItem :: LineVertices -> Color -> IO PlotItem
-lineItem verts color =
-  do prog <- initLine verts color
-     return $ PlotItem (drawLine prog)
-
--- | Create a line program
-initLine :: LineVertices -> Color -> IO LineItem
-initLine vertices color =
-  do prog <- U.simpleShaderProgramBS vsSource fsSource
-     vbuf <- U.makeBuffer GL.ArrayBuffer vertices
-     return $ LineItem prog vbuf vertices color
 
 -- | Draw a given line program to the current OpenGL context
 drawLine :: LineItem -> L.M44 GL.GLfloat -> IO ()
@@ -96,6 +86,7 @@ lineInit (LineSpec verts color) =
      vbuf <- lineBuff vs
      return $ ReactiveLineItem prog vs vbuf color
 
+
 lineBuff :: Subject [L.V2 GL.GLfloat] ->          -- ^ Input vertices subject
             MomentIO (Observable GL.BufferObject) -- ^ Resulting buffer observable
 lineBuff s = mapObservableIO (asObservable s) makeBuffer
@@ -110,11 +101,22 @@ data ReactiveLineItem = ReactiveLineItem
   , _reactiveLineItemColor    :: Color
   }
 
+-- | Shader program and buffer objects for a line
+data LineItem = LineItem U.ShaderProgram GL.BufferObject LineVertices Color
+
 makeFields ''ReactiveLineItem
 
 
-drawLineItem :: ReactiveLineItem -> L.M44 GL.GLfloat -> MomentIO ()
-drawLineItem (ReactiveLineItem prog vs bo c) t =
-  do vs' <- currentValue vs
-     bo' <- currentValue bo
-     liftIO $ drawLine (LineItem prog bo' vs' c) t
+bLineItem :: ReactiveLineItem -> Behavior LineItem
+bLineItem item = LineItem <$> pure (item ^. program)
+                          <*> item ^. buffer ^. behavior
+                          <*> item ^. verts ^. behavior
+                          <*> pure (item ^. color)
+
+
+lineNode :: ReactiveLineItem -> Visual
+lineNode item = Visual f
+  where f :: Event () -> Behavior Transformation -> MomentIO ()
+        f eDraw bTrans = do let bData = (,) <$> bLineItem item <*> bTrans
+                                eData = bData <@ eDraw
+                            reactimate $ uncurry drawLine <$> eData

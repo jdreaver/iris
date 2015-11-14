@@ -5,7 +5,6 @@
 
 module Main where
 
-import           Control.Concurrent.STM
 import           Control.Lens
 import qualified Linear as L
 import           Reactive.Banana
@@ -27,26 +26,27 @@ main =
 
      let cam = panZoomCamera { center = L.V2 1 2 , width = 10 , height = 7 }
 
-     line <- lineItem lineVerts (L.V3 0.2 0.5 1)
-     tri <- triangleItem triVerts (L.V3 0.2 1 0.1)
 
-     let items = Collection [ Drawable line
-                            , Drawable tri
-                            , Transform (pure $ translation (L.V3 (-1) 1 0)) (Drawable tri)]
-
-
-     network <- compile $ makeNetwork canvas cam items
+     network <- compile $ makeNetwork canvas cam
      actuate network
 
      W.mainLoop canvas
 
 
-makeNetwork :: W.GLFWCanvas -> PanZoomCamera -> SceneNode -> MomentIO ()
-makeNetwork canvas cam items =
+makeNetwork :: W.GLFWCanvas -> PanZoomCamera -> MomentIO ()
+makeNetwork canvas cam =
   do events <- W.makeEvents canvas
      (bCam, hPos, hScroll) <- mouseNetwork cam events
      handleEvent [hPos] (events ^. W.mousePosObservable ^. event)
      handleEvent [hScroll] (events ^. W.mouseScrollEvent)
+
+     line <- lineInit $ LineSpec lineVerts (L.V3 0.2 0.5 1)
+     tri <- triangleInit $ TriangleSpec triVerts (L.V3 0.2 1 0.1)
+
+     let items = Collection [ VisualNode $ lineNode line
+                            , VisualNode $ triangleNode tri
+                            , Transform (pure $ translation (L.V3 (-1) 1 0))
+                              (VisualNode $ triangleNode tri)]
 
      let eDraw = events ^. W.drawEvent
          root = cameraNode bCam items

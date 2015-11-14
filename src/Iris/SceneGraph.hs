@@ -5,10 +5,11 @@ module Iris.SceneGraph
        , PlotItem (..)
        , cameraNode
        , makeScene
+
+       , Visual (..)
        ) where
 
 
-import           Control.Concurrent.STM
 import           Control.Lens
 import           Graphics.Rendering.OpenGL (($=))
 import qualified Graphics.Rendering.OpenGL as GL
@@ -24,12 +25,16 @@ import           Iris.Transformation
 -- | Recursive definition of a scene graph tree.
 data SceneNode = Collection [SceneNode]
                | Transform (Behavior Transformation) SceneNode
-               | Drawable PlotItem
+               | VisualNode Visual
 
 
 -- | An wrapper around a function to plot an item.
 data PlotItem = PlotItem
   { drawFunc :: Transformation -> IO ()
+  }
+
+data Visual = Visual
+  { drawEventFunc :: Event () -> Behavior Transformation -> MomentIO ()
   }
 
 makeScene :: (Window a) => a ->
@@ -48,10 +53,7 @@ makeNode :: Event () ->
             SceneNode ->
             MomentIO ()
 makeNode eDraw bTrans (Collection ns) = mapM_ (makeNode eDraw bTrans) ns
-makeNode eDraw bTrans (Drawable item) =
-  do let eTrans = bTrans <@ eDraw
-     reactimate $ drawFunc item <$> eTrans
-     return ()
+makeNode eDraw bTrans (VisualNode visual) = drawEventFunc visual eDraw bTrans
 makeNode eDraw bTrans (Transform t n) = makeNode eDraw bTrans' n
   where bTrans' = liftA2 Iris.Transformation.apply bTrans t
 
