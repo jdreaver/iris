@@ -51,24 +51,24 @@ data MeshDataBuffer = VertexesBuffer MeshVertices GL.BufferObject
 meshInit :: MeshSpec -> MomentIO Visual
 meshInit (MeshSpec md c) =
   do prog <- liftIO $ U.simpleShaderProgramBS vsSource fsSource
-     vbuf <- meshBufferObservable md
+     mds  <- subject md
+     vbuf <- meshBufferObservable mds
      let bItem = MeshItem <$> pure prog
                           <*> vbuf ^. behavior
                           <*> pure c
      return $ Visual (drawVisual bItem drawMesh)
 
 
-meshBufferObservable :: MeshData -> MomentIO (Observable MeshDataBuffer)
-meshBufferObservable (Vertexes verts) =
-  do vs  <- subject verts
-     obs <- bufferObservable vs GL.ArrayBuffer
-     return $ VertexesBuffer verts <$> obs
-meshBufferObservable (Faces verts faces) =
-  do vs <- subject verts
-     fs <- subject faces
-     vb <- bufferObservable vs GL.ArrayBuffer
-     fb <- bufferObservable fs GL.ElementArrayBuffer
-     return $ merge (FacesBuffer verts faces) vb fb
+meshBufferObservable :: Subject MeshData -> MomentIO (Observable MeshDataBuffer)
+meshBufferObservable s = mapObservableIO (asObservable s) makeBuffer
+  where makeBuffer :: MeshData -> IO MeshDataBuffer
+        makeBuffer (Vertexes verts) =
+          do b <- U.fromSource GL.ArrayBuffer verts
+             return $ VertexesBuffer verts b
+        makeBuffer (Faces verts faces) =
+          do vb <- U.fromSource GL.ArrayBuffer verts
+             fb <- U.fromSource GL.ElementArrayBuffer faces
+             return $ FacesBuffer verts faces vb fb
 
 -- | Draw a given mesh item to the current OpenGL context
 drawMesh :: MeshItem -> L.M44 GL.GLfloat -> IO ()
