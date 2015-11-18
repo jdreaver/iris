@@ -23,7 +23,6 @@ module Iris.Reactive
 import           Control.Concurrent.STM
 import           Control.Lens
 import           Control.Monad (void, (>=>))
-import           Data.StateVar
 import           Reactive.Banana
 import           Reactive.Banana.Frameworks
 
@@ -49,10 +48,6 @@ data Subject a = Subject
   , _subjectHandler  :: Handler a
   }
 makeFields ''Subject
-
-instance HasSetter (Subject a) a where
-  Subject _ _ h $= x = liftIO $ h x
-  {-# INLINE ($=) #-}
 
 -- | Get current value of an object with a behavior.
 currentValue :: (HasBehavior s (Behavior a)) => s -> MomentIO a
