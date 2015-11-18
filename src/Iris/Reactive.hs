@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE FunctionalDependencies #-}
@@ -33,11 +34,8 @@ import           Reactive.Banana.Frameworks
 data Observable a = Observable
   { _observableBehavior :: Behavior a
   , _observableEvent    :: Event a
-  }
+  } deriving (Functor)
 makeFields ''Observable
-
-instance Functor Observable where
-  fmap f (Observable b e) = Observable (f <$> b) (f <$> e)
 
 -- | Wrapper around a triple of Behavior, Event, and Handler. This is useful
 -- over an `Observable` when the value of the Behavior is meant to be set from
