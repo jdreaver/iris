@@ -6,6 +6,7 @@
 module Main where
 
 import           Control.Lens
+import qualified Data.Vector.Storable as V
 import qualified Linear as L
 import           Reactive.Banana
 import           Reactive.Banana.Frameworks
@@ -40,7 +41,7 @@ makeNetwork canvas cam =
      handleEvent [hScroll] (events ^. W.mouseScrollEvent)
 
      line <- lineInit $ LineSpec lineVerts (L.V3 0.2 0.5 1)
-     mesh <- meshInit $ MeshSpec meshVerts (L.V3 0.2 1 0.1)
+     mesh <- meshInit $ MeshSpec (Vertexes meshVerts) (L.V3 0.2 1 0.1)
 
      let items = Collection [ VisualNode line
                             , VisualNode mesh
@@ -59,10 +60,11 @@ lineVerts = [ L.V2 1 1
             ]
 
 meshVerts :: MeshVertices
-meshVerts = [ L.V2 0 0
-            , L.V2 1 1
-            , L.V2 0 1
-            , L.V2 0 0
-            , L.V2 1 0
-            , L.V2 1 1
-            ]
+meshVerts = V.fromList [ L.V3 (L.V3 0 0 0) (L.V3 1 1 0) (L.V3 0 1 0)
+                       , L.V3 (L.V3 0 0 0) (L.V3 1 0 0) (L.V3 1 1 0)
+                       ]
+
+-- meshVerts :: MeshVertices
+-- meshVerts = V.fromList [ L.V3 (L.V3 0 1 0) (L.V3 0 1 1) (L.V3 0 0 0)
+--                        , L.V3 (L.V3 0 1 1) (L.V3 0 0 1) (L.V3 0 0 0)
+--                        ]

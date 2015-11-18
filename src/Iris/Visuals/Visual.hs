@@ -30,5 +30,6 @@ drawVisual bItem drawFunc eDraw bTrans =
 -- | Creates an Observable of a buffer object from a subject of vertexes.
 bufferObservable :: (U.BufferSource a) =>
                     Subject a ->
+                    GL.BufferTarget ->
                     MomentIO (Observable GL.BufferObject)
-bufferObservable s = mapObservableIO (asObservable s) (U.fromSource GL.ArrayBuffer)
+bufferObservable s t = mapObservableIO (asObservable s) (U.fromSource t)

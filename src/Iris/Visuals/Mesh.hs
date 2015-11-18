@@ -4,11 +4,13 @@ module Iris.Visuals.Mesh
        ( MeshItem (..)
        , MeshVertices
        , MeshSpec (..)
+       , MeshData (..)
        , meshSpec
        , meshInit
        ) where
 
 import           Control.Lens
+import qualified Data.Vector.Storable as V
 import qualified Graphics.GLUtil as U
 import           Graphics.Rendering.OpenGL (($=))
 import qualified Graphics.Rendering.OpenGL as GL
@@ -22,43 +24,64 @@ import Iris.Visuals.Line (fsSource, vsSource)
 import Iris.Visuals.Visual
 
 -- | Shader program and buffer objects for a mesh
-data MeshItem = MeshItem U.ShaderProgram GL.BufferObject MeshVertices Color
-
-type MeshVertices = [L.V2 GL.GLfloat]
+data MeshItem = MeshItem U.ShaderProgram MeshDataBuffer Color
 
 data MeshSpec = MeshSpec
-  { meshSpecVertices :: [L.V2 GL.GLfloat]
-  , meshSpecColors   :: Color
+  { meshSpecData   :: MeshData
+  , meshSpecColors :: Color
   }
 
 meshSpec :: MeshSpec
-meshSpec = MeshSpec [] (L.V3 1 1 1)
+meshSpec = MeshSpec (Vertexes $ V.fromList []) (L.V3 1 1 1)
+
+type MeshVertices = V.Vector (L.M33 GL.GLfloat)
+type MeshFaceVertices = V.Vector (L.V3 GL.GLfloat)
+type MeshFaceIndices = V.Vector (L.V3 GL.GLint)
+
+data MeshData = Vertexes MeshVertices
+              | Indexed MeshFaceVertices MeshFaceIndices
+
+data MeshDataBuffer = VertexesBuffer MeshVertices GL.BufferObject
+                    | IndexedBuffer MeshFaceVertices MeshFaceIndices
+                      GL.BufferObject GL.BufferObject
 
 -- | Create mesh visual from a MeshSpec
 meshInit :: MeshSpec -> MomentIO Visual
-meshInit (MeshSpec verts' c) =
+meshInit (MeshSpec md c) =
   do prog <- liftIO $ U.simpleShaderProgramBS vsSource fsSource
-     vs   <- subject verts'
-     vbuf <- bufferObservable vs
+     vbuf <- meshBufferObservable md
      let bItem = MeshItem <$> pure prog
                           <*> vbuf ^. behavior
-                          <*> vs ^. behavior
                           <*> pure c
      return $ Visual (drawVisual bItem drawMesh)
 
 
+meshBufferObservable :: MeshData -> MomentIO (Observable MeshDataBuffer)
+meshBufferObservable (Vertexes verts) =
+  do vs  <- subject verts
+     obs <- bufferObservable vs GL.ArrayBuffer
+     return $ VertexesBuffer verts <$> obs
+
 -- | Draw a given mesh item to the current OpenGL context
 drawMesh :: MeshItem -> L.M44 GL.GLfloat -> IO ()
-drawMesh (MeshItem prog vbuf verts' color') m =
+drawMesh (MeshItem prog meshData color') m =
   do GL.currentProgram $= Just (U.program prog)
      U.enableAttrib prog "coord2d"
 
-     GL.bindBuffer GL.ArrayBuffer $= Just vbuf
-     U.setAttrib prog "coord2d"
-        GL.ToFloat $ GL.VertexArrayDescriptor 2 GL.Float 0 U.offset0
+     bindMeshData prog meshData
      U.asUniform m $ U.getUniform prog "mvp"
      U.asUniform color' $ U.getUniform prog "f_color"
 
-     GL.drawArrays GL.Triangles 0 (fromIntegral $ length verts')
+     drawMeshData meshData
 
      GL.vertexAttribArray (U.getAttrib prog "coord2d") $= GL.Disabled
+
+
+bindMeshData :: U.ShaderProgram -> MeshDataBuffer -> IO ()
+bindMeshData p (VertexesBuffer _ vbo) =
+  do GL.bindBuffer GL.ArrayBuffer $= Just vbo
+     U.setAttrib p "coord2d"
+        GL.ToFloat $ GL.VertexArrayDescriptor 3 GL.Float 0 U.offset0
+
+drawMeshData :: MeshDataBuffer -> IO ()
+drawMeshData (VertexesBuffer v _) = GL.drawArrays GL.Triangles 0 (fromIntegral $ V.length v * 3)

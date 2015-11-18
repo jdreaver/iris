@@ -46,7 +46,7 @@ lineInit :: LineSpec -> MomentIO Visual
 lineInit (LineSpec verts' color') =
   do prog <- liftIO $ U.simpleShaderProgramBS vsSource fsSource
      vs   <- subject verts'
-     vbuf <- bufferObservable vs
+     vbuf <- bufferObservable vs GL.ArrayBuffer
      let bItem = LineItem <$> pure prog
                           <*> vbuf ^. behavior
                           <*> vs ^. behavior
