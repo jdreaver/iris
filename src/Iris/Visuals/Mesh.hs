@@ -3,6 +3,8 @@
 module Iris.Visuals.Mesh
        ( MeshItem (..)
        , MeshVertices
+       , MeshFaceIndices
+       , MeshFaceVertices
        , MeshSpec (..)
        , MeshData (..)
        , meshSpec
@@ -39,10 +41,10 @@ type MeshFaceVertices = V.Vector (L.V3 GL.GLfloat)
 type MeshFaceIndices = V.Vector (L.V3 GL.GLint)
 
 data MeshData = Vertexes MeshVertices
-              | Indexed MeshFaceVertices MeshFaceIndices
+              | Faces MeshFaceVertices MeshFaceIndices
 
 data MeshDataBuffer = VertexesBuffer MeshVertices GL.BufferObject
-                    | IndexedBuffer MeshFaceVertices MeshFaceIndices
+                    | FacesBuffer MeshFaceVertices MeshFaceIndices
                       GL.BufferObject GL.BufferObject
 
 -- | Create mesh visual from a MeshSpec
@@ -61,6 +63,12 @@ meshBufferObservable (Vertexes verts) =
   do vs  <- subject verts
      obs <- bufferObservable vs GL.ArrayBuffer
      return $ VertexesBuffer verts <$> obs
+meshBufferObservable (Faces verts faces) =
+  do vs <- subject verts
+     fs <- subject faces
+     vb <- bufferObservable vs GL.ArrayBuffer
+     fb <- bufferObservable fs GL.ElementArrayBuffer
+     return $ merge (FacesBuffer verts faces) vb fb
 
 -- | Draw a given mesh item to the current OpenGL context
 drawMesh :: MeshItem -> L.M44 GL.GLfloat -> IO ()
@@ -69,6 +77,7 @@ drawMesh (MeshItem prog meshData color') m =
      U.enableAttrib prog "coord2d"
 
      bindMeshData prog meshData
+
      U.asUniform m $ U.getUniform prog "mvp"
      U.asUniform color' $ U.getUniform prog "f_color"
 
@@ -82,6 +91,14 @@ bindMeshData p (VertexesBuffer _ vbo) =
   do GL.bindBuffer GL.ArrayBuffer $= Just vbo
      U.setAttrib p "coord2d"
         GL.ToFloat $ GL.VertexArrayDescriptor 3 GL.Float 0 U.offset0
+bindMeshData p (FacesBuffer _ _ vb fb) =
+  do GL.bindBuffer GL.ArrayBuffer $= Just vb
+     U.setAttrib p "coord2d"
+        GL.ToFloat $ GL.VertexArrayDescriptor 3 GL.Float 0 U.offset0
+     GL.bindBuffer GL.ElementArrayBuffer $= Just fb
 
 drawMeshData :: MeshDataBuffer -> IO ()
-drawMeshData (VertexesBuffer v _) = GL.drawArrays GL.Triangles 0 (fromIntegral $ V.length v * 3)
+drawMeshData (VertexesBuffer v _) =
+  GL.drawArrays GL.Triangles 0 (fromIntegral $ V.length v * 3)
+drawMeshData (FacesBuffer _ fs _ _) =
+  U.drawIndexedTris (fromIntegral $ V.length fs)

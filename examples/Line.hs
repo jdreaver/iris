@@ -42,9 +42,12 @@ makeNetwork canvas cam =
 
      line <- lineInit $ LineSpec lineVerts (L.V3 0.2 0.5 1)
      mesh <- meshInit $ MeshSpec (Vertexes meshVerts) (L.V3 0.2 1 0.1)
+     mesh2 <- meshInit $ MeshSpec (Faces meshFaceVerts meshFaceIndices) (L.V3 1 0.2 0.1)
 
      let items = Collection [ VisualNode line
                             , VisualNode mesh
+                            , Transform (pure $ translation (L.V3 2 2 0))
+                              (VisualNode mesh2)
                             , Transform (pure $ translation (L.V3 (-1) 1 0))
                               (VisualNode mesh)]
 
@@ -64,7 +67,14 @@ meshVerts = V.fromList [ L.V3 (L.V3 0 0 0) (L.V3 1 1 0) (L.V3 0 1 0)
                        , L.V3 (L.V3 0 0 0) (L.V3 1 0 0) (L.V3 1 1 0)
                        ]
 
--- meshVerts :: MeshVertices
--- meshVerts = V.fromList [ L.V3 (L.V3 0 1 0) (L.V3 0 1 1) (L.V3 0 0 0)
---                        , L.V3 (L.V3 0 1 1) (L.V3 0 0 1) (L.V3 0 0 0)
---                        ]
+meshFaceVerts :: MeshFaceVertices
+meshFaceVerts = V.fromList [ L.V3 0 0 0
+                           , L.V3 1 1 0
+                           , L.V3 1 2 0
+                           , L.V3 0 1 0
+                           ]
+
+meshFaceIndices :: MeshFaceIndices
+meshFaceIndices = V.fromList [ L.V3 0 1 2
+                             , L.V3 2 3 0
+                             ]

@@ -17,6 +17,7 @@ module Iris.Reactive
        , event
        , handler
        , mapObservableIO
+       , merge
        , subject
        , tVarSubject
        ) where
@@ -36,6 +37,16 @@ data Observable a = Observable
   , _observableEvent    :: Event a
   } deriving (Functor)
 makeFields ''Observable
+
+-- | Combines two Observables
+merge :: (a -> b -> c) -> Observable a -> Observable b -> Observable c
+merge f (Observable b1 e1) (Observable b2 e2) =
+  let b   = f <$> b1 <*> b2
+      e12 = (f      <$> b1) `apply` e2
+      e21 = (flip f <$> b2) `apply` e1
+      e   = unionWith const e12 e21
+  in Observable b e
+
 
 -- | Wrapper around a triple of Behavior, Event, and Handler. This is useful
 -- over an `Observable` when the value of the Behavior is meant to be set from
