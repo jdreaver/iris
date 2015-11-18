@@ -32,18 +32,18 @@ import           Iris.Reactive
 
 data GLFWCanvas = GLFWCanvas
   { _gLFWCanvasGlfwWindow        :: GLFW.Window
-  , _gLFWCanvasGlfwWindowEvents  :: MomentIO WindowEvents
+  , _gLFWCanvasGlfwWindowEvents  :: MomentIO CanvasEvents
   , _gLFWCanvasFireDraw          :: Handler ()
   }
 
 makeFields ''GLFWCanvas
 
-instance Window GLFWCanvas where
-  windowSize = windowSize' . view glfwWindow
+instance Canvas GLFWCanvas where
+  canvasSize      = windowSize' . view glfwWindow
   framebufferSize = framebufferSize'
-  drawLoop = mainLoop
-  cursorPos = cursorPos' . view glfwWindow
-  makeEvents = view glfwWindowEvents
+  drawLoop        = mainLoop
+  cursorPos       = cursorPos' . view glfwWindow
+  makeEvents      = view glfwWindowEvents
 
 -- | Create a GLFWCanvas from a raw GLFW Window. The only point of this
 -- function is to create an event for the draw callback. GLFW doesn't have a
@@ -57,7 +57,7 @@ initGLFW w =
      mouseButtonE <- mouseButtonEvent' w
      mouseScrollE <- mouseScrollEvent' w
      windowSizeO  <- windowSizeObservable' w
-     let events = WindowEvents <$> mousePosO
+     let events = CanvasEvents <$> mousePosO
                                <*> mouseButtonE
                                <*> mouseScrollE
                                <*> windowSizeO

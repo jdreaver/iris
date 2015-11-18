@@ -36,7 +36,7 @@ data Visual = Visual
   { drawEventFunc :: Event () -> Behavior Transformation -> MomentIO ()
   }
 
-makeScene :: (Window a, Camera c) =>
+makeScene :: (Canvas a, Camera c) =>
              a ->
              SceneNode ->
              Maybe c ->
@@ -54,7 +54,7 @@ makeScene win n maybeCam =
 
      -- Recurse through the scene graph to hook up the draw event and
      -- transformation behavior to all nodes.
-     let bTrans = aspectTrans <$> (events ^. windowSizeObservable ^. behavior)
+     let bTrans = aspectTrans <$> (events ^. canvasSizeObservable ^. behavior)
      makeNode (events ^. drawEvent) bTrans root
 
      return ()
@@ -64,10 +64,10 @@ makeScene win n maybeCam =
 -- handler.
 attachCam :: (Camera c) =>
              Maybe c ->
-             WindowEvents ->
+             CanvasEvents ->
              SceneNode ->
-             [WindowEventHandler] ->
-             MomentIO (SceneNode, [WindowEventHandler])
+             [CanvasEventHandler] ->
+             MomentIO (SceneNode, [CanvasEventHandler])
 attachCam maybeCam es n hs =
   case maybeCam of
     Nothing     -> return (n, hs)
@@ -87,7 +87,7 @@ makeNode eDraw bTrans (Transform t n) = makeNode eDraw bTrans' n
   where bTrans' = liftA2 Iris.Transformation.apply bTrans t
 
 
-drawRoot :: (Window a) => a -> IO ()
+drawRoot :: (Canvas a) => a -> IO ()
 drawRoot win =
   do winSize <- framebufferSize win
      GL.viewport $= (GL.Position 0 0, winSize)

@@ -7,14 +7,14 @@
 -- | Defines the interface that all backends need to conform to.
 
 module Iris.Backends.Class
-       ( Window (..)
-       , WindowEvents (..)
-       , WindowEventHandler (..)
-       , windowEventHandler
+       ( Canvas (..)
+       , CanvasEvents (..)
+       , CanvasEventHandler (..)
+       , canvasEventHandler
        , mousePosObservable
        , mouseButtonEvent
        , mouseScrollEvent
-       , windowSizeObservable
+       , canvasSizeObservable
        , drawEvent
        , attachEventHandlers
        ) where
@@ -31,39 +31,39 @@ import           Iris.Reactive
 
 
 -- | Used for a common interface for OpenGL windows.
-class Window a where
+class Canvas a where
 
-  windowSize      :: a -> IO GL.Size
+  canvasSize      :: a -> IO GL.Size
   framebufferSize :: a -> IO GL.Size
   drawLoop        :: a -> IO ()
   cursorPos       :: a -> IO GL.Position
-  makeEvents      :: a -> MomentIO WindowEvents
+  makeEvents      :: a -> MomentIO CanvasEvents
 
--- | Data type containing all needed events from a backend Window
-data WindowEvents = WindowEvents
-  { _windowEventsMousePosObservable   :: Observable GL.Position
-  , _windowEventsMouseButtonEvent     :: Event MouseButtonEvent
-  , _windowEventsMouseScrollEvent     :: Event GL.GLfloat
-  , _windowEventsWindowSizeObservable :: Observable GL.Size
-  , _windowEventsDrawEvent            :: Event ()
+-- | Data type containing all needed events from a backend Canvas
+data CanvasEvents = CanvasEvents
+  { _canvasEventsMousePosObservable   :: Observable GL.Position
+  , _canvasEventsMouseButtonEvent     :: Event MouseButtonEvent
+  , _canvasEventsMouseScrollEvent     :: Event GL.GLfloat
+  , _canvasEventsCanvasSizeObservable :: Observable GL.Size
+  , _canvasEventsDrawEvent            :: Event ()
   }
 
-makeFields ''WindowEvents
+makeFields ''CanvasEvents
 
 
-data WindowEventHandler = WindowEventHandler
+data CanvasEventHandler = CanvasEventHandler
   { mousePosEventHandler    :: Maybe (EventHandler GL.Position)
   , mouseButtonEventHandler :: Maybe (EventHandler MouseButtonEvent)
   , mouseScrollEventHandler :: Maybe (EventHandler GL.GLfloat)
-  , windowSizeEventHandler  :: Maybe (EventHandler GL.Size)
+  , canvasSizeEventHandler  :: Maybe (EventHandler GL.Size)
   }
 
-windowEventHandler :: WindowEventHandler
-windowEventHandler = WindowEventHandler Nothing Nothing Nothing Nothing
+canvasEventHandler :: CanvasEventHandler
+canvasEventHandler = CanvasEventHandler Nothing Nothing Nothing Nothing
 
-attachEventHandlers :: WindowEvents -> [WindowEventHandler] -> MomentIO ()
+attachEventHandlers :: CanvasEvents -> [CanvasEventHandler] -> MomentIO ()
 attachEventHandlers es hs =
-  do handleEvent (mapMaybe mousePosEventHandler hs) (es ^. mousePosObservable ^. event)
+  do handleEvent (mapMaybe mousePosEventHandler hs)    (es ^. mousePosObservable ^. event)
      handleEvent (mapMaybe mouseButtonEventHandler hs) (es ^. mouseButtonEvent)
      handleEvent (mapMaybe mouseScrollEventHandler hs) (es ^. mouseScrollEvent)
-     handleEvent (mapMaybe windowSizeEventHandler hs) (es ^. windowSizeObservable ^. event)
+     handleEvent (mapMaybe canvasSizeEventHandler hs)  (es ^. canvasSizeObservable ^. event)
