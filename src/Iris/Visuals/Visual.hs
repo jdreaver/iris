@@ -6,7 +6,6 @@ module Iris.Visuals.Visual
        ) where
 
 
-import           Foreign.Storable
 import qualified Graphics.GLUtil as U
 import qualified Graphics.Rendering.OpenGL as GL
 import           Reactive.Banana
@@ -29,5 +28,7 @@ drawVisual bItem drawFunc eDraw bTrans =
      reactimate $ uncurry drawFunc <$> eData
 
 -- | Creates an Observable of a buffer object from a subject of vertexes.
-bufferObservable :: Storable a => Subject [a] -> MomentIO (Observable GL.BufferObject)
-bufferObservable s = mapObservableIO (asObservable s) (U.makeBuffer GL.ArrayBuffer)
+bufferObservable :: (U.BufferSource a) =>
+                    Subject a ->
+                    MomentIO (Observable GL.BufferObject)
+bufferObservable s = mapObservableIO (asObservable s) (U.fromSource GL.ArrayBuffer)
