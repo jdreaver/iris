@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 -- | Defines a mesh item for plots
 
 module Iris.Visuals.Mesh
@@ -6,12 +8,14 @@ module Iris.Visuals.Mesh
        , MeshFaceIndices
        , MeshFaceVertices
        , MeshSpec (..)
+       , MeshColor (..)
        , MeshData (..)
        , meshSpec
        , meshInit
        ) where
 
 import           Control.Lens
+import qualified Data.ByteString as BS
 import qualified Data.Vector.Storable as V
 import qualified Graphics.GLUtil as U
 import           Graphics.Rendering.OpenGL (($=))
@@ -22,19 +26,20 @@ import           Reactive.Banana.Frameworks
 import Iris.Colors
 import Iris.Reactive
 import Iris.SceneGraph
-import Iris.Visuals.Line (fsSource, vsSource)
 import Iris.Visuals.Visual
 
 -- | Shader program and buffer objects for a mesh
-data MeshItem = MeshItem U.ShaderProgram MeshDataBuffer Color
+data MeshItem = MeshItem U.ShaderProgram MeshDataBuffer MeshColor
 
 data MeshSpec = MeshSpec
   { meshSpecData   :: MeshData
-  , meshSpecColors :: Color
+  , meshSpecColors :: MeshColor
   }
 
+data MeshColor = ConstantMeshColor Color
+
 meshSpec :: MeshSpec
-meshSpec = MeshSpec (Vertexes $ V.fromList []) (L.V3 1 1 1)
+meshSpec = MeshSpec (Vertexes $ V.fromList []) (ConstantMeshColor $ L.V3 1 1 1)
 
 type MeshVertices = V.Vector (L.M33 GL.GLfloat)
 type MeshFaceVertices = V.Vector (L.V3 GL.GLfloat)
@@ -79,7 +84,7 @@ drawMesh (MeshItem prog meshData color') m =
      bindMeshData prog meshData
 
      U.asUniform m $ U.getUniform prog "mvp"
-     U.asUniform color' $ U.getUniform prog "f_color"
+     drawMeshColor prog color'
 
      drawMeshData meshData
 
@@ -102,3 +107,28 @@ drawMeshData (VertexesBuffer v _) =
   GL.drawArrays GL.Triangles 0 (fromIntegral $ V.length v * 3)
 drawMeshData (FacesBuffer _ fs _ _) =
   U.drawIndexedTris (fromIntegral $ V.length fs)
+
+
+drawMeshColor :: U.ShaderProgram -> MeshColor -> IO ()
+drawMeshColor prog (ConstantMeshColor c) =
+  U.asUniform c $ U.getUniform prog "f_color"
+
+
+vsSource, fsSource :: BS.ByteString
+vsSource = BS.intercalate "\n"
+           [
+             "attribute vec2 coord2d; "
+           , "uniform mat4 mvp;"
+           , ""
+           , "void main(void) { "
+           , "    gl_Position = mvp * vec4(coord2d, 0.0, 1.0); "
+           , "}"
+           ]
+
+fsSource = BS.intercalate "\n"
+           [
+             "uniform vec3 f_color;"
+           , "void main(void) { "
+           , "    gl_FragColor = vec4(f_color.xyz, 1.0);"
+           , "}"
+           ]

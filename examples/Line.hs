@@ -41,8 +41,9 @@ makeNetwork canvas cam =
      handleEvent [hScroll] (events ^. W.mouseScrollEvent)
 
      line <- lineInit $ LineSpec lineVerts (L.V3 0.2 0.5 1)
-     mesh <- meshInit $ MeshSpec (Vertexes meshVerts) (L.V3 0.2 1 0.1)
-     mesh2 <- meshInit $ MeshSpec (Faces meshFaceVerts meshFaceIndices) (L.V3 1 0.2 0.1)
+     mesh <- meshInit $ MeshSpec (Vertexes meshVerts) (ConstantMeshColor $ L.V3 0.2 1 0.1)
+     mesh2 <- meshInit $ MeshSpec (Faces meshFaceVerts meshFaceIndices)
+                         (ConstantMeshColor $ L.V3 1 0.2 0.1)
 
      let items = Collection [ VisualNode line
                             , VisualNode mesh
