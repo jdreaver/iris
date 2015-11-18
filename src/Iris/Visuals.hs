@@ -1,8 +1,8 @@
 module Iris.Visuals
        ( module Iris.Visuals.Line
-       , module Iris.Visuals.Triangle
+       , module Iris.Visuals.Mesh
        ) where
 
 
 import Iris.Visuals.Line
-import Iris.Visuals.Triangle
+import Iris.Visuals.Mesh

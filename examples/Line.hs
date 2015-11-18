@@ -40,12 +40,12 @@ makeNetwork canvas cam =
      handleEvent [hScroll] (events ^. W.mouseScrollEvent)
 
      line <- lineInit $ LineSpec lineVerts (L.V3 0.2 0.5 1)
-     tri <- triangleInit $ TriangleSpec triVerts (L.V3 0.2 1 0.1)
+     mesh <- meshInit $ MeshSpec meshVerts (L.V3 0.2 1 0.1)
 
      let items = Collection [ VisualNode line
-                            , VisualNode tri
+                            , VisualNode mesh
                             , Transform (pure $ translation (L.V3 (-1) 1 0))
-                              (VisualNode tri)]
+                              (VisualNode mesh)]
 
      let eDraw = events ^. W.drawEvent
          root = cameraNode bCam items
@@ -58,8 +58,11 @@ lineVerts = [ L.V2 1 1
             , L.V2 2 2
             ]
 
-triVerts :: TriangleVertices
-triVerts = [ L.V2 0 0
-           , L.V2 0 1
-           , L.V2 1 0
-           ]
+meshVerts :: MeshVertices
+meshVerts = [ L.V2 0 0
+            , L.V2 1 1
+            , L.V2 0 1
+            , L.V2 0 0
+            , L.V2 1 0
+            , L.V2 1 1
+            ]

@@ -33,7 +33,7 @@ library
                      , Iris.Transformation
                      , Iris.Visuals
                      , Iris.Visuals.Line
-                     , Iris.Visuals.Triangle
+                     , Iris.Visuals.Mesh
                      , Iris.Visuals.Visual
   other-modules:       Iris.Backends.Class
   -- other-extensions:
