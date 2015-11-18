@@ -47,7 +47,6 @@ merge f (Observable b1 e1) (Observable b2 e2) =
       e   = unionWith const e12 e21
   in Observable b e
 
-
 -- | Wrapper around a triple of Behavior, Event, and Handler. This is useful
 -- over an `Observable` when the value of the Behavior is meant to be set from
 -- the outside.

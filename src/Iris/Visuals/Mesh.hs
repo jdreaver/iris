@@ -9,6 +9,7 @@ module Iris.Visuals.Mesh
        , MeshFaceVertices
        , MeshSpec (..)
        , MeshColor (..)
+       , MeshVectorColor
        , MeshData (..)
        , meshSpec
        , meshInit
@@ -29,14 +30,20 @@ import Iris.SceneGraph
 import Iris.Visuals.Visual
 
 -- | Shader program and buffer objects for a mesh
-data MeshItem = MeshItem U.ShaderProgram MeshDataBuffer MeshColor
+data MeshItem = MeshItem U.ShaderProgram MeshDataBuffer MeshColorBuffer
 
 data MeshSpec = MeshSpec
   { meshSpecData   :: MeshData
   , meshSpecColors :: MeshColor
   }
 
+type MeshVectorColor = (V.Vector (L.V3 GL.GLfloat))
 data MeshColor = ConstantMeshColor Color
+               | VectorMeshColor MeshVectorColor
+               deriving (Show)
+
+data MeshColorBuffer = ConstantColorBuffer Color
+                     | VectorColorBuffer MeshVectorColor GL.BufferObject
 
 meshSpec :: MeshSpec
 meshSpec = MeshSpec (Vertexes $ V.fromList []) (ConstantMeshColor $ L.V3 1 1 1)
@@ -55,12 +62,14 @@ data MeshDataBuffer = VertexesBuffer MeshVertices GL.BufferObject
 -- | Create mesh visual from a MeshSpec
 meshInit :: MeshSpec -> MomentIO Visual
 meshInit (MeshSpec md c) =
-  do prog <- liftIO $ U.simpleShaderProgramBS vsSource fsSource
+  do prog <- liftIO $ U.simpleShaderProgramBS (vsSource c) (fsSource c)
      mds  <- subject md
      vbuf <- meshBufferObservable mds
+     cs   <- subject c
+     cbuf <- colorBufferObservable cs
      let bItem = MeshItem <$> pure prog
                           <*> vbuf ^. behavior
-                          <*> pure c
+                          <*> cbuf ^. behavior
      return $ Visual (drawVisual bItem drawMesh)
 
 
@@ -75,12 +84,20 @@ meshBufferObservable s = mapObservableIO (asObservable s) makeBuffer
              fb <- U.fromSource GL.ElementArrayBuffer faces
              return $ FacesBuffer verts faces vb fb
 
+colorBufferObservable :: Subject MeshColor -> MomentIO (Observable MeshColorBuffer)
+colorBufferObservable s = mapObservableIO (asObservable s) makeBuffer
+  where makeBuffer :: MeshColor -> IO MeshColorBuffer
+        makeBuffer (ConstantMeshColor c) = return $ ConstantColorBuffer c
+        makeBuffer (VectorMeshColor cv) =
+          do cb <- U.fromSource GL.ArrayBuffer cv
+             return $ VectorColorBuffer cv cb
+
 -- | Draw a given mesh item to the current OpenGL context
 drawMesh :: MeshItem -> L.M44 GL.GLfloat -> IO ()
 drawMesh (MeshItem prog meshData color') m =
   do GL.currentProgram $= Just (U.program prog)
-     U.enableAttrib prog "coord2d"
 
+     U.enableAttrib prog "coord2d"
      bindMeshData prog meshData
 
      U.asUniform m $ U.getUniform prog "mvp"
@@ -89,6 +106,8 @@ drawMesh (MeshItem prog meshData color') m =
      drawMeshData meshData
 
      GL.vertexAttribArray (U.getAttrib prog "coord2d") $= GL.Disabled
+
+     disableColor prog color'
 
 
 bindMeshData :: U.ShaderProgram -> MeshDataBuffer -> IO ()
@@ -109,26 +128,49 @@ drawMeshData (FacesBuffer _ fs _ _) =
   U.drawIndexedTris (fromIntegral $ V.length fs)
 
 
-drawMeshColor :: U.ShaderProgram -> MeshColor -> IO ()
-drawMeshColor prog (ConstantMeshColor c) =
+drawMeshColor :: U.ShaderProgram -> MeshColorBuffer -> IO ()
+drawMeshColor prog (ConstantColorBuffer c) =
   U.asUniform c $ U.getUniform prog "f_color"
+drawMeshColor prog (VectorColorBuffer _ cb) =
+  do U.enableAttrib prog "v_color"
+     GL.bindBuffer GL.ArrayBuffer $= Just cb
+     U.setAttrib prog "v_color"
+        GL.ToFloat $ GL.VertexArrayDescriptor 3 GL.Float 0 U.offset0
+
+disableColor :: U.ShaderProgram -> MeshColorBuffer -> IO ()
+disableColor _ (ConstantColorBuffer _) = return ()
+disableColor prog (VectorColorBuffer _ _) =
+  GL.vertexAttribArray (U.getAttrib prog "v_color") $= GL.Disabled
+
+vsSource, fsSource :: MeshColor -> BS.ByteString
+vsSource mc = BS.intercalate "\n"
+              [
+                "attribute vec2 coord2d; "
+              , colorVertexLine mc
+              , "uniform mat4 mvp;"
+              , "void main(void) { "
+              , "    gl_Position = mvp * vec4(coord2d, 0.0, 1.0); "
+              , colorVertexFunc mc
+              , "}"
+              ]
+
+fsSource mc = BS.intercalate "\n"
+              [
+                colorFragmentLine mc
+              , "void main(void) { "
+              , "    gl_FragColor = vec4(f_color.xyz, 1.0);"
+              , "}"
+              ]
 
 
-vsSource, fsSource :: BS.ByteString
-vsSource = BS.intercalate "\n"
-           [
-             "attribute vec2 coord2d; "
-           , "uniform mat4 mvp;"
-           , ""
-           , "void main(void) { "
-           , "    gl_Position = mvp * vec4(coord2d, 0.0, 1.0); "
-           , "}"
-           ]
+colorVertexLine :: MeshColor -> BS.ByteString
+colorVertexLine (ConstantMeshColor _) = ""
+colorVertexLine (VectorMeshColor _) = "attribute vec3 v_color;\nvarying vec3 f_color;"
 
-fsSource = BS.intercalate "\n"
-           [
-             "uniform vec3 f_color;"
-           , "void main(void) { "
-           , "    gl_FragColor = vec4(f_color.xyz, 1.0);"
-           , "}"
-           ]
+colorVertexFunc :: MeshColor -> BS.ByteString
+colorVertexFunc (ConstantMeshColor _) = ""
+colorVertexFunc (VectorMeshColor _) = "    f_color = v_color;"
+
+colorFragmentLine :: MeshColor -> BS.ByteString
+colorFragmentLine (ConstantMeshColor _) = "uniform vec3 f_color;"
+colorFragmentLine (VectorMeshColor _) = "varying vec3 f_color;"

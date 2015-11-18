@@ -44,13 +44,17 @@ makeNetwork canvas cam =
      mesh <- meshInit $ MeshSpec (Vertexes meshVerts) (ConstantMeshColor $ L.V3 0.2 1 0.1)
      mesh2 <- meshInit $ MeshSpec (Faces meshFaceVerts meshFaceIndices)
                          (ConstantMeshColor $ L.V3 1 0.2 0.1)
+     mesh3 <- meshInit $ MeshSpec (Vertexes meshVerts) (VectorMeshColor meshVertColors)
 
      let items = Collection [ VisualNode line
                             , VisualNode mesh
                             , Transform (pure $ translation (L.V3 2 2 0))
                               (VisualNode mesh2)
                             , Transform (pure $ translation (L.V3 (-1) 1 0))
-                              (VisualNode mesh)]
+                              (VisualNode mesh)
+                            , Transform (pure $ translation (L.V3 (-2) 3 0))
+                              (VisualNode mesh3)
+                            ]
 
      let eDraw = events ^. W.drawEvent
          root = cameraNode bCam items
@@ -67,6 +71,15 @@ meshVerts :: MeshVertices
 meshVerts = V.fromList [ L.V3 (L.V3 0 0 0) (L.V3 1 1 0) (L.V3 0 1 0)
                        , L.V3 (L.V3 0 0 0) (L.V3 1 0 0) (L.V3 1 1 0)
                        ]
+
+meshVertColors :: MeshVectorColor
+meshVertColors = V.fromList [ L.V3 0 1 0
+                            , L.V3 1 0 0
+                            , L.V3 0 0 1
+                            , L.V3 1 1 0
+                            , L.V3 0 1 1
+                            , L.V3 1 0 1
+                            ]
 
 meshFaceVerts :: MeshFaceVertices
 meshFaceVerts = V.fromList [ L.V3 0 0 0
