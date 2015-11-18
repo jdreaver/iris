@@ -3,9 +3,6 @@
 module Iris.Camera.PanZoom
        ( PanZoomCamera (..)
        , panZoomCamera
-       , mouseDrag
-       , mouseZoom
-       , mouseNetwork
        ) where
 
 import           Control.Lens
@@ -34,7 +31,7 @@ data PanZoomCamera = PanZoomCamera
   } deriving (Show)
 
 instance Camera PanZoomCamera where
-  cameraTrans = cameraTrans'
+  initCamera = initCamera'
 
 -- | Default PanZoomCamera instance.
 panZoomCamera :: PanZoomCamera
@@ -43,8 +40,8 @@ panZoomCamera = PanZoomCamera (L.V2 0 0) 1 1 MouseButtonLeft
 
 -- | Creates a transformation that centers from the camera center to (0, 0),
 -- and scales widths and heights from the camera width/height to [-1, 1].
-cameraTrans' :: PanZoomCamera -> Transformation
-cameraTrans' (PanZoomCamera (L.V2 cx cy) w h _) =
+cameraTrans :: PanZoomCamera -> Transformation
+cameraTrans (PanZoomCamera (L.V2 cx cy) w h _) =
   foldl1' Iris.Transformation.apply [scale', trans, identity]
   where trans  = translation (L.V3 (-cx) (-cy) 0)
         scale' = scale (L.V3 (2/w) (2/h) 1)
@@ -82,11 +79,9 @@ mapToWorld (GL.Size w h) (GL.Position xp yp) cam = (x, y)
         (x, y)     = (cx' + dx, cy' + dy)
 
 
-mouseNetwork :: PanZoomCamera -> WindowEvents ->
-                MomentIO (Behavior PanZoomCamera,
-                          EventHandler GL.Position,
-                          EventHandler GL.GLfloat)
-mouseNetwork cam events =
+initCamera' :: PanZoomCamera -> WindowEvents ->
+               MomentIO (Behavior Transformation, WindowEventHandler)
+initCamera' cam events =
   do sCam <- subject cam
 
      bPressedButtons <- recordButtons events (sCam ^. behavior)
@@ -106,7 +101,12 @@ mouseNetwork cam events =
      doScroll <- scroll events sCam eScroll
      reactimate doScroll
 
-     return (sCam ^. behavior, hPos, hScroll)
+     let winEventHandler = windowEventHandler
+                           { mousePosEventHandler    = Just hPos
+                           , mouseScrollEventHandler = Just hScroll
+                           }
+
+     return (cameraTrans <$> sCam ^. behavior, winEventHandler)
 
 
 recordButtons :: WindowEvents ->

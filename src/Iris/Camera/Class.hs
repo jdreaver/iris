@@ -9,13 +9,16 @@ module Iris.Camera.Class
 
 import qualified Data.Map.Strict as Map
 import qualified Graphics.Rendering.OpenGL as GL
+import           Reactive.Banana
+import           Reactive.Banana.Frameworks
 
+import           Iris.Backends
 import           Iris.Mouse
 import           Iris.Transformation
 
 -- | Type class for all cameras.
 class Camera a where
-  cameraTrans :: a -> Transformation
+  initCamera :: a -> WindowEvents -> MomentIO (Behavior Transformation, WindowEventHandler)
 
 
 -- | Stores currently pressed buttons and the coordinates when they were

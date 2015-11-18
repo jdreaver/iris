@@ -3,7 +3,6 @@
 module Iris.SceneGraph
        ( SceneNode (..)
        , PlotItem (..)
-       , cameraNode
        , makeScene
 
        , Visual (..)
@@ -37,16 +36,46 @@ data Visual = Visual
   { drawEventFunc :: Event () -> Behavior Transformation -> MomentIO ()
   }
 
-makeScene :: (Window a) => a ->
-             WindowEvents ->
-             Event () ->  -- ^ Draw event
+makeScene :: (Window a, Camera c) =>
+             a ->
              SceneNode ->
+             Maybe c ->
              MomentIO ()
-makeScene win events eDraw n =
-  do reactimate $ (\_ -> drawRoot win) <$> eDraw
+makeScene win n maybeCam =
+  do events <- makeEvents win
+
+     -- Initialize camera and attach event handlers
+     (root, winEventHandlers) <- attachCam maybeCam events n []
+     attachEventHandlers events winEventHandlers
+
+     -- Hook up the root drawing function that clears the OpenGL context and
+     -- ensures the viewport is correct.
+     reactimate $ (\_ -> drawRoot win) <$> (events ^. drawEvent)
+
+     -- Recurse through the scene graph to hook up the draw event and
+     -- transformation behavior to all nodes.
      let bTrans = aspectTrans <$> (events ^. windowSizeObservable ^. behavior)
-     makeNode eDraw bTrans n
+     makeNode (events ^. drawEvent) bTrans root
+
      return ()
+
+-- | If we have a camera, then initialize the reactive form of the camera, set
+-- the camera node as root, and make the camera event handler the first event
+-- handler.
+attachCam :: (Camera c) =>
+             Maybe c ->
+             WindowEvents ->
+             SceneNode ->
+             [WindowEventHandler] ->
+             MomentIO (SceneNode, [WindowEventHandler])
+attachCam maybeCam es n hs =
+  case maybeCam of
+    Nothing     -> return (n, hs)
+    (Just cam) -> do (bCamTrans, camHandler) <- initCamera cam es
+                     let n'  = Transform bCamTrans n
+                         hs' = camHandler : hs
+                     return (n', hs')
+
 
 makeNode :: Event () ->
             Behavior Transformation ->
@@ -67,8 +96,3 @@ drawRoot win =
      GL.clearColor $= GL.Color4 0 0 0 1
      GL.depthFunc $= Just GL.Less
      GL.clear [GL.ColorBuffer, GL.DepthBuffer]
-
-
--- | Creates a DynamicNode for a camera
-cameraNode :: (Camera a) => Behavior a -> SceneNode -> SceneNode
-cameraNode bCam = Transform (cameraTrans <$> bCam)

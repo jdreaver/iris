@@ -5,7 +5,6 @@
 
 module Main where
 
-import           Control.Lens
 import qualified Data.Vector.Storable as V
 import qualified Linear as L
 import           Reactive.Banana
@@ -33,15 +32,7 @@ main =
 
 makeNetwork :: W.GLFWCanvas -> PanZoomCamera -> MomentIO ()
 makeNetwork canvas cam =
-  do events <- W.makeEvents canvas
-     (bCam, hPos, hScroll) <- mouseNetwork cam events
-     let camEventHandler = W.windowEventHandler
-                           { W.mousePosEventHandler    = Just hPos
-                           , W.mouseScrollEventHandler = Just hScroll
-                           }
-     W.attachEventHandlers events [camEventHandler]
-
-     line <- lineInit $ LineSpec lineVerts (L.V3 0.2 0.5 1)
+  do line <- lineInit $ LineSpec lineVerts (L.V3 0.2 0.5 1)
      mesh <- meshInit $ MeshSpec (Vertexes meshVerts) (ConstantMeshColor $ L.V3 0.2 1 0.1)
      mesh2 <- meshInit $ MeshSpec (Faces meshFaceVerts meshFaceIndices)
                          (ConstantMeshColor $ L.V3 1 0.2 0.1)
@@ -57,9 +48,7 @@ makeNetwork canvas cam =
                               (VisualNode mesh3)
                             ]
 
-     let eDraw = events ^. W.drawEvent
-         root = cameraNode bCam items
-     makeScene canvas events eDraw root
+     makeScene canvas items (Just cam)
 
 
 lineVerts :: LineVertices
