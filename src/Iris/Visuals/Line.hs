@@ -2,7 +2,7 @@
 
 -- | Defines data and functions for drawing a line.
 
-module Iris.Line
+module Iris.Visuals.Line
        ( LineItem
        , LineVertices
        , vsSource

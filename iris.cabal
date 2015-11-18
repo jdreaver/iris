@@ -27,12 +27,13 @@ library
                      , Iris.Camera.PanZoom
                      , Iris.Events
                      , Iris.Colors
-                     , Iris.Line
                      , Iris.Mouse
                      , Iris.Reactive
                      , Iris.SceneGraph
                      , Iris.Transformation
-                     , Iris.Triangle
+                     , Iris.Visuals
+                     , Iris.Visuals.Line
+                     , Iris.Visuals.Triangle
   other-modules:       Iris.Backends.Class
   -- other-extensions:
   build-depends:       base >=4.8 && <4.9

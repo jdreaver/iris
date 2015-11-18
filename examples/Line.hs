@@ -13,11 +13,10 @@ import           Reactive.Banana.Frameworks
 import qualified Iris.Backends.GLFW as W
 import           Iris.Camera
 import           Iris.Events
-import           Iris.Line
 import           Iris.Reactive
 import           Iris.SceneGraph
 import           Iris.Transformation
-import           Iris.Triangle
+import           Iris.Visuals
 
 main :: IO ()
 main =

@@ -1,6 +1,6 @@
 -- | Defines a triangle item for plots
 
-module Iris.Triangle
+module Iris.Visuals.Triangle
        ( TriangleItem (..)
        , TriangleVertices
        , TriangleSpec (..)
@@ -17,10 +17,10 @@ import           Reactive.Banana
 import           Reactive.Banana.Frameworks
 
 import Iris.Colors
-import Iris.Line (fsSource, vsSource)
 import Iris.Reactive
 import Iris.SceneGraph
 import Iris.Transformation
+import Iris.Visuals.Line (fsSource, vsSource)
 
 
 -- | Shader program and buffer objects for a triangle
