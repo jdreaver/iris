@@ -43,10 +43,10 @@ makeNetwork canvas cam =
      line <- lineInit $ LineSpec lineVerts (L.V3 0.2 0.5 1)
      tri <- triangleInit $ TriangleSpec triVerts (L.V3 0.2 1 0.1)
 
-     let items = Collection [ VisualNode $ lineNode line
-                            , VisualNode $ triangleNode tri
+     let items = Collection [ VisualNode line
+                            , VisualNode tri
                             , Transform (pure $ translation (L.V3 (-1) 1 0))
-                              (VisualNode $ triangleNode tri)]
+                              (VisualNode tri)]
 
      let eDraw = events ^. W.drawEvent
          root = cameraNode bCam items
