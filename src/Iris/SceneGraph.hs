@@ -70,7 +70,7 @@ attachCam :: (Camera c) =>
              MomentIO (SceneNode, [CanvasEventHandler])
 attachCam maybeCam es n hs =
   case maybeCam of
-    Nothing     -> return (n, hs)
+    Nothing    -> return (n, hs)
     (Just cam) -> do (bCamTrans, camHandler) <- initCamera cam es
                      let n'  = Transform bCamTrans n
                          hs' = camHandler : hs
