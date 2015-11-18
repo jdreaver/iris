@@ -9,18 +9,23 @@
 module Iris.Backends.Class
        ( Window (..)
        , WindowEvents (..)
+       , WindowEventHandler (..)
+       , windowEventHandler
        , mousePosObservable
        , mouseButtonEvent
        , mouseScrollEvent
        , windowSizeObservable
        , drawEvent
+       , attachEventHandlers
        ) where
 
 import           Control.Lens
+import           Data.Maybe (mapMaybe)
 import qualified Graphics.Rendering.OpenGL as GL
 import           Reactive.Banana
 import           Reactive.Banana.Frameworks
 
+import           Iris.Events
 import           Iris.Mouse
 import           Iris.Reactive
 
@@ -44,3 +49,21 @@ data WindowEvents = WindowEvents
   }
 
 makeFields ''WindowEvents
+
+
+data WindowEventHandler = WindowEventHandler
+  { mousePosEventHandler    :: Maybe (EventHandler GL.Position)
+  , mouseButtonEventHandler :: Maybe (EventHandler MouseButtonEvent)
+  , mouseScrollEventHandler :: Maybe (EventHandler GL.GLfloat)
+  , windowSizeEventHandler  :: Maybe (EventHandler GL.Size)
+  }
+
+windowEventHandler :: WindowEventHandler
+windowEventHandler = WindowEventHandler Nothing Nothing Nothing Nothing
+
+attachEventHandlers :: WindowEvents -> [WindowEventHandler] -> MomentIO ()
+attachEventHandlers es hs =
+  do handleEvent (mapMaybe mousePosEventHandler hs) (es ^. mousePosObservable ^. event)
+     handleEvent (mapMaybe mouseButtonEventHandler hs) (es ^. mouseButtonEvent)
+     handleEvent (mapMaybe mouseScrollEventHandler hs) (es ^. mouseScrollEvent)
+     handleEvent (mapMaybe windowSizeEventHandler hs) (es ^. windowSizeObservable ^. event)

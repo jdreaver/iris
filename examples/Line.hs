@@ -13,8 +13,6 @@ import           Reactive.Banana.Frameworks
 
 import qualified Iris.Backends.GLFW as W
 import           Iris.Camera
-import           Iris.Events
-import           Iris.Reactive
 import           Iris.SceneGraph
 import           Iris.Transformation
 import           Iris.Visuals
@@ -37,8 +35,11 @@ makeNetwork :: W.GLFWCanvas -> PanZoomCamera -> MomentIO ()
 makeNetwork canvas cam =
   do events <- W.makeEvents canvas
      (bCam, hPos, hScroll) <- mouseNetwork cam events
-     handleEvent [hPos] (events ^. W.mousePosObservable ^. event)
-     handleEvent [hScroll] (events ^. W.mouseScrollEvent)
+     let camEventHandler = W.windowEventHandler
+                           { W.mousePosEventHandler    = Just hPos
+                           , W.mouseScrollEventHandler = Just hScroll
+                           }
+     W.attachEventHandlers events [camEventHandler]
 
      line <- lineInit $ LineSpec lineVerts (L.V3 0.2 0.5 1)
      mesh <- meshInit $ MeshSpec (Vertexes meshVerts) (ConstantMeshColor $ L.V3 0.2 1 0.1)
