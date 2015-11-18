@@ -46,16 +46,12 @@ lineInit :: LineSpec -> MomentIO Visual
 lineInit (LineSpec verts' color') =
   do prog <- liftIO $ U.simpleShaderProgramBS vsSource fsSource
      vs   <- subject verts'
-     vbuf <- lineBuff vs
+     vbuf <- bufferObservable vs
      let bItem = LineItem <$> pure prog
                           <*> vbuf ^. behavior
                           <*> vs ^. behavior
                           <*> pure color'
      return $ Visual (drawVisual bItem drawLine)
-
-lineBuff :: Subject [L.V2 GL.GLfloat] ->          -- ^ Input vertices subject
-            MomentIO (Observable GL.BufferObject) -- ^ Resulting buffer observable
-lineBuff s = mapObservableIO (asObservable s) (U.makeBuffer GL.ArrayBuffer)
 
 -- | Draw a given line item to the current OpenGL context
 drawLine :: LineItem -> L.M44 GL.GLfloat -> IO ()

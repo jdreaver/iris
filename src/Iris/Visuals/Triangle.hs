@@ -39,16 +39,12 @@ triangleInit :: TriangleSpec -> MomentIO Visual
 triangleInit (TriangleSpec verts' c) =
   do prog <- liftIO $ U.simpleShaderProgramBS vsSource fsSource
      vs   <- subject verts'
-     vbuf <- triangleBuff vs
+     vbuf <- bufferObservable vs
      let bItem = TriangleItem <$> pure prog
                               <*> vbuf ^. behavior
                               <*> vs ^. behavior
                               <*> pure c
      return $ Visual (drawVisual bItem drawTriangle)
-
-triangleBuff :: Subject [L.V2 GL.GLfloat] ->          -- ^ Input vertices subject
-                MomentIO (Observable GL.BufferObject) -- ^ Resulting buffer observable
-triangleBuff s = mapObservableIO (asObservable s) (U.makeBuffer GL.ArrayBuffer)
 
 
 -- | Draw a given triangle item to the current OpenGL context
