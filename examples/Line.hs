@@ -32,11 +32,22 @@ main =
 
 makeNetwork :: W.GLFWCanvas -> PanZoomCamera -> MomentIO ()
 makeNetwork canvas cam =
-  do line <- lineInit $ LineSpec lineVerts (L.V3 0.2 0.5 1)
-     mesh <- meshInit $ MeshSpec (Vertexes meshVerts) (ConstantMeshColor $ L.V3 0.2 1 0.1)
-     mesh2 <- meshInit $ MeshSpec (Faces meshFaceVerts meshFaceIndices)
-                         (ConstantMeshColor $ L.V3 1 0.2 0.1)
-     mesh3 <- meshInit $ MeshSpec (Vertexes meshVerts) (VectorMeshColor meshVertColors)
+  do line <- lineInit $ lineSpec
+             { lineSpecVertices = lineVerts
+             , lineSpecColors   = L.V3 0.2 0.5 1
+             }
+     mesh <- meshInit $ meshSpec
+             { meshSpecData   = Vertexes meshVerts
+             , meshSpecColors = ConstantMeshColor (L.V3 0.2 1 0.1)
+             }
+     mesh2 <- meshInit $ meshSpec
+              { meshSpecData   = Faces meshFaceVerts meshFaceIndices
+              , meshSpecColors = ConstantMeshColor (L.V3 1 0.2 0.1)
+              }
+     mesh3 <- meshInit $ meshSpec
+              { meshSpecData   = Vertexes meshVerts ,
+                meshSpecColors = VectorMeshColor meshVertColors
+              }
 
      let items = Collection [ VisualNode line
                             , VisualNode mesh
