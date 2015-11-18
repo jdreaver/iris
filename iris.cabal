@@ -34,6 +34,7 @@ library
                      , Iris.Visuals
                      , Iris.Visuals.Line
                      , Iris.Visuals.Triangle
+                     , Iris.Visuals.Visual
   other-modules:       Iris.Backends.Class
   -- other-extensions:
   build-depends:       base >=4.8 && <4.9

@@ -13,15 +13,13 @@ import qualified Graphics.GLUtil as U
 import           Graphics.Rendering.OpenGL (($=))
 import qualified Graphics.Rendering.OpenGL as GL
 import qualified Linear as L
-import           Reactive.Banana
 import           Reactive.Banana.Frameworks
 
 import Iris.Colors
 import Iris.Reactive
 import Iris.SceneGraph
-import Iris.Transformation
 import Iris.Visuals.Line (fsSource, vsSource)
-
+import Iris.Visuals.Visual
 
 -- | Shader program and buffer objects for a triangle
 data TriangleItem = TriangleItem U.ShaderProgram GL.BufferObject TriangleVertices Color
@@ -46,11 +44,7 @@ triangleInit (TriangleSpec verts' c) =
                               <*> vbuf ^. behavior
                               <*> vs ^. behavior
                               <*> pure c
-         f :: Event () -> Behavior Transformation -> MomentIO ()
-         f eDraw bTrans = do let bData = (,) <$> bItem <*> bTrans
-                                 eData = bData <@ eDraw
-                             reactimate $ uncurry drawTriangle <$> eData
-     return $ Visual f
+     return $ Visual (drawVisual bItem drawTriangle)
 
 triangleBuff :: Subject [L.V2 GL.GLfloat] ->          -- ^ Input vertices subject
                 MomentIO (Observable GL.BufferObject) -- ^ Resulting buffer observable
