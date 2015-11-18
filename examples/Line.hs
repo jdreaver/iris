@@ -21,17 +21,14 @@ main =
   do win <- W.makeWindow "Line Plot" (640, 480)
      canvas <- W.initGLFW win
 
-     let cam = panZoomCamera { center = L.V2 1 2 , width = 10 , height = 7 }
-
-
-     network <- compile $ makeNetwork canvas cam
+     network <- compile $ makeNetwork canvas
      actuate network
 
      W.mainLoop canvas
 
 
-makeNetwork :: W.GLFWCanvas -> PanZoomCamera -> MomentIO ()
-makeNetwork canvas cam =
+makeNetwork :: W.GLFWCanvas -> MomentIO ()
+makeNetwork canvas =
   do line <- lineInit $ lineSpec
              { lineSpecVertices = lineVerts
              , lineSpecColors   = L.V3 0.2 0.5 1
@@ -58,6 +55,7 @@ makeNetwork canvas cam =
                             , Transform (pure $ translation (L.V3 (-2) 3 0))
                               (VisualNode mesh3)
                             ]
+         cam = panZoomCamera { center = L.V2 1 2 , width = 10 , height = 7 }
 
      makeScene canvas items (Just cam)
 
