@@ -62,15 +62,20 @@ data MeshDataBuffer = VertexesBuffer MeshVertices GL.BufferObject
 -- | Create mesh visual from a MeshSpec
 meshInit :: MeshSpec -> MomentIO Visual
 meshInit (MeshSpec md c) =
-  do prog <- liftIO $ U.simpleShaderProgramBS (vsSource c) (fsSource c)
-     mds  <- subject md
+  do mds  <- subject md
      vbuf <- meshBufferObservable mds
      cs   <- subject c
      cbuf <- colorBufferObservable cs
-     let bItem = MeshItem <$> pure prog
+     prog <- programObservable cs
+     let bItem = MeshItem <$> prog ^. behavior
                           <*> vbuf ^. behavior
                           <*> cbuf ^. behavior
      return $ Visual (drawVisual bItem drawMesh)
+
+programObservable :: Subject MeshColor -> MomentIO (Observable U.ShaderProgram)
+programObservable s = mapObservableIO (asObservable s) makeProgram
+  where makeProgram :: MeshColor -> IO U.ShaderProgram
+        makeProgram c = U.simpleShaderProgramBS (vsSource c) (fsSource c)
 
 
 meshBufferObservable :: Subject MeshData -> MomentIO (Observable MeshDataBuffer)
