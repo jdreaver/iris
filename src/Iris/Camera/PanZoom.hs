@@ -115,16 +115,9 @@ dragEvent events bPressedButtons bCam ePos =
          <*> events ^. canvasSizeObservable ^. behavior
          <*> bCam
          <@> ePos
-  where doMove :: PressedButtons PanZoomCamera ->
-                  GL.Size ->
-                  PanZoomCamera ->
-                  GL.Position ->
-                  PanZoomCamera
-        doMove pbs size cs pos =
-          do let bs = Map.lookup (dragButton cs) (buttonMap pbs)
-             case bs of
-               Nothing    -> cs
-               (Just bs') -> mouseDrag size pos bs' cs
+  where doMove pbs size cs pos = maybe cs
+                                 (\bs' -> mouseDrag size pos bs' cs)
+                                 (Map.lookup (dragButton cs) (buttonMap pbs))
 
 -- | Change the camera state with a mouse drag.
 mouseDrag :: GL.Size ->
