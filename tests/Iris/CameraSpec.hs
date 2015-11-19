@@ -14,13 +14,13 @@ spec =
     let buttons = pressedButtons :: PressedButtons PanZoomCamera
         cs      = panZoomCamera
         b       = MouseButtonLeft
-        bs1     = recordClick cs b Pressed (GL.Position 0 0) buttons
-        bs2     = recordClick cs b Pressed (GL.Position 1 1) bs1
+        bs1     = recordClick cs (GL.Position 0 0) b Pressed buttons
+        bs2     = recordClick cs (GL.Position 1 1) b Pressed bs1
 
     it "doesn't overwrite clicks" $ do
       length (buttonMap bs1) `shouldBe` 1
       length (buttonMap bs2) `shouldBe` 1
 
-    let b3 = recordClick cs b Released (GL.Position 2 2) bs2
+    let b3 = recordClick cs (GL.Position 2 2) b Released bs2
     it "removes clicks" $
       length (buttonMap b3) `shouldBe` 0
