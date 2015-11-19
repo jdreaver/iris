@@ -35,7 +35,7 @@ cameraTrans (ArcBallCamera (L.V2 cx cy) w a e) =
   where trans    = translation (L.V3 (-cx) (-cy) 0)
         rotAzim  = rotateZ a
         rotElev  = rotateX e
-        scale'   = scale (L.V3 (2/w) (2/w) 1)
+        scale'   = scale (L.V3 (2/w) (2/w) (2/1000))
 
 initCamera' :: ArcBallCamera ->
                CanvasEvents ->
