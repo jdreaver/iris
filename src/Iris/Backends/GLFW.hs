@@ -21,8 +21,6 @@ import           Control.Lens
 import           Control.Monad
 import qualified Graphics.Rendering.OpenGL as GL
 import qualified Graphics.UI.GLFW as GLFW
-import           Reactive.Banana
-import           Reactive.Banana.Frameworks
 import           System.Exit
 import           System.IO
 

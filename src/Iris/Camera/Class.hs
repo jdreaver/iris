@@ -9,11 +9,10 @@ module Iris.Camera.Class
 
 import qualified Data.Map.Strict as Map
 import qualified Graphics.Rendering.OpenGL as GL
-import           Reactive.Banana
-import           Reactive.Banana.Frameworks
 
 import           Iris.Backends
 import           Iris.Mouse
+import           Iris.Reactive
 import           Iris.Transformation
 
 -- | Type class for all cameras.

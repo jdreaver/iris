@@ -7,11 +7,10 @@ module Main where
 
 import qualified Data.Vector.Storable as V
 import qualified Linear as L
-import           Reactive.Banana
-import           Reactive.Banana.Frameworks
 
 import qualified Iris.Backends.GLFW as W
 import           Iris.Camera
+import           Iris.Reactive
 import           Iris.SceneGraph
 import           Iris.Transformation
 import           Iris.Visuals

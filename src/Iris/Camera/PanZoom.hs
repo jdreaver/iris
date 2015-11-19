@@ -10,8 +10,6 @@ import           Data.List (foldl1')
 import qualified Data.Map.Strict as Map
 import qualified Graphics.Rendering.OpenGL as GL
 import qualified Linear as L
-import           Reactive.Banana
-import           Reactive.Banana.Frameworks
 
 import           Iris.Backends as W
 import           Iris.Camera.Class

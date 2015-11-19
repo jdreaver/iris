@@ -20,6 +20,8 @@ module Iris.Reactive
        , merge
        , subject
        , tVarSubject
+       , module Reactive.Banana
+       , module Reactive.Banana.Frameworks
        ) where
 
 import           Control.Concurrent.STM

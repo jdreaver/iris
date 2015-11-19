@@ -19,7 +19,6 @@ import qualified Graphics.GLUtil as U
 import           Graphics.Rendering.OpenGL (($=))
 import qualified Graphics.Rendering.OpenGL as GL
 import qualified Linear as L
-import           Reactive.Banana.Frameworks
 
 import Iris.Colors
 import Iris.Reactive

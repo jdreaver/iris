@@ -8,8 +8,6 @@ module Iris.Visuals.Visual
 
 import qualified Graphics.GLUtil as U
 import qualified Graphics.Rendering.OpenGL as GL
-import           Reactive.Banana
-import           Reactive.Banana.Frameworks
 
 import Iris.Reactive
 import Iris.Transformation

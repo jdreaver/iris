@@ -22,8 +22,6 @@ module Iris.Backends.Class
 import           Control.Lens
 import           Data.Maybe (mapMaybe)
 import qualified Graphics.Rendering.OpenGL as GL
-import           Reactive.Banana
-import           Reactive.Banana.Frameworks
 
 import           Iris.Events
 import           Iris.Mouse

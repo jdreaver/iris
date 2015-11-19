@@ -12,8 +12,6 @@ module Iris.SceneGraph
 import           Control.Lens
 import           Graphics.Rendering.OpenGL (($=))
 import qualified Graphics.Rendering.OpenGL as GL
-import           Reactive.Banana
-import           Reactive.Banana.Frameworks
 
 import           Iris.Backends
 import           Iris.Camera

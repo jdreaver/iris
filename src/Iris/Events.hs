@@ -7,9 +7,7 @@ module Iris.Events
        ) where
 
 
-import           Reactive.Banana
-import           Reactive.Banana.Frameworks
-
+import           Iris.Reactive
 
 type EventHandler a = Event a -> MomentIO EventHandled
 
