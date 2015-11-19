@@ -3,9 +3,9 @@
 -- | Handle camera interaction in a scene
 
 module Iris.Camera
-       ( module Iris.Camera.Class
-       , module Iris.Camera.PanZoom
+       ( module X
        ) where
 
-import           Iris.Camera.Class
-import           Iris.Camera.PanZoom
+import           Iris.Camera.ArcBall as X
+import           Iris.Camera.Class   as X
+import           Iris.Camera.PanZoom as X

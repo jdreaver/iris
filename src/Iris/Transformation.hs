@@ -7,6 +7,8 @@ module Iris.Transformation
        , scale
        , apply
        , aspectTrans
+       , rotateX
+       , rotateZ
        ) where
 
 import qualified Graphics.Rendering.OpenGL as GL
@@ -42,3 +44,15 @@ aspectTrans (GL.Size w h)
   | aspect >= 1 = scale $ L.V3 1 aspect 1
   | otherwise   = scale $ L.V3 (1 / aspect) 1 1
   where aspect = fromIntegral w / fromIntegral h
+
+rotateX :: GL.GLfloat -> Transformation
+rotateX angle =
+  L.V4 (L.V4 1 0 0 0) (L.V4 0 ca (-sa) 0) (L.V4 0 sa ca 0) (L.V4 0 0 0 1)
+  where ca = cos angle
+        sa = sin angle
+
+rotateZ :: GL.GLfloat -> Transformation
+rotateZ angle =
+  L.V4 (L.V4 ca (-sa) 0 0) (L.V4 sa ca 0 0) (L.V4 0 0 1 0) (L.V4 0 0 0 1)
+  where ca = cos angle
+        sa = sin angle
