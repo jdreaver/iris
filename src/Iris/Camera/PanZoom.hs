@@ -105,21 +105,6 @@ initCamera' cam events =
      return (cameraTrans <$> bCam, winEventHandler)
 
 
-recordButtons :: CanvasEvents ->
-                 Behavior PanZoomCamera ->
-                 MomentIO (Behavior (PressedButtons PanZoomCamera))
-recordButtons events bCam = accumB pressedButtons eClickedCam
-  where applyClick :: PanZoomCamera ->
-                      GL.Position ->
-                      MouseButtonEvent ->
-                      PressedButtons PanZoomCamera ->
-                      PressedButtons PanZoomCamera
-        applyClick s p (b, bs) = recordClick s p b bs
-        eClickedCam = applyClick <$> bCam
-                                 <*> (events ^. mousePosObservable ^. behavior)
-                                 <@> (events ^. mouseButtonEvent)
-
-
 dragEvent :: CanvasEvents ->
              Behavior (PressedButtons PanZoomCamera) ->
              Behavior PanZoomCamera ->

@@ -4,9 +4,10 @@ module Iris.Camera.Class
        ( Camera (..)
        , PressedButtons (..)
        , pressedButtons
-       , recordClick
+       , recordButtons
        ) where
 
+import           Control.Lens
 import qualified Data.Map.Strict as Map
 import qualified Graphics.Rendering.OpenGL as GL
 
@@ -36,6 +37,24 @@ pressedButtons = PressedButtons (Map.fromList [])
 -- pressed.
 -- buttonPressed :: MouseButton -> PressedButtons -> Maybe ButtonPressState
 -- buttonPressed b = Map.lookup b . buttonMap
+
+
+-- | Creates a Behavior that holds the currently pressed buttons.
+recordButtons :: (Camera a) =>
+                 CanvasEvents ->
+                 Behavior a ->
+                 MomentIO (Behavior (PressedButtons a))
+recordButtons events bCam = accumB pressedButtons eClickedCam
+  where applyClick :: (Camera a) =>
+                      a ->
+                      GL.Position ->
+                      MouseButtonEvent ->
+                      PressedButtons a ->
+                      PressedButtons a
+        applyClick s p (b, bs) = recordClick s p b bs
+        eClickedCam = applyClick <$> bCam
+                                 <*> (events ^. mousePosObservable ^. behavior)
+                                 <@> (events ^. mouseButtonEvent)
 
 
 -- | Record when a button is pressed in the `PressedButtons` state.
