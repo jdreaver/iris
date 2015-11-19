@@ -80,7 +80,7 @@ mapToWorld (GL.Size w h) (GL.Position xp yp) cam = (x, y)
 initCamera' :: PanZoomCamera -> CanvasEvents ->
                MomentIO (Behavior Transformation, CanvasEventHandler)
 initCamera' cam events =
-  do (Subject bCam _ hCam) <- subject cam
+  do (bCam, hCam) <- newBehavior cam
 
      bPressedButtons <- liftMoment $ recordButtons events bCam
 
