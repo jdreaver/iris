@@ -22,15 +22,16 @@ class Camera a where
   initCamera :: a -> CanvasEvents -> MomentIO (Behavior Transformation, CanvasEventHandler)
 
 
--- | Stores currently pressed buttons and the coordinates when they were
--- pressed.
-newtype (Camera a) => PressedButtons a = PressedButtons
+-- | Stores currently pressed buttons, the mouse coordinates when they were
+-- pressed, and another piece of information (usually the camera state when the
+-- button was pressed).
+newtype PressedButtons a = PressedButtons
   { buttonMap :: Map.Map MouseButton (GL.Position, a) }
   deriving (Show)
 
 
 -- | Default constructor for `PressedButtons`
-pressedButtons :: (Camera a) => PressedButtons a
+pressedButtons :: PressedButtons a
 pressedButtons = PressedButtons (Map.fromList [])
 
 
@@ -41,13 +42,11 @@ pressedButtons = PressedButtons (Map.fromList [])
 
 
 -- | Creates a Behavior that holds the currently pressed buttons.
-recordButtons :: (Camera a) =>
-                 CanvasEvents ->
+recordButtons :: CanvasEvents ->
                  Behavior a ->
                  Moment (Behavior (PressedButtons a))
 recordButtons events bCam = accumB pressedButtons eClickedCam
-  where applyClick :: (Camera a) =>
-                      a ->
+  where applyClick :: a ->
                       GL.Position ->
                       MouseButtonEvent ->
                       PressedButtons a ->
@@ -59,8 +58,7 @@ recordButtons events bCam = accumB pressedButtons eClickedCam
 
 
 -- | Record when a button is pressed in the `PressedButtons` state.
-recordClick :: (Camera a) =>
-               a ->
+recordClick :: a ->
                GL.Position ->
                MouseButton ->
                MouseButtonState ->
