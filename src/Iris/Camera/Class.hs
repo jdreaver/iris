@@ -5,6 +5,7 @@ module Iris.Camera.Class
        , PressedButtons (..)
        , pressedButtons
        , recordButtons
+       , recordClick
        ) where
 
 import           Control.Lens
