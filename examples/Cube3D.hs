@@ -35,9 +35,8 @@ makeNetwork canvas =
                               , arcBallAzimuth   = 30 * pi / 180
                               , arcBallElevation = 30 * pi / 180
                               }
-         node = (VisualNode cube)
 
-     makeScene canvas node (Just cam)
+     makeScene canvas (VisualNode cube) (Just cam)
 
 
 cubeVerts :: MeshFaceVertices
