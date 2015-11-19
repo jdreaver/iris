@@ -89,14 +89,12 @@ initCamera' cam events =
      -- specifically, we want to create event handlers for camera actions, but
      -- we only have the root canvas events available. Therefore, we create
      -- dummy events that we will fire with the event handlers.
-     (ePos, fPos) <- newEvent
-     let hPos e = reactimate (fPos <$> e) >> return NotAccepted
-         eMovedCam = dragEvent events bPressedButtons bCam ePos
+     (ePos, hPos) <- eventHandler NotAccepted
+     let eMovedCam = dragEvent events bPressedButtons bCam ePos
      reactimate $ hCam <$> eMovedCam
 
-     (eScroll, fScroll) <- newEvent
-     let hScroll e = reactimate (fScroll <$> e) >> return NotAccepted
-         eScrolledCam = scrollEvent events bCam eScroll
+     (eScroll, hScroll) <- eventHandler NotAccepted
+     let eScrolledCam = scrollEvent events bCam eScroll
      reactimate $ hCam <$> eScrolledCam
 
      let winEventHandler = canvasEventHandler

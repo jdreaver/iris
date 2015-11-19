@@ -3,6 +3,7 @@
 module Iris.Events
        ( EventHandler
        , EventHandled (..)
+       , eventHandler
        , handleEvent
        ) where
 
@@ -24,3 +25,11 @@ handleEvent' :: [EventHandler a] -> Event a -> EventHandled -> MomentIO ()
 handleEvent' _ _ Accepted = return ()  -- Previous handler accepted
 handleEvent' [] _ _       = return ()
 handleEvent' (h:hs) e _   = h e >>= handleEvent' hs e
+
+-- | Creates an event handler and returns the event handler with an event that
+-- will be fired when the event handler is called.
+eventHandler :: EventHandled -> MomentIO (Event a, EventHandler a)
+eventHandler handled =
+  do (e, f) <- newEvent
+     let h e' = reactimate (f <$> e') >> return handled
+     return (e, h)
