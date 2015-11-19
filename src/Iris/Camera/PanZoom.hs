@@ -138,7 +138,7 @@ dragEvent events bPressedButtons bCam ePos =
                   GL.Position ->
                   PanZoomCamera
         doMove pbs size cs pos =
-          do let bs = Map.lookup MouseButtonLeft (buttonMap pbs)
+          do let bs = Map.lookup (dragButton cs) (buttonMap pbs)
              case bs of
                Nothing    -> cs
                (Just bs') -> mouseDrag size pos bs' cs
