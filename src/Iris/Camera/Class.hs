@@ -43,7 +43,7 @@ pressedButtons = PressedButtons (Map.fromList [])
 recordButtons :: (Camera a) =>
                  CanvasEvents ->
                  Behavior a ->
-                 MomentIO (Behavior (PressedButtons a))
+                 Moment (Behavior (PressedButtons a))
 recordButtons events bCam = accumB pressedButtons eClickedCam
   where applyClick :: (Camera a) =>
                       a ->

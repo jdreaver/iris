@@ -60,7 +60,7 @@ data Subject a = Subject
 makeFields ''Subject
 
 -- | Get current value of an object with a behavior.
-currentValue :: (HasBehavior s (Behavior a)) => s -> MomentIO a
+currentValue :: (MonadMoment m, HasBehavior s (Behavior a)) => s -> m a
 currentValue s = valueB $ s ^. behavior
 
 -- | Create subject from initial value

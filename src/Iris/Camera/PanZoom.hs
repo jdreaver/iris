@@ -82,7 +82,7 @@ initCamera' :: PanZoomCamera -> CanvasEvents ->
 initCamera' cam events =
   do (Subject bCam _ hCam) <- subject cam
 
-     bPressedButtons <- recordButtons events bCam
+     bPressedButtons <- liftMoment $ recordButtons events bCam
 
      -- Why are we creating new events? We need them to avoid the circular
      -- dependency on canvas events and events passed to event handlers. More
