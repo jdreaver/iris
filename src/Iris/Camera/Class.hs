@@ -41,14 +41,14 @@ pressedButtons = PressedButtons (Map.fromList [])
 -- | Record when a button is pressed in the `PressedButtons` state.
 recordClick :: (Camera a) =>
                a ->
+               GL.Position ->
                MouseButton ->
                MouseButtonState ->
-               GL.Position ->
                PressedButtons a ->
                PressedButtons a
-recordClick c button Pressed p (PressedButtons bmap) =
+recordClick c p button Pressed (PressedButtons bmap) =
   if Map.member button bmap
   then PressedButtons bmap
   else PressedButtons $ Map.insert button (p, c) bmap
-recordClick _ button Released _ (PressedButtons bmap) =
+recordClick _ _ button Released (PressedButtons bmap) =
   PressedButtons $ Map.delete button bmap
