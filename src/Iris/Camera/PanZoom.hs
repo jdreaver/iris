@@ -91,13 +91,13 @@ initCamera' cam events =
      -- dummy events that we will fire with the event handlers.
      (ePos, fPos) <- newEvent
      let hPos e = reactimate (fPos <$> e) >> return NotAccepted
-     eMove <- dragMove events bPressedButtons sCam ePos
-     reactimate eMove
+         eMovedCam = dragEvent events bPressedButtons sCam ePos
+     reactimate $ (sCam ^. handler) <$> eMovedCam
 
      (eScroll, fScroll) <- newEvent
      let hScroll e = reactimate (fScroll <$> e) >> return NotAccepted
-     doScroll <- scroll events sCam eScroll
-     reactimate doScroll
+         eScrolledCam = scrollEvent events sCam eScroll
+     reactimate $ (sCam ^. handler) <$> eScrolledCam
 
      let winEventHandler = canvasEventHandler
                            { mousePosEventHandler    = Just hPos
@@ -122,28 +122,26 @@ recordButtons events bCam = accumB pressedButtons eClickedCam
                                  <@> (events ^. mouseButtonEvent)
 
 
-dragMove :: CanvasEvents ->
-            Behavior (PressedButtons PanZoomCamera) ->
-            Subject PanZoomCamera ->
-            Event GL.Position ->
-            MomentIO (Event (IO ()))
-dragMove events bPressedButtons sCam ePos =
-  do let doMove :: PressedButtons PanZoomCamera ->
-                   GL.Size ->
-                   PanZoomCamera ->
-                   GL.Position ->
-                   PanZoomCamera
-         doMove pbs size cs pos =
-           do let bs = Map.lookup MouseButtonLeft (buttonMap pbs)
-              case bs of
-                Nothing    -> cs
-                (Just bs') -> mouseDrag size pos bs' cs
-
-         eMovedCam = doMove <$> bPressedButtons
-                            <*> events ^. canvasSizeObservable ^. behavior
-                            <*> sCam ^. behavior
-                            <@> ePos
-     return $ (sCam ^. handler) <$> eMovedCam
+dragEvent :: CanvasEvents ->
+             Behavior (PressedButtons PanZoomCamera) ->
+             Subject PanZoomCamera ->
+             Event GL.Position ->
+             Event PanZoomCamera
+dragEvent events bPressedButtons sCam ePos =
+  doMove <$> bPressedButtons
+         <*> events ^. canvasSizeObservable ^. behavior
+         <*> sCam ^. behavior
+         <@> ePos
+  where doMove :: PressedButtons PanZoomCamera ->
+                  GL.Size ->
+                  PanZoomCamera ->
+                  GL.Position ->
+                  PanZoomCamera
+        doMove pbs size cs pos =
+          do let bs = Map.lookup MouseButtonLeft (buttonMap pbs)
+             case bs of
+               Nothing    -> cs
+               (Just bs') -> mouseDrag size pos bs' cs
 
 -- | Change the camera state with a mouse drag.
 mouseDrag :: GL.Size ->
@@ -161,14 +159,12 @@ mouseDrag (GL.Size w h) (GL.Position x y) (GL.Position ox oy, ocs) cs =
     c   = center ocs + L.V2 (-dxw) dyw
 
 
-scroll :: CanvasEvents ->
-          Subject PanZoomCamera ->
-          Event GL.GLfloat ->
-          MomentIO (Event (IO ()))
-scroll events sCam eScroll =
-  do let eZoomedCam :: Event PanZoomCamera
-         eZoomedCam = mouseZoom <$> events ^. canvasSizeObservable ^. behavior
-                                <*> events ^. mousePosObservable ^. behavior
-                                <*> sCam ^. behavior
-                                <@> eScroll
-     return $ (sCam ^. handler) <$> eZoomedCam
+scrollEvent :: CanvasEvents ->
+               Subject PanZoomCamera ->
+               Event GL.GLfloat ->
+               Event PanZoomCamera
+scrollEvent events sCam eScroll =
+  mouseZoom <$> events ^. canvasSizeObservable ^. behavior
+            <*> events ^. mousePosObservable ^. behavior
+            <*> sCam ^. behavior
+            <@> eScroll
