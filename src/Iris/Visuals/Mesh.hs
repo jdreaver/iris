@@ -101,7 +101,7 @@ drawMesh :: MeshItem -> L.M44 GL.GLfloat -> IO ()
 drawMesh (MeshItem prog meshData color') m =
   do GL.currentProgram $= Just (U.program prog)
 
-     U.enableAttrib prog "coord2d"
+     U.enableAttrib prog "coord3d"
      bindMeshData prog meshData
 
      U.asUniform m $ U.getUniform prog "mvp"
@@ -109,7 +109,7 @@ drawMesh (MeshItem prog meshData color') m =
 
      drawMeshData meshData
 
-     GL.vertexAttribArray (U.getAttrib prog "coord2d") $= GL.Disabled
+     GL.vertexAttribArray (U.getAttrib prog "coord3d") $= GL.Disabled
 
      disableColor prog color'
 
@@ -117,11 +117,11 @@ drawMesh (MeshItem prog meshData color') m =
 bindMeshData :: U.ShaderProgram -> MeshDataBuffer -> IO ()
 bindMeshData p (VertexesBuffer _ vbo) =
   do GL.bindBuffer GL.ArrayBuffer $= Just vbo
-     U.setAttrib p "coord2d"
+     U.setAttrib p "coord3d"
         GL.ToFloat $ GL.VertexArrayDescriptor 3 GL.Float 0 U.offset0
 bindMeshData p (FacesBuffer _ _ vb fb) =
   do GL.bindBuffer GL.ArrayBuffer $= Just vb
-     U.setAttrib p "coord2d"
+     U.setAttrib p "coord3d"
         GL.ToFloat $ GL.VertexArrayDescriptor 3 GL.Float 0 U.offset0
      GL.bindBuffer GL.ElementArrayBuffer $= Just fb
 
@@ -149,11 +149,11 @@ disableColor prog (VectorColorBuffer _ _) =
 vsSource, fsSource :: MeshColor -> BS.ByteString
 vsSource mc = BS.intercalate "\n"
               [
-                "attribute vec2 coord2d; "
+                "attribute vec3 coord3d; "
               , colorVertexLine mc
               , "uniform mat4 mvp;"
               , "void main(void) { "
-              , "    gl_Position = mvp * vec4(coord2d, 0.0, 1.0); "
+              , "    gl_Position = mvp * vec4(coord3d, 1.0); "
               , colorVertexFunc mc
               , "}"
               ]
