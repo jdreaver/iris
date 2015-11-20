@@ -80,8 +80,8 @@ cubeColors = V.fromList [-- front colors
                         , L.V3 0 0 1
                         , L.V3 1 1 1
                          -- back colors
-                        , L.V3 1 0 0
-                        , L.V3 0 1 0
-                        , L.V3 0 0 1
-                        , L.V3 1 1 1
+                        , L.V3 1 1 0
+                        , L.V3 0 1 1
+                        , L.V3 1 0 1
+                        , L.V3 0 0 0
                         ]
