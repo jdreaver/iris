@@ -34,7 +34,7 @@ data MeshItem = MeshItem U.ShaderProgram MeshDataBuffer MeshColorBuffer
 data MeshSpec = MeshSpec
   { meshSpecData   :: MeshData
   , meshSpecColors :: MeshColor
-  }
+  } deriving (Show)
 
 type MeshVectorColor = (V.Vector (L.V3 GL.GLfloat))
 data MeshColor = ConstantMeshColor Color
@@ -53,6 +53,7 @@ type MeshFaceIndices = V.Vector (L.V3 GL.GLint)
 
 data MeshData = Vertexes MeshVertices
               | Faces MeshFaceVertices MeshFaceIndices
+              deriving (Show)
 
 data MeshDataBuffer = VertexesBuffer MeshVertices GL.BufferObject
                     | FacesBuffer MeshFaceVertices MeshFaceIndices
