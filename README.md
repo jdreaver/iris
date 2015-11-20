@@ -7,7 +7,7 @@ combining the expressiveness of Haskell and the power of OpenGL.
 Iris takes inspiration from the [vispy](http://vispy.org/) and
 [pyqtgraph](http://www.pyqtgraph.org/) Python plotting libraries.
 
-# Motivation and Goals
+## Motivation and Goals
 
 Data visualization is a fundamental necessity for a few common tasks:
 
@@ -28,7 +28,7 @@ Iris aims to help Haskell programmers with these tasks by:
 * Adding many GUI frameworks as backends, so iris visualizations can be
   integrated into native user interfaces.
 
-# Design
+## Design
 
 All visualizations in iris are centered around the abstraction called a
 [scene graph](https://en.wikipedia.org/wiki/Scene_graph). Our scene graph is
@@ -42,7 +42,7 @@ interactive.
 We want to have a solid library of common visuals for users to work with, along
 with an easy and flexible way to create custom visuals.
 
-# Project Status
+## Project Status
 
 Right now, the project is in an **experimental** stage. Hopefully we can have
 an initial release and some cool examples to play with in the near future.
@@ -65,7 +65,7 @@ Some short-term goals are:
   and have it "just work."
 
 
-# Contributing
+## Contributing
 
 Feel free to make a pull request or file an issue if you have suggestions or
 find a bug. There won't be any contribution rules or guidelines until we
