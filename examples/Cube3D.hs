@@ -31,7 +31,7 @@ makeNetwork canvas =
              , meshSpecColors = VectorMeshColor cubeColors
              }
 
-     let cam  = arcBallCamera { arcBallWidth     = 10
+     let cam  = arcBallCamera { arcBallWidth     = 6
                               , arcBallAzimuth   = 30 * pi / 180
                               , arcBallElevation = 30 * pi / 180
                               }

@@ -7,6 +7,7 @@ module Iris.Camera.ArcBall
        ) where
 
 import           Control.Lens
+import           Data.Fixed (mod')
 import           Data.List (foldl1')
 import qualified Data.Map.Strict as Map
 import qualified Graphics.Rendering.OpenGL as GL
@@ -39,7 +40,7 @@ cameraTrans (ArcBallCamera (L.V3 cx cy cz) w a e _) =
   foldl1' Iris.Transformation.apply [scale', rotElev, rotAzim, trans, identity]
   where trans    = translation (L.V3 (-cx) (-cy) (-cz))
         rotAzim  = rotateZ a
-        rotElev  = rotateX e
+        rotElev  = rotateX ((pi / 2) - e)
         scale'   = scale (L.V3 (2/w) (2/w) (2/1000))
 
 initCamera' :: ArcBallCamera ->
@@ -108,12 +109,14 @@ mouseRotate (GL.Size w h) (GL.Position x y) (GL.Position ox oy, ocs) cs =
     -- Compute the original and new azimuth and elevations of the clicks. The
     -- azimuth spans the x-z plane, and the elevation spans the z-y plane.
     oa = atan (ox' / oz')
-    oe = atan (oy' / oz') * (-1)
+    oe = atan (oy' / oz')
     a  = atan (x'  / z' )
-    e  = atan (y'  / z' ) * (-1)
+    e  = atan (y'  / z' )
 
-    azim' = arcBallAzimuth   ocs + (a - oa)
-    elev' = arcBallElevation ocs + (e - oe)
+    a' = arcBallAzimuth   ocs + (a - oa)
+    e' = arcBallElevation ocs + (e - oe)
+    azim' = mod' a' (pi * 2)
+    elev' = min (pi / 2) $ max ((-pi) / 2) e'
 
 
 -- | Maps a coordinate from [0, len] to [-1, 1]
