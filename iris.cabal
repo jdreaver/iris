@@ -52,8 +52,6 @@ library
                      , reactive-banana == 1.0.*
                      , stm == 2.4.*
                      , vector == 0.11.*
-                     -- Temporary workaround for Travis CI failure
-                     , haskell-src-exts < 1.17
   hs-source-dirs:      src
   default-language:    Haskell2010
   ghc-options:         -Wall
@@ -80,8 +78,6 @@ test-suite tests
 
                     , hspec ==2.*
                     , HUnit -any
-                    -- Temporary workaround for Travis CI failure
-                     , haskell-src-exts < 1.17
     default-language: Haskell2010
     hs-source-dirs:   src tests
     ghc-options:    -Wall -Werror
