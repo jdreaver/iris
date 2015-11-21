@@ -1,5 +1,7 @@
 # Iris: OpenGL Visualization in Haskell
 
+[![Build Status](https://travis-ci.org/jdreaver/iris.svg?branch=master)](https://travis-ci.org/jdreaver/iris)
+
 Iris is an OpenGL-based visualization library for the Haskell programming
 language. Iris aims to help users create fast interactive visualizations by
 combining the expressiveness of Haskell and the power of OpenGL.
