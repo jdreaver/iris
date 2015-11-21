@@ -27,7 +27,7 @@ matrix:
       addons: {apt: {packages: [cabal-install-1.22,ghc-7.10.2,libxxf86vm-dev,alex-3.1.4,happy-1.19.5,build-essential,gcc-multilib,libc6-dev], sources: [hvr-ghc]}}
 
 before_install:
- - unset CC
+ # - unset CC
  - export PATH=/opt/ghc/$GHCVER/bin:/opt/cabal/$CABALVER/bin:$PATH
  - export PATH=/opt/happy/$HAPPYVER/bin:$PATH
  - export PATH=/opt/alex/$ALEXVER/bin:$PATH
