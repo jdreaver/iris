@@ -22,51 +22,36 @@ class Camera a where
   initCamera :: a -> CanvasEvents -> MomentIO (Behavior Transformation, CanvasEventHandler)
 
 
--- | Stores currently pressed buttons, the mouse coordinates when they were
--- pressed, and another piece of information (usually the camera state when the
--- button was pressed).
-newtype PressedButtons a = PressedButtons
-  { buttonMap :: Map.Map MouseButton (GL.Position, a) }
+-- | Stores currently pressed buttons and the mouse coordinates when they were
+-- pressed.
+newtype PressedButtons = PressedButtons
+  { buttonMap :: Map.Map MouseButton GL.Position }
   deriving (Show)
 
 
 -- | Default constructor for `PressedButtons`
-pressedButtons :: PressedButtons a
+pressedButtons :: PressedButtons
 pressedButtons = PressedButtons (Map.fromList [])
-
-
--- | If a button is pressed, then return the state when that button was
--- pressed.
--- buttonPressed :: MouseButton -> PressedButtons -> Maybe ButtonPressState
--- buttonPressed b = Map.lookup b . buttonMap
 
 
 -- | Creates a Behavior that holds the currently pressed buttons.
 recordButtons :: CanvasEvents ->
-                 Behavior a ->
-                 Moment (Behavior (PressedButtons a))
-recordButtons events bCam = accumB pressedButtons eClickedCam
-  where applyClick :: a ->
-                      GL.Position ->
-                      MouseButtonEvent ->
-                      PressedButtons a ->
-                      PressedButtons a
-        applyClick s p (b, bs) = recordClick s p b bs
-        eClickedCam = applyClick <$> bCam
-                                 <*> (events ^. mousePosObservable ^. behavior)
+                 Moment (Event PressedButtons)
+recordButtons events = accumE pressedButtons eClickedCam
+  where applyClick p (b, bs) = recordClick p b bs
+        eClickedCam = applyClick <$> (events ^. mousePosObservable ^. behavior)
                                  <@> (events ^. mouseButtonEvent)
 
 
 -- | Record when a button is pressed in the `PressedButtons` state.
-recordClick :: a ->
-               GL.Position ->
+recordClick :: GL.Position ->
                MouseButton ->
                MouseButtonState ->
-               PressedButtons a ->
-               PressedButtons a
-recordClick c p button Pressed (PressedButtons bmap) =
+               PressedButtons ->
+               PressedButtons
+recordClick p button Pressed (PressedButtons bmap) =
   if Map.member button bmap
   then PressedButtons bmap
-  else PressedButtons $ Map.insert button (p, c) bmap
-recordClick _ _ button Released (PressedButtons bmap) =
+  else PressedButtons $ Map.insert button p bmap
+recordClick _ button Released (PressedButtons bmap) =
   PressedButtons $ Map.delete button bmap
