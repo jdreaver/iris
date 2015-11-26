@@ -44,19 +44,6 @@ cameraTrans (PanZoomCamera (L.V2 cx cy) w h _) =
   where trans  = translation (L.V3 (-cx) (-cy) 0)
         scale' = scale (L.V3 (2/w) (2/h) 1)
 
--- | Map from pixel canvas coordinates to world coordinates.
-mapToWorld :: GL.Size -> GL.Position -> PanZoomCamera -> (GL.GLfloat, GL.GLfloat)
-mapToWorld (GL.Size w h) (GL.Position xp yp) cam = (x, y)
-  where (L.V2 cx cy) = center cam
-        (w', h')   = (fromIntegral w, fromIntegral h)
-        (cxp, cyp) = (w' / 2, h' / 2)  -- Camera center in pixels
-        (xp', yp') = (fromIntegral xp, fromIntegral yp)
-        (dxp, dyp) = (xp' - cxp, yp' - cyp)
-        (cw', ch') = (width cam, height cam)
-        (cx', cy') = (cx, cy)
-        (dx, dy)   = (dxp * cw' / w', dyp * ch' / h' * (-1))
-        (x, y)     = (cx' + dx, cy' + dy)
-
 
 -- | The first part of the tuple is a map of the mouse state and position when
 -- the mouse is pressed. The second part is the actual camera state.
@@ -65,22 +52,20 @@ type PanZoomState = (Map.Map MouseButton (PanZoomCamera, GL.Position), PanZoomCa
 initCamera' :: PanZoomCamera -> CanvasEvents ->
                MomentIO (Behavior Transformation, CanvasEventHandler)
 initCamera' cam events =
-  do ePressedButtons <- liftMoment $ recordButtons events
-
-     let eClick = clickEvent ePressedButtons
-
-     -- Why are we creating new events? We need them to avoid the circular
+  do -- Why are we creating new events? We need them to avoid the circular
      -- dependency on canvas events and events passed to event handlers. More
      -- specifically, we want to create event handlers for camera actions, but
      -- we only have the root canvas events available. Therefore, we create
      -- dummy events that we will fire with the event handlers.
      (ePos, hPos) <- eventHandler NotAccepted
-     let eMovedCam = dragEvent events ePos
-
      (eScroll, hScroll) <- eventHandler NotAccepted
-     let eScrolledCam = scrollEvent events eScroll
+     ePressedButtons <- liftMoment $ recordButtons events
 
-     let winEventHandler = canvasEventHandler
+     let eClick = clickEvent ePressedButtons
+         eMovedCam = dragEvent events ePos
+         eScrolledCam = scrollEvent events eScroll
+
+         winEventHandler = canvasEventHandler
                            { mousePosEventHandler    = Just hPos
                            , mouseScrollEventHandler = Just hScroll
                            }
@@ -154,3 +139,17 @@ mouseZoom s p cs z =
     dx' = dx * realToFrac f
     c = center cs
     c' = x - dx'
+
+
+-- | Map from pixel canvas coordinates to world coordinates.
+mapToWorld :: GL.Size -> GL.Position -> PanZoomCamera -> (GL.GLfloat, GL.GLfloat)
+mapToWorld (GL.Size w h) (GL.Position xp yp) cam = (x, y)
+  where (L.V2 cx cy) = center cam
+        (w', h')   = (fromIntegral w, fromIntegral h)
+        (cxp, cyp) = (w' / 2, h' / 2)  -- Camera center in pixels
+        (xp', yp') = (fromIntegral xp, fromIntegral yp)
+        (dxp, dyp) = (xp' - cxp, yp' - cyp)
+        (cw', ch') = (width cam, height cam)
+        (cx', cy') = (cx, cy)
+        (dx, dy)   = (dxp * cw' / w', dyp * ch' / h' * (-1))
+        (x, y)     = (cx' + dx, cy' + dy)

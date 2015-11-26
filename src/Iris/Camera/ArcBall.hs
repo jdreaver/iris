@@ -47,17 +47,15 @@ initCamera' :: ArcBallCamera ->
                CanvasEvents ->
                MomentIO (Behavior Transformation, CanvasEventHandler)
 initCamera' cam events =
-  do ePressedButtons <- liftMoment $ recordButtons events
-
-     let eClick = clickEvent ePressedButtons
-
-     (ePos, hPos) <- eventHandler NotAccepted
-     let eMovedCam = dragEvent events ePos
-
+  do (ePos, hPos) <- eventHandler NotAccepted
      (eScroll, hScroll) <- eventHandler NotAccepted
-     let eScrolledCam = scrollEvent eScroll
+     ePressedButtons <- liftMoment $ recordButtons events
 
-     let winEventHandler = canvasEventHandler
+     let eMovedCam = dragEvent events ePos
+         eScrolledCam = scrollEvent eScroll
+         eClick = clickEvent ePressedButtons
+
+         winEventHandler = canvasEventHandler
                            { mousePosEventHandler    = Just hPos
                            , mouseScrollEventHandler = Just hScroll
                            }
