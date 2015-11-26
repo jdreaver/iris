@@ -17,9 +17,9 @@ spec =
         bs2     = recordClick (GL.Position 1 1) b Pressed bs1
 
     it "doesn't overwrite clicks" $ do
-      length (buttonMap bs1) `shouldBe` 1
-      length (buttonMap bs2) `shouldBe` 1
+      length bs1 `shouldBe` 1
+      length bs2 `shouldBe` 1
 
     let b3 = recordClick (GL.Position 2 2) b Released bs2
     it "removes clicks" $
-      length (buttonMap b3) `shouldBe` 0
+      length b3 `shouldBe` 0

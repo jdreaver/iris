@@ -2,7 +2,7 @@
 
 module Iris.Camera.Class
        ( Camera (..)
-       , PressedButtons (..)
+       , PressedButtons
        , pressedButtons
        , recordButtons
        , recordClick
@@ -24,14 +24,11 @@ class Camera a where
 
 -- | Stores currently pressed buttons and the mouse coordinates when they were
 -- pressed.
-newtype PressedButtons = PressedButtons
-  { buttonMap :: Map.Map MouseButton GL.Position }
-  deriving (Show)
-
+type PressedButtons = Map.Map MouseButton GL.Position
 
 -- | Default constructor for `PressedButtons`
 pressedButtons :: PressedButtons
-pressedButtons = PressedButtons (Map.fromList [])
+pressedButtons = Map.fromList []
 
 
 -- | Creates a Behavior that holds the currently pressed buttons.
@@ -49,9 +46,5 @@ recordClick :: GL.Position ->
                MouseButtonState ->
                PressedButtons ->
                PressedButtons
-recordClick p button Pressed (PressedButtons bmap) =
-  if Map.member button bmap
-  then PressedButtons bmap
-  else PressedButtons $ Map.insert button p bmap
-recordClick _ button Released (PressedButtons bmap) =
-  PressedButtons $ Map.delete button bmap
+recordClick p button Pressed bmap = Map.insert button p bmap
+recordClick _ button Released bmap = Map.delete button bmap

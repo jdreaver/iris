@@ -48,12 +48,11 @@ initCamera' :: ArcBallCamera ->
                MomentIO (Behavior Transformation, CanvasEventHandler)
 initCamera' cam events =
   do ePressedButtons <- liftMoment $ recordButtons events
-     bPressedButtons <- stepper pressedButtons ePressedButtons
 
      let eClick = clickEvent ePressedButtons
 
      (ePos, hPos) <- eventHandler NotAccepted
-     let eMovedCam = dragEvent events bPressedButtons ePos
+     let eMovedCam = dragEvent events ePos
 
      (eScroll, hScroll) <- eventHandler NotAccepted
      let eScrolledCam = scrollEvent eScroll
@@ -63,31 +62,27 @@ initCamera' cam events =
                            , mouseScrollEventHandler = Just hScroll
                            }
 
-     bCamState <- accumB (cam, cam) $ unions [ eClick, eMovedCam, eScrolledCam ]
+     bCamState <- accumB (Map.fromList [], cam) $ unions [ eClick, eMovedCam, eScrolledCam ]
 
      return (cameraTrans <$> (snd <$> bCamState), winEventHandler)
 
--- | The first part of the tuple changes when the drag mouse button is clicked
-type ArcBallState = (ArcBallCamera, ArcBallCamera)
+type ArcBallState = (Map.Map MouseButton (ArcBallCamera, GL.Position), ArcBallCamera)
 
 clickEvent :: Event PressedButtons ->
               Event (ArcBallState -> ArcBallState)
 clickEvent ePressedButtons = f <$> ePressedButtons
-  where f pb (c1, c2) = maybe (c1, c2) (const (c2, c2))
-                        (Map.lookup (arcBallDragButton c1) (buttonMap pb))
+  where f pb (_, cs) = (fmap ((,) cs) pb, cs)
 
 dragEvent :: CanvasEvents ->
-             Behavior PressedButtons ->
              Event GL.Position ->
              Event (ArcBallState -> ArcBallState)
-dragEvent events bPressedButtons ePos =
-  doMove <$> bPressedButtons
-         <*> events ^. canvasSizeObservable ^. behavior
+dragEvent events ePos =
+  doMove <$> events ^. canvasSizeObservable ^. behavior
          <@> ePos
-  where doMove pbs size pos (c1, c2) =
-          maybe (c1, c2)
-          (\bs' -> (c1, mouseRotate size pos bs' c1 c2))
-          (Map.lookup (arcBallDragButton c1) (buttonMap pbs))
+  where doMove size pos (cm, cs) =
+          maybe (cm, cs)
+          (\(c1, opos) -> (cm, mouseRotate size pos opos c1 cs))
+          (Map.lookup (arcBallDragButton cs) cm)
 
 
 -- | Rotates the arcball camera.
@@ -136,7 +131,7 @@ normalizeCoord x len = fromIntegral x / fromIntegral len * 2.0 - 1.0
 scrollEvent :: Event GL.GLfloat ->
                Event (ArcBallState -> ArcBallState)
 scrollEvent eScroll = doZoom <$> eScroll
-  where doZoom z (c1, c2) = (c1, mouseZoom c2 z)
+  where doZoom z (cm, cs) = (cm, mouseZoom cs z)
 
 
 mouseZoom :: ArcBallCamera -> GL.GLfloat -> ArcBallCamera

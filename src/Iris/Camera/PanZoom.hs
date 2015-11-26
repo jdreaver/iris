@@ -58,14 +58,14 @@ mapToWorld (GL.Size w h) (GL.Position xp yp) cam = (x, y)
         (x, y)     = (cx' + dx, cy' + dy)
 
 
--- | The first part of the tuple changes when the drag mouse button is clicked
-type PanZoomState = (PanZoomCamera, PanZoomCamera)
+-- | The first part of the tuple is a map of the mouse state and position when
+-- the mouse is pressed. The second part is the actual camera state.
+type PanZoomState = (Map.Map MouseButton (PanZoomCamera, GL.Position), PanZoomCamera)
 
 initCamera' :: PanZoomCamera -> CanvasEvents ->
                MomentIO (Behavior Transformation, CanvasEventHandler)
 initCamera' cam events =
   do ePressedButtons <- liftMoment $ recordButtons events
-     bPressedButtons <- stepper pressedButtons ePressedButtons
 
      let eClick = clickEvent ePressedButtons
 
@@ -75,7 +75,7 @@ initCamera' cam events =
      -- we only have the root canvas events available. Therefore, we create
      -- dummy events that we will fire with the event handlers.
      (ePos, hPos) <- eventHandler NotAccepted
-     let eMovedCam = dragEvent events bPressedButtons ePos
+     let eMovedCam = dragEvent events ePos
 
      (eScroll, hScroll) <- eventHandler NotAccepted
      let eScrolledCam = scrollEvent events eScroll
@@ -85,31 +85,29 @@ initCamera' cam events =
                            , mouseScrollEventHandler = Just hScroll
                            }
 
-     bCamState <- accumB (cam, cam) $ unions [ eClick, eMovedCam, eScrolledCam ]
+     bCamState <- accumB (Map.fromList [], cam) $ unions [ eClick, eMovedCam, eScrolledCam ]
 
      return (cameraTrans <$> (snd <$> bCamState), winEventHandler)
 
 
+-- | Tags a PressedButtons map with the current camera state.
 clickEvent :: Event PressedButtons ->
               Event (PanZoomState -> PanZoomState)
 clickEvent ePressedButtons = f <$> ePressedButtons
   where f :: PressedButtons -> PanZoomState -> PanZoomState
-        f pb (c1, c2) = maybe (c1, c2) (const (c2, c2))
-                        (Map.lookup (dragButton c1) (buttonMap pb))
+        f pb (_, cs) = (fmap ((,) cs) pb, cs)
 
 
 dragEvent :: CanvasEvents ->
-             Behavior PressedButtons ->
              Event GL.Position ->
              Event (PanZoomState -> PanZoomState)
-dragEvent events bPressedButtons ePos =
-  doMove <$> bPressedButtons
-         <*> events ^. canvasSizeObservable ^. behavior
+dragEvent events ePos =
+  doMove <$> events ^. canvasSizeObservable ^. behavior
          <@> ePos
-  where doMove pbs size pos (c1, c2) =
-          maybe (c1, c2)
-          (\bs' -> (c1, mouseDrag size pos bs' c1 c2))
-          (Map.lookup (dragButton c1) (buttonMap pbs))
+  where doMove size pos (cm, cs) =
+          maybe (cm, cs)
+          (\(c1, opos) -> (cm, mouseDrag size pos opos c1 cs))
+          (Map.lookup (dragButton cs) cm)
 
 -- | Change the camera state with a mouse drag.
 mouseDrag :: GL.Size ->
@@ -135,7 +133,7 @@ scrollEvent events eScroll =
   doZoom <$> events ^. canvasSizeObservable ^. behavior
          <*> events ^. mousePosObservable ^. behavior
          <@> eScroll
-  where doZoom s p z (c1, c2) = (c1, mouseZoom s p c2 z)
+  where doZoom s p z (cm, cs) = (cm, mouseZoom s p cs z)
 
 
 -- | Zoom a camera, keeping the point under the mouse still while zooming.
