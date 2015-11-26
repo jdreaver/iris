@@ -83,7 +83,12 @@ dragEvent events ePos =
           (Map.lookup (arcBallDragButton cs) cm)
 
 
--- | Rotates the arcball camera.
+-- | Rotates the arcball camera. This is not actually true arcball rotation.
+-- Instead of thinking of a ball, think of two independent cylinders. One
+-- rotates about the x axis (elevation cylinder), and one rotates about the y
+-- axis (azimuth cylinder). We compute the angle changes about these cylinders
+-- independently. This frees us from the nasty task of handling when the mouse
+-- goes outside the bounds of the arcball.
 mouseRotate :: GL.Size ->
                GL.Position ->
                GL.Position ->
@@ -98,22 +103,16 @@ mouseRotate (GL.Size w h) (GL.Position x y) (GL.Position ox oy) ocs cs =
     (ox', oy') = (normalizeCoord ox w, normalizeCoord oy h)
     (x' , y' ) = (normalizeCoord x  w, normalizeCoord y  h)
 
-    -- Since we have normalized our click coordinates, we can assume our
-    -- imaginary arcball has a radius of 1. We can compute the z coordinates of
-    -- the clicks using the Pythagorean theorem. Note that if the user clicked
-    -- near a corner, we assume that z is zero, and they have clicked the edge
-    -- of the arcball.
-    oxy = ox' ** 2 + oy' ** 2
-    xy  = x'  ** 2 + y'  ** 2
-    oz' = if oxy < 1 then sqrt (1 - oxy) else 0
-    z'  = if xy  < 1 then sqrt (1 - xy)  else 0
-
     -- Compute the original and new azimuth and elevations of the clicks. The
     -- azimuth spans the x-z plane, and the elevation spans the z-y plane.
-    oa = atan (ox' / oz')
-    oe = atan (oy' / oz')
-    a  = atan (x'  / z' )
-    e  = atan (y'  / z' )
+    oa = circleAngle ox'
+    oe = circleAngle oy'
+    a  = circleAngle x'
+    e  = circleAngle y'
+
+    -- da = acos $ (oxp * xp) + (ozp * zp)
+    -- de = acos $ (oyp * yp) + (ozp * zp)
+    -- angle = acos $ min 1 (oxp * xp + oyp * xp + ozp * zp)
 
     a' = arcBallAzimuth   ocs + (a - oa)
     e' = arcBallElevation ocs + (e - oe)
@@ -125,6 +124,13 @@ mouseRotate (GL.Size w h) (GL.Position x y) (GL.Position ox oy) ocs cs =
 normalizeCoord :: (Integral a, Floating b) => a -> a -> b
 normalizeCoord x len = fromIntegral x / fromIntegral len * 2.0 - 1.0
 
+-- | Finds the angle of a given x coordinate about a circle, assuming the
+-- radius of the circle is 1.
+circleAngle :: GL.GLfloat -> GL.GLfloat
+circleAngle x =
+  let norm = x ** 2
+      y    = if norm < 1 then sqrt (1 - norm) else 0
+  in atan (x / y)
 
 scrollEvent :: Event GL.GLfloat ->
                Event (ArcBallState -> ArcBallState)
