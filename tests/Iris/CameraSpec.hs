@@ -2,6 +2,7 @@ module Iris.CameraSpec (spec) where
 
 import Test.Hspec
 
+import qualified Data.Map.Strict as Map
 import qualified Graphics.Rendering.OpenGL as GL
 
 import Iris.Camera
@@ -17,9 +18,9 @@ spec =
         bs2     = recordClick (GL.Position 1 1) b Pressed bs1
 
     it "doesn't overwrite clicks" $ do
-      length bs1 `shouldBe` 1
-      length bs2 `shouldBe` 1
+      length (Map.toList bs1) `shouldBe` 1
+      length (Map.toList bs2) `shouldBe` 1
 
     let b3 = recordClick (GL.Position 2 2) b Released bs2
     it "removes clicks" $
-      length b3 `shouldBe` 0
+      length (Map.toList b3) `shouldBe` 0
