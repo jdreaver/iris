@@ -1,0 +1,5 @@
+resolver: nightly-2015-12-01
+packages:
+  - '.'
+extra-deps:
+  - reactive-banana-1.0.0.0

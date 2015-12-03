@@ -1,6 +1,1 @@
-flags: {}
-packages:
-  - '.'
-extra-deps:
-  - reactive-banana-1.0.0.0
-resolver: nightly-2015-12-01
+stack-7.10.yaml
