@@ -22,10 +22,9 @@ main =
 
      let lineNode = DrawableNode (drawLine line)
          cam = panZoomCamera { center = L.V2 1 2 , width = 10 , height = 7 }
-         camT = panZoomTrans cam
-         camGroup = defaultGroupData { transformation = Just camT }
+         camNode = TransformNode (panZoomTrans cam)
          rootGroup = defaultGroupData { preDrawFunc = drawRoot win }
-         scene = GroupNode rootGroup [GroupNode camGroup [lineNode]]
+         scene = GroupNode rootGroup [camNode lineNode]
 
      mainLoop win (drawGraph scene)
 
