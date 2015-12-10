@@ -29,6 +29,7 @@ library
                      , Iris.Camera.ArcBall
                      , Iris.Camera.Class
                      , Iris.Camera.PanZoom
+                     , Iris.DrawGraph
                      , Iris.Events
                      , Iris.Colors
                      , Iris.Mouse
@@ -123,6 +124,21 @@ executable cube3d
     build-depends:    base -any
                     , iris -any
                     , linear >= 1.18
+                    , vector >= 0.10
+    default-language: Haskell2010
+    hs-source-dirs:   examples
+    ghc-prof-options: -auto-all -prof
+    ghc-options:      -Wall -O2 -threaded
+
+
+executable pure2d
+    main-is:          Pure2D.hs
+    build-depends:    base -any
+                    , iris -any
+                    , GLFW-b == 1.*
+                    , GLUtil >= 0.8.8
+                    , linear >= 1.18
+                    , OpenGL >= 2.12
                     , vector >= 0.10
     default-language: Haskell2010
     hs-source-dirs:   examples

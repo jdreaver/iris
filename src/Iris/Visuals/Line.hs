@@ -3,10 +3,11 @@
 -- | Defines data and functions for drawing a line.
 
 module Iris.Visuals.Line
-       ( LineItem
+       ( LineItem (..)
        , LineVertices
        , vsSource
        , fsSource
+       , drawLine
 
        , LineSpec (..)
        , lineSpec

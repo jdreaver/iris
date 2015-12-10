@@ -3,6 +3,7 @@
 module Iris.Camera.PanZoom
        ( PanZoomCamera (..)
        , panZoomCamera
+       , panZoomTrans
        ) where
 
 import           Control.Lens
@@ -38,8 +39,8 @@ panZoomCamera = PanZoomCamera (L.V2 0 0) 1 1 MouseButtonLeft
 
 -- | Creates a transformation that centers from the camera center to (0, 0),
 -- and scales widths and heights from the camera width/height to [-1, 1].
-cameraTrans :: PanZoomCamera -> Transformation
-cameraTrans (PanZoomCamera (L.V2 cx cy) w h _) =
+panZoomTrans :: PanZoomCamera -> Transformation
+panZoomTrans (PanZoomCamera (L.V2 cx cy) w h _) =
   foldl1' Iris.Transformation.apply [scale', trans, identity]
   where trans  = translation (L.V3 (-cx) (-cy) 0)
         scale' = scale (L.V3 (2/w) (2/h) 1)
@@ -72,7 +73,7 @@ initCamera' cam events =
 
      bCamState <- accumB (Map.fromList [], cam) $ unions [ eClick, eMovedCam, eScrolledCam ]
 
-     return (cameraTrans <$> (snd <$> bCamState), winEventHandler)
+     return (panZoomTrans <$> (snd <$> bCamState), winEventHandler)
 
 
 -- | Tags a PressedButtons map with the current camera state.

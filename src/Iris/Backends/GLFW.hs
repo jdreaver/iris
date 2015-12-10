@@ -14,6 +14,7 @@ module Iris.Backends.GLFW
        , initGLFW
        , GLFWCanvas (..)
        , mainLoop
+       , cleanup
        , module Iris.Backends.Class
        ) where
 
