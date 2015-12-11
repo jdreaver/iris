@@ -14,6 +14,7 @@ module Iris.Backends.GLFW
        , initGLFW
        , GLFWCanvas (..)
        , mainLoop
+       , mainLoop'
        , cleanup
        , module Iris.Backends.Class
        ) where
@@ -95,15 +96,17 @@ keyCallback window key _ action _ =
 -- | Runs the given drawing function in GLFW's main loop, and cleans up the
 -- window when the user exits.
 mainLoop :: GLFWCanvas -> IO ()
-mainLoop c = do
-    let w    = c ^. glfwWindow
-        fire = c ^. fireDraw
+mainLoop c = mainLoop' (c ^. glfwWindow) (c ^. fireDraw $ ())
+
+
+mainLoop' :: GLFW.Window -> IO () -> IO ()
+mainLoop' w drawFunc = do
     close <- GLFW.windowShouldClose w
     unless close $ do
-                    fire ()
+                    drawFunc
                     GLFW.swapBuffers w
                     GLFW.pollEvents
-                    mainLoop c
+                    mainLoop' w drawFunc
     cleanup w
 
 

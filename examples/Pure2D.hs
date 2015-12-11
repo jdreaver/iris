@@ -26,17 +26,7 @@ main =
          rootGroup = defaultGroupData { preDrawFunc = drawRoot win }
          scene = GroupNode rootGroup [camNode lineNode]
 
-     mainLoop win (drawGraph scene)
-
-mainLoop :: GLFW.Window -> IO () -> IO ()
-mainLoop w drawFunc = do
-    close <- GLFW.windowShouldClose w
-    unless close $ do
-                    drawFunc
-                    GLFW.swapBuffers w
-                    GLFW.pollEvents
-                    mainLoop w drawFunc
-    W.cleanup w
+     W.mainLoop' win (drawGraph scene)
 
 drawRoot :: GLFW.Window -> IO ()
 drawRoot win =
