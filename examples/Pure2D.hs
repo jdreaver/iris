@@ -2,7 +2,6 @@
 
 module Main where
 
-import           Control.Monad (unless)
 import qualified Graphics.GLUtil as U
 import           Graphics.Rendering.OpenGL (($=))
 import qualified Graphics.Rendering.OpenGL as GL
