@@ -43,15 +43,16 @@ lineSpec = LineSpec [] (L.V3 1 1 1)
 
 -- | Create line visual from a LineSpec
 lineInit :: LineSpec -> MomentIO Visual
-lineInit (LineSpec verts' color') =
-  do prog <- liftIO $ U.simpleShaderProgramBS vsSource fsSource
-     vs   <- subject verts'
-     vbuf <- bufferObservable vs GL.ArrayBuffer
-     let bItem = LineItem <$> pure prog
-                          <*> vbuf ^. behavior
-                          <*> vs ^. behavior
-                          <*> pure color'
-     return $ Visual (drawVisual bItem drawLine)
+lineInit spec =
+  do item <- liftIO $ makeLine spec
+     return $ Visual (drawVisual (pure item) drawLine)
+
+makeLine :: LineSpec -> IO LineItem
+makeLine (LineSpec verts' color') =
+  do prog <- U.simpleShaderProgramBS vsSource fsSource
+     vbuf <- U.fromSource GL.ArrayBuffer verts'
+     return $ LineItem prog vbuf verts' color'
+
 
 -- | Draw a given line item to the current OpenGL context
 drawLine :: LineItem -> L.M44 GL.GLfloat -> IO ()

@@ -15,7 +15,6 @@ module Iris.Visuals.Mesh
        , meshInit
        ) where
 
-import           Control.Lens
 import qualified Data.ByteString as BS
 import qualified Data.Vector.Storable as V
 import qualified Graphics.GLUtil as U
@@ -61,41 +60,35 @@ data MeshDataBuffer = VertexesBuffer MeshVertices GL.BufferObject
 
 -- | Create mesh visual from a MeshSpec
 meshInit :: MeshSpec -> MomentIO Visual
-meshInit (MeshSpec md c) =
-  do mds  <- subject md
-     vbuf <- meshBufferObservable mds
-     cs   <- subject c
-     cbuf <- colorBufferObservable cs
-     prog <- programObservable cs
-     let bItem = MeshItem <$> prog ^. behavior
-                          <*> vbuf ^. behavior
-                          <*> cbuf ^. behavior
-     return $ Visual (drawVisual bItem drawMesh)
+meshInit spec =
+  do item <- liftIO $ makeMesh spec
+     return $ Visual (drawVisual (pure item) drawMesh)
 
-programObservable :: Subject MeshColor -> MomentIO (Observable U.ShaderProgram)
-programObservable s = mapObservableIO (asObservable s) makeProgram
-  where makeProgram :: MeshColor -> IO U.ShaderProgram
-        makeProgram c = U.simpleShaderProgramBS (vsSource c) (fsSource c)
+makeMesh :: MeshSpec -> IO MeshItem
+makeMesh (MeshSpec md c) =
+  do prog <- meshProgram c
+     vbuf <- meshBuffer md
+     cbuf <- meshColorBuffer c
+     return $ MeshItem prog vbuf cbuf
+
+meshProgram :: MeshColor -> IO U.ShaderProgram
+meshProgram c = U.simpleShaderProgramBS (vsSource c) (fsSource c)
 
 
-meshBufferObservable :: Subject MeshData -> MomentIO (Observable MeshDataBuffer)
-meshBufferObservable s = mapObservableIO (asObservable s) makeBuffer
-  where makeBuffer :: MeshData -> IO MeshDataBuffer
-        makeBuffer (Vertexes verts) =
-          do b <- U.fromSource GL.ArrayBuffer verts
-             return $ VertexesBuffer verts b
-        makeBuffer (Faces verts faces) =
-          do vb <- U.fromSource GL.ArrayBuffer verts
-             fb <- U.fromSource GL.ElementArrayBuffer faces
-             return $ FacesBuffer verts faces vb fb
+meshBuffer :: MeshData -> IO MeshDataBuffer
+meshBuffer (Vertexes verts) =
+  do b <- U.fromSource GL.ArrayBuffer verts
+     return $ VertexesBuffer verts b
+meshBuffer (Faces verts faces) =
+  do vb <- U.fromSource GL.ArrayBuffer verts
+     fb <- U.fromSource GL.ElementArrayBuffer faces
+     return $ FacesBuffer verts faces vb fb
 
-colorBufferObservable :: Subject MeshColor -> MomentIO (Observable MeshColorBuffer)
-colorBufferObservable s = mapObservableIO (asObservable s) makeBuffer
-  where makeBuffer :: MeshColor -> IO MeshColorBuffer
-        makeBuffer (ConstantMeshColor c) = return $ ConstantColorBuffer c
-        makeBuffer (VectorMeshColor cv) =
-          do cb <- U.fromSource GL.ArrayBuffer cv
-             return $ VectorColorBuffer cv cb
+meshColorBuffer :: MeshColor -> IO MeshColorBuffer
+meshColorBuffer (ConstantMeshColor c) = return $ ConstantColorBuffer c
+meshColorBuffer (VectorMeshColor cv) =
+  do cb <- U.fromSource GL.ArrayBuffer cv
+     return $ VectorColorBuffer cv cb
 
 -- | Draw a given mesh item to the current OpenGL context
 drawMesh :: MeshItem -> L.M44 GL.GLfloat -> IO ()
