@@ -14,7 +14,6 @@ module Iris.Visuals.Line
        , lineInit
        ) where
 
-import           Control.Lens
 import qualified Data.ByteString as BS
 import qualified Graphics.GLUtil as U
 import           Graphics.Rendering.OpenGL (($=))
