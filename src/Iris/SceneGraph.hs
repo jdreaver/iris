@@ -2,9 +2,9 @@
 
 module Iris.SceneGraph
        ( SceneNode (..)
-       , PlotItem (..)
        , makeScene
 
+       , Effect (..)
        , Visual (..)
        ) where
 
@@ -22,17 +22,15 @@ import           Iris.Transformation
 -- | Recursive definition of a scene graph tree.
 data SceneNode = Collection [SceneNode]
                | Transform (Behavior Transformation) SceneNode
+               | EffectNode Effect SceneNode
                | VisualNode Visual
 
-
--- | An wrapper around a function to plot an item.
-data PlotItem = PlotItem
-  { drawFunc :: Transformation -> IO ()
-  }
 
 data Visual = Visual
   { drawEventFunc :: Event () -> Behavior Transformation -> MomentIO ()
   }
+
+data Effect = Effect (Event () -> MomentIO ())
 
 makeScene :: (Canvas a, Camera c) =>
              a ->
@@ -46,14 +44,12 @@ makeScene win n maybeCam =
      (root, winEventHandlers) <- attachCam maybeCam events n []
      attachEventHandlers events winEventHandlers
 
-     -- Hook up the root drawing function that clears the OpenGL context and
-     -- ensures the viewport is correct.
-     reactimate $ (\_ -> drawRoot win) <$> (events ^. drawEvent)
+     let root' = sceneRoot win root
 
      -- Recurse through the scene graph to hook up the draw event and
      -- transformation behavior to all nodes.
      let bTrans = aspectTrans <$> (events ^. canvasSizeObservable ^. behavior)
-     makeNode (events ^. drawEvent) bTrans root
+     makeNode (events ^. drawEvent) bTrans root'
 
      return ()
 
@@ -80,10 +76,15 @@ makeNode :: Event () ->
             SceneNode ->
             MomentIO ()
 makeNode eDraw bTrans (Collection ns) = mapM_ (makeNode eDraw bTrans) ns
+makeNode eDraw bTrans (EffectNode (Effect e) n) = e eDraw >> makeNode eDraw bTrans n
 makeNode eDraw bTrans (VisualNode visual) = drawEventFunc visual eDraw bTrans
 makeNode eDraw bTrans (Transform t n) = makeNode eDraw bTrans' n
   where bTrans' = liftA2 Iris.Transformation.apply bTrans t
 
+sceneRoot :: (Canvas a) => a -> SceneNode -> SceneNode
+sceneRoot can = EffectNode (Effect f)
+  where f :: Event () -> MomentIO ()
+        f e = reactimate $ (\_ -> drawRoot can) <$> e
 
 drawRoot :: (Canvas a) => a -> IO ()
 drawRoot win =
