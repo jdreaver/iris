@@ -55,7 +55,8 @@ makeScene win n maybeCam =
      (root, winEventHandlers) <- attachCam maybeCam events n []
      attachEventHandlers events winEventHandlers
 
-     let root' = sceneRoot win root
+     let bTrans = aspectTrans <$> (events ^. canvasSizeObservable ^. behavior)
+         root' = sceneRoot win (Transform bTrans root)
 
      -- Recurse through the scene graph to hook up the draw event and
      -- transformation behavior to all nodes.
