@@ -1,6 +1,7 @@
 module Iris.DrawGraph
        ( DrawGraph (..)
        , GroupData (..)
+       , DrawFunc
        , defaultGroupData
        , drawGraph
        ) where
@@ -18,7 +19,9 @@ data DrawGraph = GroupNode GroupData [DrawGraph]
 
 
 data GroupData = GroupData
-  { preDrawFunc :: IO ()  -- Maybe just have drawFunc and postDrawFunc
+  { preDrawFunc :: IO ()  -- Maybe just have drawFunc and postDrawFunc. Or, add
+                          -- these funcs as child visuals, so GroupData is not
+                          -- even needed.
   , postDrawFunc :: IO ()
   }
 

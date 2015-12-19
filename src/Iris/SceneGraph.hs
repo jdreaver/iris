@@ -4,7 +4,7 @@ module Iris.SceneGraph
        ( SceneNode (..)
        , makeScene
 
-       , Effect (..)
+       , Effect
        , Visual (..)
        ) where
 
@@ -15,6 +15,7 @@ import qualified Graphics.Rendering.OpenGL as GL
 
 import           Iris.Backends
 import           Iris.Camera
+import           Iris.DrawGraph
 import           Iris.Reactive
 import           Iris.Transformation
 
@@ -27,10 +28,20 @@ data SceneNode = Collection [SceneNode]
 
 
 data Visual = Visual
-  { drawEventFunc :: Event () -> Behavior Transformation -> MomentIO ()
+  { drawFunc :: DrawFunc
   }
 
-data Effect = Effect (Event () -> MomentIO ())
+sceneB :: SceneNode -> Moment (Behavior DrawGraph)
+sceneB (Collection cs) = do cs' <- mapM sceneB cs
+                            return $ GroupNode defaultGroupData <$> sequenceA cs'
+sceneB (Transform bt n) = do n' <- sceneB n
+                             return $ TransformNode <$> bt <*> n'
+sceneB (VisualNode (Visual f)) = return $ pure $ DrawableNode f
+sceneB (EffectNode f n) = do n' <- sceneB n
+                             let gd = defaultGroupData { preDrawFunc = f}
+                             return $ GroupNode gd <$> ((: []) <$> n')
+
+type Effect = IO ()
 
 makeScene :: (Canvas a, Camera c) =>
              a ->
@@ -48,10 +59,9 @@ makeScene win n maybeCam =
 
      -- Recurse through the scene graph to hook up the draw event and
      -- transformation behavior to all nodes.
-     let bTrans = aspectTrans <$> (events ^. canvasSizeObservable ^. behavior)
-     makeNode (events ^. drawEvent) bTrans root'
-
-     return ()
+     bGraph <- liftMoment $ sceneB root'
+     let eDraw = drawGraph <$> bGraph <@ (events ^. drawEvent)
+     reactimate eDraw
 
 -- | If we have a camera, then initialize the reactive form of the camera, set
 -- the camera node as root, and make the camera event handler the first event
@@ -71,20 +81,18 @@ attachCam maybeCam es n hs =
                      return (n', hs')
 
 
-makeNode :: Event () ->
-            Behavior Transformation ->
-            SceneNode ->
-            MomentIO ()
-makeNode eDraw bTrans (Collection ns) = mapM_ (makeNode eDraw bTrans) ns
-makeNode eDraw bTrans (EffectNode (Effect e) n) = e eDraw >> makeNode eDraw bTrans n
-makeNode eDraw bTrans (VisualNode visual) = drawEventFunc visual eDraw bTrans
-makeNode eDraw bTrans (Transform t n) = makeNode eDraw bTrans' n
-  where bTrans' = liftA2 Iris.Transformation.apply bTrans t
+-- makeNode :: Event () ->
+--             Behavior Transformation ->
+--             SceneNode ->
+--             MomentIO ()
+-- makeNode eDraw bTrans (Collection ns) = mapM_ (makeNode eDraw bTrans) ns
+-- makeNode eDraw bTrans (EffectNode (Effect e) n) = e eDraw >> makeNode eDraw bTrans n
+-- makeNode eDraw bTrans (VisualNode visual) = drawFunc visual eDraw bTrans
+-- makeNode eDraw bTrans (Transform t n) = makeNode eDraw bTrans' n
+--   where bTrans' = liftA2 Iris.Transformation.apply bTrans t
 
 sceneRoot :: (Canvas a) => a -> SceneNode -> SceneNode
-sceneRoot can = EffectNode (Effect f)
-  where f :: Event () -> MomentIO ()
-        f e = reactimate $ (\_ -> drawRoot can) <$> e
+sceneRoot can = EffectNode (drawRoot can)
 
 drawRoot :: (Canvas a) => a -> IO ()
 drawRoot win =

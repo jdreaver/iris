@@ -21,9 +21,7 @@ import qualified Graphics.Rendering.OpenGL as GL
 import qualified Linear as L
 
 import Iris.Colors
-import Iris.Reactive
 import Iris.SceneGraph
-import Iris.Visuals.Visual
 
 
 -- | Shader program and buffer objects for a line
@@ -41,10 +39,10 @@ lineSpec :: LineSpec
 lineSpec = LineSpec [] (L.V3 1 1 1)
 
 -- | Create line visual from a LineSpec
-lineInit :: LineSpec -> MomentIO Visual
+lineInit :: LineSpec -> IO Visual
 lineInit spec =
-  do item <- liftIO $ makeLine spec
-     return $ Visual (drawVisual (pure item) drawLine)
+  do item <- makeLine spec
+     return $ Visual (drawLine item)
 
 makeLine :: LineSpec -> IO LineItem
 makeLine (LineSpec verts' color') =

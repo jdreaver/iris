@@ -23,9 +23,7 @@ import qualified Graphics.Rendering.OpenGL as GL
 import qualified Linear as L
 
 import Iris.Colors
-import Iris.Reactive
 import Iris.SceneGraph
-import Iris.Visuals.Visual
 
 -- | Shader program and buffer objects for a mesh
 data MeshItem = MeshItem U.ShaderProgram MeshDataBuffer MeshColorBuffer
@@ -59,10 +57,10 @@ data MeshDataBuffer = VertexesBuffer MeshVertices GL.BufferObject
                       GL.BufferObject GL.BufferObject
 
 -- | Create mesh visual from a MeshSpec
-meshInit :: MeshSpec -> MomentIO Visual
+meshInit :: MeshSpec -> IO Visual
 meshInit spec =
-  do item <- liftIO $ makeMesh spec
-     return $ Visual (drawVisual (pure item) drawMesh)
+  do item <- makeMesh spec
+     return $ Visual (drawMesh item)
 
 makeMesh :: MeshSpec -> IO MeshItem
 makeMesh (MeshSpec md c) =

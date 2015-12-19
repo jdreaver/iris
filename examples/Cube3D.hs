@@ -18,15 +18,7 @@ main =
   do win <- W.makeWindow "3D Cube" (640, 480)
      canvas <- W.initGLFW win
 
-     network <- compile $ makeNetwork canvas
-     actuate network
-
-     W.mainLoop canvas
-
-
-makeNetwork :: W.GLFWCanvas -> MomentIO ()
-makeNetwork canvas =
-  do cube <- meshInit $ meshSpec
+     cube <- meshInit $ meshSpec
              { meshSpecData   = Faces cubeVerts cubeIndices
              , meshSpecColors = VectorMeshColor cubeColors
              }
@@ -36,7 +28,10 @@ makeNetwork canvas =
                               , arcBallElevation = 30 * pi / 180
                               }
 
-     makeScene canvas (VisualNode cube) (Just cam)
+     network <- compile $ makeScene canvas (VisualNode cube) (Just cam)
+     actuate network
+
+     W.mainLoop canvas
 
 
 cubeVerts :: MeshFaceVertices
