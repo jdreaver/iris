@@ -1,3 +1,5 @@
+{-# LANGUAGE CPP #-}
+
 -- | Compose drawable items into a scene graph.
 
 module Iris.SceneGraph
@@ -40,6 +42,13 @@ sceneB (VisualNode (Visual f)) = return $ pure $ DrawableNode f
 sceneB (EffectNode f n) = do n' <- sceneB n
                              let gd = defaultGroupData { preDrawFunc = f}
                              return $ GroupNode gd <$> ((: []) <$> n')
+
+#if !MIN_VERSION_base(4,8,0)
+sequenceA :: Applicative f => [f a] -> f [a]
+sequenceA = foldr k (pure [])
+  where
+    k f f' = (:) <$> f <*> f'--do { x <- m; xs <- m'; return (x:xs) }
+#endif
 
 type Effect = IO ()
 
