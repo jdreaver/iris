@@ -3,12 +3,8 @@
 -- | Compose drawable items into a scene graph.
 
 module Iris.SceneGraph
-       ( SceneNode (..)
-       , DrawNode (..)
+       ( DrawNode (..)
        , makeScene
-       , transSceneNode
-       , effectSceneNode
-       , groupSceneNode
        ) where
 
 #if !MIN_VERSION_base(4,8,0)
@@ -26,27 +22,11 @@ import           Iris.Reactive
 import           Iris.Transformation
 
 
--- | Recursive definition of a scene graph tree.
-data SceneNode = SceneNode
-  { drawNodeB :: Behavior DrawNode
-  }
-
-
-groupSceneNode :: [SceneNode] -> SceneNode
-groupSceneNode cs = SceneNode $ groupNode <$> groupNodeB cs
-
-groupNodeB :: [SceneNode] -> Behavior [DrawNode]
-groupNodeB = sequenceA . map drawNodeB
-
-transSceneNode :: Behavior Transformation -> [SceneNode] -> SceneNode
-transSceneNode tB cs = SceneNode $ transNode <$> tB <*> groupNodeB cs
-
-effectSceneNode :: Behavior (IO ()) -> [SceneNode] -> SceneNode
-effectSceneNode f cs = SceneNode $ effectNode <$> f <*> groupNodeB cs
+type DynamicDrawNode = Behavior DrawNode
 
 makeScene :: (Canvas a, Camera c) =>
              a ->
-             SceneNode ->
+             DynamicDrawNode ->
              Maybe c ->
              MomentIO ()
 makeScene win n maybeCam =
@@ -57,12 +37,12 @@ makeScene win n maybeCam =
      attachEventHandlers events winEventHandlers
 
      let bTrans = aspectTrans <$> (events ^. canvasSizeObservable ^. behavior)
-         root' = sceneRoot win [transSceneNode bTrans [root]]
+         tNode = transNode <$> bTrans <*> sequenceA [root]
+         root' = sceneRoot win <$> sequenceA [tNode]
 
      -- Recurse through the scene graph to hook up the draw event and
      -- transformation behavior to all nodes.
-     let bGraph = drawNodeB root'
-     let eDraw = drawGraph <$> bGraph <@ (events ^. drawEvent)
+     let eDraw = drawGraph <$> root' <@ (events ^. drawEvent)
      reactimate eDraw
 
 -- | If we have a camera, then initialize the reactive form of the camera, set
@@ -71,20 +51,20 @@ makeScene win n maybeCam =
 attachCam :: (Camera c) =>
              Maybe c ->
              CanvasEvents ->
-             SceneNode ->
+             DynamicDrawNode ->
              [CanvasEventHandler] ->
-             MomentIO (SceneNode, [CanvasEventHandler])
+             MomentIO (DynamicDrawNode, [CanvasEventHandler])
 attachCam maybeCam es n hs =
   case maybeCam of
     Nothing    -> return (n, hs)
     (Just cam) -> do (bCamTrans, camHandler) <- initCamera cam es
-                     let n'  = transSceneNode bCamTrans [n]
+                     let n'  = transNode <$> bCamTrans <*> sequenceA [n]
                          hs' = camHandler : hs
                      return (n', hs')
 
 
-sceneRoot :: (Canvas a) => a -> [SceneNode] -> SceneNode
-sceneRoot can = effectSceneNode (pure $ drawRoot can)
+sceneRoot :: (Canvas a) => a -> [DrawNode] -> DrawNode
+sceneRoot can = effectNode (drawRoot can)
 
 drawRoot :: (Canvas a) => a -> IO ()
 drawRoot win =

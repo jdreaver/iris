@@ -15,10 +15,6 @@ module Iris.Visuals.Line
        , lineInit
        ) where
 
-#if !MIN_VERSION_base(4,8,0)
-import           Prelude.Compat (pure)
-#endif
-
 import qualified Data.ByteString as BS
 import qualified Graphics.GLUtil as U
 import           Graphics.Rendering.OpenGL (($=))
@@ -26,7 +22,7 @@ import qualified Graphics.Rendering.OpenGL as GL
 import qualified Linear as L
 
 import Iris.Colors
-import Iris.SceneGraph
+import Iris.DrawGraph
 
 
 -- | Shader program and buffer objects for a line
@@ -44,10 +40,10 @@ lineSpec :: LineSpec
 lineSpec = LineSpec [] (L.V3 1 1 1)
 
 -- | Create line visual from a LineSpec
-lineInit :: LineSpec -> IO SceneNode
+lineInit :: LineSpec -> IO DrawNode
 lineInit spec =
   do item <- makeLine spec
-     return $ SceneNode $ pure $ DrawNode (drawLine item)
+     return $ DrawNode (drawLine item)
 
 makeLine :: LineSpec -> IO LineItem
 makeLine (LineSpec verts' color') =

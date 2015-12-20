@@ -16,10 +16,6 @@ module Iris.Visuals.Mesh
        , meshInit
        ) where
 
-#if !MIN_VERSION_base(4,8,0)
-import           Prelude.Compat (pure)
-#endif
-
 import qualified Data.ByteString as BS
 import qualified Data.Vector.Storable as V
 import qualified Graphics.GLUtil as U
@@ -28,7 +24,7 @@ import qualified Graphics.Rendering.OpenGL as GL
 import qualified Linear as L
 
 import Iris.Colors
-import Iris.SceneGraph
+import Iris.DrawGraph
 
 -- | Shader program and buffer objects for a mesh
 data MeshItem = MeshItem U.ShaderProgram MeshDataBuffer MeshColorBuffer
@@ -62,10 +58,10 @@ data MeshDataBuffer = VertexesBuffer MeshVertices GL.BufferObject
                       GL.BufferObject GL.BufferObject
 
 -- | Create mesh visual from a MeshSpec
-meshInit :: MeshSpec -> IO SceneNode
+meshInit :: MeshSpec -> IO DrawNode
 meshInit spec =
   do item <- makeMesh spec
-     return $ SceneNode $ pure $ DrawNode (drawMesh item)
+     return $ DrawNode (drawMesh item)
 
 makeMesh :: MeshSpec -> IO MeshItem
 makeMesh (MeshSpec md c) =

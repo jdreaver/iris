@@ -28,7 +28,7 @@ main =
                               , arcBallElevation = 30 * pi / 180
                               }
 
-     network <- compile $ makeScene canvas cube (Just cam)
+     network <- compile $ makeScene canvas (pure cube) (Just cam)
      actuate network
 
      W.mainLoop canvas
