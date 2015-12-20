@@ -5,7 +5,8 @@ import System.Exit (exitFailure, exitSuccess)
 
 arguments :: [String]
 arguments =
-    [ "examples"
+    [ "--cpp-simple"
+    , "examples"
     , "src"
     , "tests"
     ]
