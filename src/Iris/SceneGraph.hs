@@ -11,6 +11,9 @@ module Iris.SceneGraph
        , groupSceneNode
        ) where
 
+#if !MIN_VERSION_base(4,8,0)
+import           Prelude.Compat (sequenceA)
+#endif
 
 import           Control.Lens
 import           Graphics.Rendering.OpenGL (($=))
@@ -40,13 +43,6 @@ transSceneNode tB cs = SceneNode $ transNode <$> tB <*> groupNodeB cs
 
 effectSceneNode :: Behavior (IO ()) -> [SceneNode] -> SceneNode
 effectSceneNode f cs = SceneNode $ effectNode <$> f <*> groupNodeB cs
-
-#if !MIN_VERSION_base(4,8,0)
-sequenceA :: Applicative f => [f a] -> f [a]
-sequenceA = foldr k (pure [])
-  where
-    k f f' = (:) <$> f <*> f'
-#endif
 
 makeScene :: (Canvas a, Camera c) =>
              a ->

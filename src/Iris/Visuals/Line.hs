@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 -- | Defines data and functions for drawing a line.
@@ -13,6 +14,10 @@ module Iris.Visuals.Line
        , lineSpec
        , lineInit
        ) where
+
+#if !MIN_VERSION_base(4,8,0)
+import           Prelude.Compat (pure)
+#endif
 
 import qualified Data.ByteString as BS
 import qualified Graphics.GLUtil as U
