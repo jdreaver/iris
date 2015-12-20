@@ -53,15 +53,15 @@ makeLine (LineSpec verts' color') =
 
 
 -- | Draw a given line item to the current OpenGL context
-drawLine :: LineItem -> L.M44 GL.GLfloat -> IO ()
-drawLine (LineItem prog vbuf verts' color') m =
+drawLine :: LineItem -> DrawFunc
+drawLine (LineItem prog vbuf verts' color') (DrawData t _) =
   do GL.currentProgram $= Just (U.program prog)
      U.enableAttrib prog "coord2d"
 
      GL.bindBuffer GL.ArrayBuffer $= Just vbuf
      U.setAttrib prog "coord2d"
         GL.ToFloat $ GL.VertexArrayDescriptor 2 GL.Float 0 U.offset0
-     U.asUniform m $ U.getUniform prog "mvp"
+     U.asUniform t $ U.getUniform prog "mvp"
      U.asUniform color' $ U.getUniform prog "f_color"
 
      GL.drawArrays GL.LineStrip 0 (fromIntegral $ length verts')

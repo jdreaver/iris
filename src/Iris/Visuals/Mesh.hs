@@ -90,14 +90,14 @@ meshColorBuffer (VectorMeshColor cv) =
      return $ VectorColorBuffer cv cb
 
 -- | Draw a given mesh item to the current OpenGL context
-drawMesh :: MeshItem -> L.M44 GL.GLfloat -> IO ()
-drawMesh (MeshItem prog meshData color') m =
+drawMesh :: MeshItem -> DrawFunc
+drawMesh (MeshItem prog meshData color') (DrawData t _) =
   do GL.currentProgram $= Just (U.program prog)
 
      U.enableAttrib prog "coord3d"
      bindMeshData prog meshData
 
-     U.asUniform m $ U.getUniform prog "mvp"
+     U.asUniform t $ U.getUniform prog "mvp"
      drawMeshColor prog color'
 
      drawMeshData meshData
