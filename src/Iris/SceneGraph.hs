@@ -33,15 +33,14 @@ data Visual = Visual
   { drawFunc :: DrawFunc
   }
 
-sceneB :: SceneNode -> Moment (Behavior DrawGraph)
+sceneB :: SceneNode -> Moment (Behavior DrawNode)
 sceneB (Collection cs) = do cs' <- mapM sceneB cs
-                            return $ GroupNode defaultGroupData <$> sequenceA cs'
+                            return $ groupNode <$> sequenceA cs'
 sceneB (Transform bt n) = do n' <- sceneB n
-                             return $ TransformNode <$> bt <*> n'
-sceneB (VisualNode (Visual f)) = return $ pure $ DrawableNode f
+                             return $ transNode <$> bt <*> ((: []) <$> n')
+sceneB (VisualNode (Visual f)) = return $ pure $ DrawNode f
 sceneB (EffectNode f n) = do n' <- sceneB n
-                             let gd = defaultGroupData { preDrawFunc = f}
-                             return $ GroupNode gd <$> ((: []) <$> n')
+                             return $ effectNode f <$> ((: []) <$> n')
 
 #if !MIN_VERSION_base(4,8,0)
 sequenceA :: Applicative f => [f a] -> f [a]

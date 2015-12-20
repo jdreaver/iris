@@ -19,11 +19,11 @@ main =
   do win <- W.makeWindow "Line Plot" (640, 480)
      line <- makeLine
 
-     let lineNode = DrawableNode (drawLine line)
+     let lineNode = DrawNode (drawLine line)
          cam = panZoomCamera { center = L.V2 1 2 , width = 10 , height = 7 }
-         camNode = TransformNode (panZoomTrans cam)
-         rootGroup = defaultGroupData { preDrawFunc = drawRoot win }
-         scene = GroupNode rootGroup [camNode lineNode]
+         camNode = transNode (panZoomTrans cam) [lineNode]
+         rootEffect = effectNode (drawRoot win) []
+         scene = groupNode [rootEffect, camNode]
 
      W.mainLoop' win (drawGraph scene)
 
