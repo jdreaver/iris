@@ -18,6 +18,7 @@ import qualified Graphics.Rendering.OpenGL as GL
 import           Iris.Backends
 import           Iris.Camera
 import           Iris.Reactive
+import           Iris.SceneGraph.Clipper
 import           Iris.SceneGraph.DrawGraph
 import           Iris.Transformation
 
@@ -69,8 +70,7 @@ sceneRoot can = effectNode (drawRoot can)
 drawRoot :: (Canvas a) => a -> IO ()
 drawRoot win =
   do winSize <- framebufferSize win
-     GL.viewport $= (GL.Position 0 0, winSize)
-     GL.scissor $= Just (GL.Position 0 0, winSize)
+     clip (Viewport (GL.Position 0 0) winSize)
 
      GL.clearColor $= GL.Color4 0 0 0 1
      GL.depthFunc $= Just GL.Less

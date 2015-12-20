@@ -1,9 +1,9 @@
 -- | Compose drawable items into a scene graph.
 module Iris.SceneGraph
-       ( module Iris.SceneGraph.DrawGraph
-       , module Iris.SceneGraph.DynamicScene
+       ( module X
        ) where
 
 
-import Iris.SceneGraph.DrawGraph
-import Iris.SceneGraph.DynamicScene
+import Iris.SceneGraph.Clipper as X
+import Iris.SceneGraph.DrawGraph as X
+import Iris.SceneGraph.DynamicScene as X

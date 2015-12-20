@@ -3,7 +3,9 @@
 module Iris.SceneGraph.DrawGraph
        ( DrawNode (..)
        , DrawData (..)
+       , Viewport (..)
        , DrawFunc
+       , drawChildren
        , drawGraph
        , groupNode
        , transNode
@@ -18,12 +20,17 @@ import           Iris.Transformation
 -- | DrawData is passed between and possible modified by nodes in the scene
 -- graph.
 data DrawData = DrawData
-  { transform :: Transformation
-  , viewport :: GL.Size
+  { transform :: !Transformation
+  , viewport  :: !Viewport
+  } deriving (Show)
+
+data Viewport = Viewport
+  { viewportPos  :: !GL.Position
+  , viewportSize :: !GL.Size
   } deriving (Show)
 
 drawData :: DrawData
-drawData = DrawData identity (GL.Size 2 2)
+drawData = DrawData identity (Viewport (GL.Position 0 0) (GL.Size 2 2))
 
 
 -- | A DrawNode is the basis for creating a tree of drawable items. The

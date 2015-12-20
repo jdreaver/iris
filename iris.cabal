@@ -34,6 +34,7 @@ library
                      , Iris.Mouse
                      , Iris.Reactive
                      , Iris.SceneGraph
+                     , Iris.SceneGraph.Clipper
                      , Iris.SceneGraph.DynamicScene
                      , Iris.SceneGraph.DrawGraph
                      , Iris.Transformation
