@@ -47,7 +47,7 @@ sceneB (EffectNode f n) = do n' <- sceneB n
 sequenceA :: Applicative f => [f a] -> f [a]
 sequenceA = foldr k (pure [])
   where
-    k f f' = (:) <$> f <*> f'--do { x <- m; xs <- m'; return (x:xs) }
+    k f f' = (:) <$> f <*> f'
 #endif
 
 type Effect = IO ()
@@ -90,16 +90,6 @@ attachCam maybeCam es n hs =
                          hs' = camHandler : hs
                      return (n', hs')
 
-
--- makeNode :: Event () ->
---             Behavior Transformation ->
---             SceneNode ->
---             MomentIO ()
--- makeNode eDraw bTrans (Collection ns) = mapM_ (makeNode eDraw bTrans) ns
--- makeNode eDraw bTrans (EffectNode (Effect e) n) = e eDraw >> makeNode eDraw bTrans n
--- makeNode eDraw bTrans (VisualNode visual) = drawFunc visual eDraw bTrans
--- makeNode eDraw bTrans (Transform t n) = makeNode eDraw bTrans' n
---   where bTrans' = liftA2 Iris.Transformation.apply bTrans t
 
 sceneRoot :: (Canvas a) => a -> SceneNode -> SceneNode
 sceneRoot can = EffectNode (drawRoot can)
