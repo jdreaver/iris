@@ -4,10 +4,11 @@
 
 module Iris.SceneGraph
        ( SceneNode (..)
+       , DrawNode (..)
        , makeScene
-
-       , Effect
-       , Visual (..)
+       , transSceneNode
+       , effectSceneNode
+       , groupSceneNode
        ) where
 
 
@@ -23,24 +24,22 @@ import           Iris.Transformation
 
 
 -- | Recursive definition of a scene graph tree.
-data SceneNode = Collection [SceneNode]
-               | Transform (Behavior Transformation) SceneNode
-               | EffectNode Effect SceneNode
-               | VisualNode Visual
-
-
-data Visual = Visual
-  { drawFunc :: DrawFunc
+data SceneNode = SceneNode
+  { drawNodeB :: Behavior DrawNode
   }
 
-sceneB :: SceneNode -> Moment (Behavior DrawNode)
-sceneB (Collection cs) = do cs' <- mapM sceneB cs
-                            return $ groupNode <$> sequenceA cs'
-sceneB (Transform bt n) = do n' <- sceneB n
-                             return $ transNode <$> bt <*> ((: []) <$> n')
-sceneB (VisualNode (Visual f)) = return $ pure $ DrawNode f
-sceneB (EffectNode f n) = do n' <- sceneB n
-                             return $ effectNode f <$> ((: []) <$> n')
+
+groupSceneNode :: [SceneNode] -> SceneNode
+groupSceneNode cs = SceneNode $ groupNode <$> groupNodeB cs
+
+groupNodeB :: [SceneNode] -> Behavior [DrawNode]
+groupNodeB = sequenceA . map drawNodeB
+
+transSceneNode :: Behavior Transformation -> [SceneNode] -> SceneNode
+transSceneNode tB cs = SceneNode $ transNode <$> tB <*> groupNodeB cs
+
+effectSceneNode :: Behavior (IO ()) -> [SceneNode] -> SceneNode
+effectSceneNode f cs = SceneNode $ effectNode <$> f <*> groupNodeB cs
 
 #if !MIN_VERSION_base(4,8,0)
 sequenceA :: Applicative f => [f a] -> f [a]
@@ -48,8 +47,6 @@ sequenceA = foldr k (pure [])
   where
     k f f' = (:) <$> f <*> f'
 #endif
-
-type Effect = IO ()
 
 makeScene :: (Canvas a, Camera c) =>
              a ->
@@ -64,11 +61,11 @@ makeScene win n maybeCam =
      attachEventHandlers events winEventHandlers
 
      let bTrans = aspectTrans <$> (events ^. canvasSizeObservable ^. behavior)
-         root' = sceneRoot win (Transform bTrans root)
+         root' = sceneRoot win [transSceneNode bTrans [root]]
 
      -- Recurse through the scene graph to hook up the draw event and
      -- transformation behavior to all nodes.
-     bGraph <- liftMoment $ sceneB root'
+     let bGraph = drawNodeB root'
      let eDraw = drawGraph <$> bGraph <@ (events ^. drawEvent)
      reactimate eDraw
 
@@ -85,13 +82,13 @@ attachCam maybeCam es n hs =
   case maybeCam of
     Nothing    -> return (n, hs)
     (Just cam) -> do (bCamTrans, camHandler) <- initCamera cam es
-                     let n'  = Transform bCamTrans n
+                     let n'  = transSceneNode bCamTrans [n]
                          hs' = camHandler : hs
                      return (n', hs')
 
 
-sceneRoot :: (Canvas a) => a -> SceneNode -> SceneNode
-sceneRoot can = EffectNode (drawRoot can)
+sceneRoot :: (Canvas a) => a -> [SceneNode] -> SceneNode
+sceneRoot can = effectSceneNode (pure $ drawRoot can)
 
 drawRoot :: (Canvas a) => a -> IO ()
 drawRoot win =

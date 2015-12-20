@@ -57,10 +57,10 @@ data MeshDataBuffer = VertexesBuffer MeshVertices GL.BufferObject
                       GL.BufferObject GL.BufferObject
 
 -- | Create mesh visual from a MeshSpec
-meshInit :: MeshSpec -> IO Visual
+meshInit :: MeshSpec -> IO SceneNode
 meshInit spec =
   do item <- makeMesh spec
-     return $ Visual (drawMesh item)
+     return $ SceneNode $ pure $ DrawNode (drawMesh item)
 
 makeMesh :: MeshSpec -> IO MeshItem
 makeMesh (MeshSpec md c) =

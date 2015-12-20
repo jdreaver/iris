@@ -37,15 +37,13 @@ main =
                 meshSpecColors = VectorMeshColor meshVertColors
               }
 
-     let items = Collection [ VisualNode line
-                            , VisualNode mesh
-                            , Transform (pure $ translation (L.V3 2 2 0))
-                              (VisualNode mesh2)
-                            , Transform (pure $ translation (L.V3 (-1) 1 0))
-                              (VisualNode mesh)
-                            , Transform (pure $ translation (L.V3 (-2) 3 0))
-                              (VisualNode mesh3)
-                            ]
+     let items = groupSceneNode
+                 [ line
+                 , mesh
+                 , transSceneNode (pure $ translation (L.V3 2 2 0)) [mesh2]
+                 , transSceneNode (pure $ translation (L.V3 (-1) 1 0)) [mesh]
+                 , transSceneNode (pure $ translation (L.V3 (-2) 3 0)) [mesh3]
+                 ]
          cam = panZoomCamera { center = L.V2 1 2 , width = 10 , height = 7 }
 
      network <- compile $ makeScene canvas items (Just cam)

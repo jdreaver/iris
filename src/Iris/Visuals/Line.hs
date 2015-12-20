@@ -39,10 +39,10 @@ lineSpec :: LineSpec
 lineSpec = LineSpec [] (L.V3 1 1 1)
 
 -- | Create line visual from a LineSpec
-lineInit :: LineSpec -> IO Visual
+lineInit :: LineSpec -> IO SceneNode
 lineInit spec =
   do item <- makeLine spec
-     return $ Visual (drawLine item)
+     return $ SceneNode $ pure $ DrawNode (drawLine item)
 
 makeLine :: LineSpec -> IO LineItem
 makeLine (LineSpec verts' color') =
