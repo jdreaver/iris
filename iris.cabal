@@ -29,12 +29,13 @@ library
                      , Iris.Camera.ArcBall
                      , Iris.Camera.Class
                      , Iris.Camera.PanZoom
-                     , Iris.DrawGraph
                      , Iris.Events
                      , Iris.Colors
                      , Iris.Mouse
                      , Iris.Reactive
                      , Iris.SceneGraph
+                     , Iris.SceneGraph.DynamicScene
+                     , Iris.SceneGraph.DrawGraph
                      , Iris.Transformation
                      , Iris.Visuals
                      , Iris.Visuals.Line

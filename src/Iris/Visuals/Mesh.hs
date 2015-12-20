@@ -24,7 +24,7 @@ import qualified Graphics.Rendering.OpenGL as GL
 import qualified Linear as L
 
 import Iris.Colors
-import Iris.DrawGraph
+import Iris.SceneGraph
 
 -- | Shader program and buffer objects for a mesh
 data MeshItem = MeshItem U.ShaderProgram MeshDataBuffer MeshColorBuffer

@@ -10,7 +10,7 @@ import qualified Linear as L
 
 import qualified Iris.Backends.GLFW as W
 import           Iris.Camera.PanZoom
-import           Iris.DrawGraph
+import           Iris.SceneGraph
 import           Iris.Visuals.Line
 
 

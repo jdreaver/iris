@@ -1,4 +1,6 @@
-module Iris.DrawGraph
+-- | Pure tree structure for drawing.
+
+module Iris.SceneGraph.DrawGraph
        ( DrawNode (..)
        , DrawFunc
        , drawGraph
