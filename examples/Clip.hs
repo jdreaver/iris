@@ -1,6 +1,12 @@
+{-# LANGUAGE CPP #-}
+
 -- | Shows how to use a clipper node to split the viewport
 
 module Main where
+
+#if !MIN_VERSION_base(4,8,0)
+import           Prelude.Compat (sequenceA)
+#endif
 
 import           Control.Lens
 import qualified Graphics.Rendering.OpenGL as GL
