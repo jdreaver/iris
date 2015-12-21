@@ -19,6 +19,7 @@ module Iris.Reactive
        , mapObservableIO
        , merge
        , subject
+       , subjectIO
        , tVarSubject
        , module Reactive.Banana
        , module Reactive.Banana.Frameworks
@@ -69,6 +70,15 @@ subject x0 =
   do (e, h) <- newEvent
      b <- stepper x0 e
      return $ Subject b e h
+
+-- | Create a subject from an initial value, except create the handler in IO
+subjectIO :: a -> IO (Handler a, MomentIO (Subject a))
+subjectIO x0 =
+  do (ah, h) <- newAddHandler
+     let s =  do e <- fromAddHandler ah
+                 b <- stepper x0 e
+                 return $ Subject b e h
+     return (h, s)
 
 -- | View a subject as an observable. This makes the behavior/event pair
 -- "read-only", as it hides the Handler to trigger the event.

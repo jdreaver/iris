@@ -40,7 +40,7 @@ makeFields ''GLFWCanvas
 
 instance Canvas GLFWCanvas where
   canvasSize      = windowSize' . view glfwWindow
-  framebufferSize = framebufferSize'
+  framebufferSize = framebufferSize' . view glfwWindow
   drawLoop        = mainLoop
   cursorPos       = cursorPos' . view glfwWindow
   makeEvents      = view glfwWindowEvents
@@ -52,15 +52,17 @@ instance Canvas GLFWCanvas where
 initGLFW :: GLFW.Window -> IO GLFWCanvas
 initGLFW w =
   do (addHandler, fire) <- newAddHandler
-     let drawEvent' = fromAddHandler addHandler
-     mousePosO    <- mousePosObservable' w
-     mouseButtonE <- mouseButtonEvent' w
-     mouseScrollE <- mouseScrollEvent' w
-     windowSizeO  <- windowSizeObservable' w
+     let drawEvent'     = fromAddHandler addHandler
+     mousePosO          <- mousePosObservable' w
+     mouseButtonE       <- mouseButtonEvent' w
+     mouseScrollE       <- mouseScrollEvent' w
+     windowSizeO        <- windowSizeObservable' w
+     framebufferSizeO   <- framebufferSizeObservable' w
      let events = CanvasEvents <$> mousePosO
                                <*> mouseButtonE
                                <*> mouseScrollE
                                <*> windowSizeO
+                               <*> framebufferSizeO
                                <*> drawEvent'
      return $ GLFWCanvas w events fire
 
@@ -122,9 +124,9 @@ windowSize' win =
   do (w, h) <- GLFW.getWindowSize win
      return $ GL.Size (fromIntegral w) (fromIntegral h)
 
-framebufferSize' :: GLFWCanvas -> IO GL.Size
-framebufferSize' c =
-  do (x, y) <- GLFW.getFramebufferSize (c ^. glfwWindow)
+framebufferSize' :: GLFW.Window -> IO GL.Size
+framebufferSize' win =
+  do (x, y) <- GLFW.getFramebufferSize win
      return $ GL.Size (fromIntegral x) (fromIntegral y)
 
 -- | Overload of `GLFW.getCursorPos` to return `GL.Position`
@@ -188,11 +190,21 @@ mouseScrollEvent' win =
 -- callback.
 windowSizeObservable' :: GLFW.Window -> IO (MomentIO (Observable GL.Size))
 windowSizeObservable' win =
-  do (addHandler, fire) <- newAddHandler
+  do currentSize <- windowSize' win
+     (h, sub) <- subjectIO currentSize
      let callback :: GLFW.WindowSizeCallback
-         callback _ x y = fire $ GL.Size (fromIntegral x) (fromIntegral y)
+         callback _ x y = h $ GL.Size (fromIntegral x) (fromIntegral y)
      liftIO $ GLFW.setWindowSizeCallback win $ Just callback
-     currentSize <- windowSize' win
-     return $ do e <- fromAddHandler addHandler
-                 b <- stepper currentSize e
-                 return $ Observable b e
+     return $ liftM asObservable sub
+
+
+-- | Create an Observable for the framebuffer size using the GLFW framebuffer size
+-- callback.
+framebufferSizeObservable' :: GLFW.Window -> IO (MomentIO (Observable GL.Size))
+framebufferSizeObservable' win =
+  do currentSize <- framebufferSize' win
+     (h, sub) <- subjectIO currentSize
+     let callback :: GLFW.FramebufferSizeCallback
+         callback _ x y = h $ GL.Size (fromIntegral x) (fromIntegral y)
+     liftIO $ GLFW.setFramebufferSizeCallback win $ Just callback
+     return $ liftM asObservable sub

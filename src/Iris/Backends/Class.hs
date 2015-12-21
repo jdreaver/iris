@@ -15,6 +15,7 @@ module Iris.Backends.Class
        , mouseButtonEvent
        , mouseScrollEvent
        , canvasSizeObservable
+       , framebufferSizeObservable
        , drawEvent
        , attachEventHandlers
        ) where
@@ -39,11 +40,12 @@ class Canvas a where
 
 -- | Data type containing all needed events from a backend Canvas
 data CanvasEvents = CanvasEvents
-  { _canvasEventsMousePosObservable   :: Observable GL.Position
-  , _canvasEventsMouseButtonEvent     :: Event MouseButtonEvent
-  , _canvasEventsMouseScrollEvent     :: Event GL.GLfloat
-  , _canvasEventsCanvasSizeObservable :: Observable GL.Size
-  , _canvasEventsDrawEvent            :: Event ()
+  { _canvasEventsMousePosObservable        :: Observable GL.Position
+  , _canvasEventsMouseButtonEvent          :: Event MouseButtonEvent
+  , _canvasEventsMouseScrollEvent          :: Event GL.GLfloat
+  , _canvasEventsCanvasSizeObservable      :: Observable GL.Size
+  , _canvasEventsFramebufferSizeObservable :: Observable GL.Size
+  , _canvasEventsDrawEvent                 :: Event ()
   }
 
 makeFields ''CanvasEvents
