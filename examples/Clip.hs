@@ -21,7 +21,7 @@ import           Iris.Util
 
 main :: IO ()
 main =
-  do win <- W.makeWindow "Line Plot" (640, 480)
+  do win <- W.makeWindow "Clipping" (640, 480)
      canvas <- W.initGLFW win
 
      network <- compile $ makeNetwork canvas
