@@ -69,9 +69,12 @@ sceneRoot can = effectNode (drawRoot can)
 
 drawRoot :: (Canvas a) => a -> IO ()
 drawRoot win =
-  do winSize <- framebufferSize win
+  do GL.clearColor $= GL.Color4 0 0 0 1
+     GL.depthFunc $= Just GL.Lequal
+     GL.blend $= GL.Enabled
+     GL.blendFunc $= (GL.SrcAlpha, GL.OneMinusSrcAlpha)
+
+     winSize <- framebufferSize win
      clip (Viewport (GL.Position 0 0) winSize)
 
-     GL.clearColor $= GL.Color4 0 0 0 1
-     GL.depthFunc $= Just GL.Less
      GL.clear [GL.ColorBuffer, GL.DepthBuffer]
