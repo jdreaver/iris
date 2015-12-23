@@ -33,6 +33,7 @@ type ImageVerts = V.Vector (L.V3 GL.GLfloat)
 type ImageFaces = V.Vector (L.V3 GL.GLint)
 
 data ImageSpec = ImageSpec GL.TextureObject
+               deriving (Show)
 
 
 imageInit :: ImageSpec -> IO DrawNode
@@ -101,7 +102,6 @@ fsSource = BS.intercalate "\n"
            , ""
            , "void main(void) {"
            , "    gl_FragColor = texture2D(mytexture, f_texcoord);"
-           --, "    gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);"
            , "}"
            ]
 

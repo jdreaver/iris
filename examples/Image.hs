@@ -14,17 +14,21 @@ import           Iris.Visuals.Image
 main :: IO ()
 main =
   do path <- getFilePath
+     win <- W.makeWindow "Image" (640, 480)
+     canvas <- W.initGLFW win
+
      spec <- imageFromFile path
      case spec of
        (Left err) -> putStrLn $ "Error: " ++ err
-       (Right spec') -> do win <- W.makeWindow "Image" (640, 480)
-                           canvas <- W.initGLFW win
-                           node <- imageInit spec'
+       (Right spec') -> do node <- imageInit spec'
                            main' canvas node
 
 main' :: W.GLFWCanvas -> DrawNode -> IO ()
 main' canvas node =
-  do let cam = panZoomCamera { width = 3 , height = 3 }
+  do let cam = arcBallCamera { arcBallWidth     = 2
+                             , arcBallAzimuth   = 30 * pi / 180
+                             , arcBallElevation = 30 * pi / 180
+                             }
 
      network <- compile $ makeScene canvas (pure node) (Just cam)
      actuate network
