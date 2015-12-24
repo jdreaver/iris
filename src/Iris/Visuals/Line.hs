@@ -12,6 +12,7 @@ module Iris.Visuals.Line
        , LineSpec (..)
        , lineSpec
        , lineInit
+       , makeLine
        ) where
 
 import qualified Data.ByteString as BS

@@ -5,6 +5,7 @@
 module Iris.SceneGraph.DynamicScene
        ( DrawNode (..)
        , makeScene
+       , sceneRoot
        ) where
 
 #if !MIN_VERSION_base(4,8,0)
