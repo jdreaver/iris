@@ -38,6 +38,7 @@ library
                      , Iris.SceneGraph.Clipper
                      , Iris.SceneGraph.DynamicScene
                      , Iris.SceneGraph.DrawGraph
+                     , Iris.Text
                      , Iris.Transformation
                      , Iris.Util
                      , Iris.Visuals
@@ -51,6 +52,7 @@ library
                      , base-compat == 0.8.2
                      , bytestring == 0.10.*
                      , containers == 0.5.*
+                     , freetype2 >= 0.1.1
                      , GLFW-b == 1.*
                      , GLUtil >= 0.8.8
                      , lens >= 4.7
@@ -75,6 +77,7 @@ test-suite tests
                     , base-compat == 0.8.2
                     , bytestring == 0.10.*
                     , containers == 0.5.*
+                    , freetype2 >= 0.1.1
                     , GLFW-b == 1.*
                     , GLUtil >= 0.8.8
                     , lens >= 4.7
@@ -163,6 +166,19 @@ executable clip
 
 executable image
     main-is:          Image.hs
+    build-depends:    base -any
+                    , base-compat == 0.8.2
+                    , iris -any
+                    , linear >= 1.18
+                    , vector >= 0.10
+    default-language: Haskell2010
+    hs-source-dirs:   examples
+    ghc-prof-options: -prof -fprof-auto
+    ghc-options:      -Wall -O2 -threaded
+
+
+executable text
+    main-is:          Text.hs
     build-depends:    base -any
                     , base-compat == 0.8.2
                     , iris -any

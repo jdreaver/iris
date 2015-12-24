@@ -4,6 +4,7 @@ packages:
 extra-deps:
   - base-compat-0.8.2
   - bindings-GLFW-3.1.1.4
+  - freetype2-0.1.1
   - hpp-0.3.0.0
   - GLFW-b-1.4.7.3
   - GLUtil-0.8.8
