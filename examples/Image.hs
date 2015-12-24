@@ -2,6 +2,8 @@
 
 module Main where
 
+import qualified Data.Vector.Storable as V
+import qualified Linear as L
 import           System.Environment (getArgs)
 
 import qualified Iris.Backends.GLFW as W
@@ -17,11 +19,11 @@ main =
      win <- W.makeWindow "Image" (640, 480)
      canvas <- W.initGLFW win
 
-     spec <- imageFromFile path
-     case spec of
+     to <- imageFromFile path
+     case to of
        (Left err) -> putStrLn $ "Error: " ++ err
-       (Right spec') -> do node <- imageInit spec'
-                           main' canvas node
+       (Right to') -> do node <- imageInit (ImageSpec to' verts)
+                         main' canvas node
 
 main' :: W.GLFWCanvas -> DrawNode -> IO ()
 main' canvas node =
@@ -42,3 +44,11 @@ getFilePath =
      case args of
        []    -> fail "Please supply image path"
        (x:_) -> return x
+
+
+verts :: ImageVerts
+verts = V.fromList [ L.V3 (-0.5) (-0.5) 0
+                   , L.V3   0.5  (-0.5) 0
+                   , L.V3   0.5    0.5  0
+                   , L.V3 (-0.5)   0.5  0
+                   ]

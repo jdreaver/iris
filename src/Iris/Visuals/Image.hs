@@ -4,6 +4,8 @@
 
 module Iris.Visuals.Image
        ( ImageItem (..)
+       , ImageSpec (..)
+       , ImageVerts
        , U.readTexture
        , imageInit
        , imageFromFile
@@ -29,11 +31,15 @@ data ImageItem = ImageItem
   , imageFaces        :: ImageFaces
   }
 
+-- | Specification for an ImageItem. This is used to construct the buffers for
+-- an image.
+data ImageSpec = ImageSpec GL.TextureObject ImageVerts
+               deriving (Show)
+
+-- | Vertexes for an ImageItem. These are specified as 4 3D points, ordered
+-- counter-clockwise.
 type ImageVerts = V.Vector (L.V3 GL.GLfloat)
 type ImageFaces = V.Vector (L.V3 GL.GLint)
-
-data ImageSpec = ImageSpec GL.TextureObject
-               deriving (Show)
 
 
 imageInit :: ImageSpec -> IO DrawNode
@@ -42,21 +48,21 @@ imageInit spec =
      return $ DrawNode (drawImage item)
 
 makeImage :: ImageSpec -> IO ImageItem
-makeImage (ImageSpec to) =
+makeImage (ImageSpec to verts) =
   do prog <- U.simpleShaderProgramBS vsSource fsSource
      vbo <- U.fromSource GL.ArrayBuffer verts
      fbo <- U.fromSource GL.ElementArrayBuffer faces
      tbo <- U.fromSource GL.ArrayBuffer texCoords
      return $ ImageItem prog to vbo fbo tbo verts faces
 
-imageFromFile :: FilePath -> IO (Either String ImageSpec)
+imageFromFile :: FilePath -> IO (Either String GL.TextureObject)
 imageFromFile filePath =
   do to <- U.readTexture filePath
      case to of
        (Left err)  -> return (Left err)
        (Right to') -> do GL.textureFilter GL.Texture2D $= ((GL.Linear', Nothing), GL.Linear')
                          U.texture2DWrap $= (GL.Mirrored, GL.ClampToEdge)
-                         return $ Right (ImageSpec to')
+                         return $ Right to'
 
 drawImage :: ImageItem -> DrawFunc
 drawImage (ImageItem prog to vbo fbo tbo _ fs) (DrawData t _) =
@@ -101,17 +107,11 @@ fsSource = BS.intercalate "\n"
            , "uniform sampler2D mytexture;"
            , ""
            , "void main(void) {"
-           , "    gl_FragColor = texture2D(mytexture, f_texcoord);"
+           , "    vec2 coords = vec2(f_texcoord.x, 1.0 - f_texcoord.y);"
+           , "    gl_FragColor = texture2D(mytexture, coords);"
            , "}"
            ]
 
-
-verts :: ImageVerts
-verts = V.fromList [ L.V3 (-0.5) 0.5 0
-                   , L.V3 0.5    0.5 0
-                   , L.V3 0.5  (-0.5) 0
-                   , L.V3 (-0.5) (-0.5) 0
-                   ]
 
 faces :: ImageFaces
 faces = V.fromList [ L.V3 0 1 2
