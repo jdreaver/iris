@@ -53,9 +53,9 @@ main =
 
 
 lineVerts :: LineVertices
-lineVerts = V.fromList [ L.V2 1 1
-                       , L.V2 1 2
-                       , L.V2 2 2
+lineVerts = V.fromList [ L.V3 1 1 0
+                       , L.V3 1 2 0
+                       , L.V3 2 2 0
                        ]
 
 meshVerts :: MeshVertices

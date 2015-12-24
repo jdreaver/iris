@@ -29,7 +29,7 @@ import Iris.SceneGraph
 data LineItem = LineItem U.ShaderProgram GL.BufferObject LineVertices Color
 
 -- | Input vertices for a line buffer object
-type LineVertices = V.Vector (L.V2 GL.GLfloat)
+type LineVertices = V.Vector (L.V3 GL.GLfloat)
 
 data LineSpec = LineSpec
   { lineSpecVertices :: LineVertices
@@ -57,25 +57,25 @@ drawLine :: LineItem -> DrawFunc
 drawLine (LineItem prog vbuf verts' color') (DrawData t _) =
   do enableProgram prog
 
-     enableAttrib prog "coord2d"
-     bindVertexBuffer prog "coord2d" vbuf 2
+     enableAttrib prog "coord3d"
+     bindVertexBuffer prog "coord3d" vbuf 3
 
      setUniform prog "mvp" t
      setUniform prog "f_color" color'
 
      GL.drawArrays GL.LineStrip 0 (fromIntegral $ V.length verts')
 
-     disableAttrib prog "coord2d"
+     disableAttrib prog "coord3d"
 
 
 vsSource, fsSource :: BS.ByteString
 vsSource = BS.intercalate "\n"
            [
-             "attribute vec2 coord2d; "
+             "attribute vec3 coord3d;"
            , "uniform mat4 mvp;"
            , ""
            , "void main(void) { "
-           , "    gl_Position = mvp * vec4(coord2d, 0.0, 1.0); "
+           , "    gl_Position = mvp * vec4(coord3d, 1.0); "
            , "}"
            ]
 

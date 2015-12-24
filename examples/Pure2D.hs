@@ -48,9 +48,9 @@ makeLine =
 
 
 lineVerts :: LineVertices
-lineVerts = V.fromList [ L.V2 0 0
-                       , L.V2 0 1
-                       , L.V2 1 1
-                       , L.V2 1 0
-                       , L.V2 0 0
+lineVerts = V.fromList [ L.V3 0 0 0
+                       , L.V3 0 1 0
+                       , L.V3 1 1 0
+                       , L.V3 1 0 0
+                       , L.V3 0 0 0
                        ]
