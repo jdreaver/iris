@@ -29,8 +29,9 @@ library
                      , Iris.Camera.ArcBall
                      , Iris.Camera.Class
                      , Iris.Camera.PanZoom
-                     , Iris.Events
                      , Iris.Colors
+                     , Iris.Draw
+                     , Iris.Events
                      , Iris.Mouse
                      , Iris.Reactive
                      , Iris.SceneGraph

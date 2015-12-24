@@ -2,6 +2,7 @@
 
 module Main where
 
+import qualified Data.Vector.Storable as V
 import qualified Graphics.GLUtil as U
 import           Graphics.Rendering.OpenGL (($=))
 import qualified Graphics.Rendering.OpenGL as GL
@@ -47,9 +48,9 @@ makeLine =
 
 
 lineVerts :: LineVertices
-lineVerts = [ L.V2 0 0
-            , L.V2 0 1
-            , L.V2 1 1
-            , L.V2 1 0
-            , L.V2 0 0
-            ]
+lineVerts = V.fromList [ L.V2 0 0
+                       , L.V2 0 1
+                       , L.V2 1 1
+                       , L.V2 1 0
+                       , L.V2 0 0
+                       ]

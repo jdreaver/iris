@@ -18,11 +18,11 @@ module Iris.Visuals.Mesh
 import qualified Data.ByteString as BS
 import qualified Data.Vector.Storable as V
 import qualified Graphics.GLUtil as U
-import           Graphics.Rendering.OpenGL (($=))
 import qualified Graphics.Rendering.OpenGL as GL
 import qualified Linear as L
 
 import Iris.Colors
+import Iris.Draw
 import Iris.SceneGraph
 
 -- | Shader program and buffer objects for a mesh
@@ -64,13 +64,10 @@ meshInit spec =
 
 makeMesh :: MeshSpec -> IO MeshItem
 makeMesh (MeshSpec md c) =
-  do prog <- meshProgram c
+  do prog <- U.simpleShaderProgramBS (vsSource c) (fsSource c)
      vbuf <- meshBuffer md
      cbuf <- meshColorBuffer c
      return $ MeshItem prog vbuf cbuf
-
-meshProgram :: MeshColor -> IO U.ShaderProgram
-meshProgram c = U.simpleShaderProgramBS (vsSource c) (fsSource c)
 
 
 meshBuffer :: MeshData -> IO MeshDataBuffer
@@ -84,38 +81,30 @@ meshBuffer (Faces verts faces) =
 
 meshColorBuffer :: MeshColor -> IO MeshColorBuffer
 meshColorBuffer (ConstantMeshColor c) = return $ ConstantColorBuffer c
-meshColorBuffer (VectorMeshColor cv) =
-  do cb <- U.fromSource GL.ArrayBuffer cv
-     return $ VectorColorBuffer cv cb
+meshColorBuffer (VectorMeshColor cv) = VectorColorBuffer cv <$>
+                                       U.fromSource GL.ArrayBuffer cv
 
 -- | Draw a given mesh item to the current OpenGL context
 drawMesh :: MeshItem -> DrawFunc
 drawMesh (MeshItem prog meshData color') (DrawData t _) =
-  do GL.currentProgram $= Just (U.program prog)
+  do enableProgram prog
 
-     U.enableAttrib prog "coord3d"
+     enableAttrib prog "coord3d"
      bindMeshData prog meshData
 
-     U.asUniform t $ U.getUniform prog "mvp"
+     setUniform prog "mvp" t
      drawMeshColor prog color'
 
      drawMeshData meshData
 
-     GL.vertexAttribArray (U.getAttrib prog "coord3d") $= GL.Disabled
-
+     disableAttrib prog "coord3d"
      disableColor prog color'
 
 
 bindMeshData :: U.ShaderProgram -> MeshDataBuffer -> IO ()
-bindMeshData p (VertexesBuffer _ vbo) =
-  do GL.bindBuffer GL.ArrayBuffer $= Just vbo
-     U.setAttrib p "coord3d"
-        GL.ToFloat $ GL.VertexArrayDescriptor 3 GL.Float 0 U.offset0
-bindMeshData p (FacesBuffer _ _ vb fb) =
-  do GL.bindBuffer GL.ArrayBuffer $= Just vb
-     U.setAttrib p "coord3d"
-        GL.ToFloat $ GL.VertexArrayDescriptor 3 GL.Float 0 U.offset0
-     GL.bindBuffer GL.ElementArrayBuffer $= Just fb
+bindMeshData p (VertexesBuffer _ vbo) = bindVertexBuffer p "coord3d" vbo 3
+bindMeshData p (FacesBuffer _ _ vb fb) = bindVertexBuffer p "coord3d" vb 3 >>
+                                         bindElementBuffer fb
 
 drawMeshData :: MeshDataBuffer -> IO ()
 drawMeshData (VertexesBuffer v _) =
@@ -125,18 +114,13 @@ drawMeshData (FacesBuffer _ fs _ _) =
 
 
 drawMeshColor :: U.ShaderProgram -> MeshColorBuffer -> IO ()
-drawMeshColor prog (ConstantColorBuffer c) =
-  U.asUniform c $ U.getUniform prog "f_color"
-drawMeshColor prog (VectorColorBuffer _ cb) =
-  do U.enableAttrib prog "v_color"
-     GL.bindBuffer GL.ArrayBuffer $= Just cb
-     U.setAttrib prog "v_color"
-        GL.ToFloat $ GL.VertexArrayDescriptor 3 GL.Float 0 U.offset0
+drawMeshColor p (ConstantColorBuffer c) = setUniform p "f_color" c
+drawMeshColor p (VectorColorBuffer _ cb) = enableAttrib p "v_color" >>
+                                           bindVertexBuffer p "v_color" cb 3
 
 disableColor :: U.ShaderProgram -> MeshColorBuffer -> IO ()
 disableColor _ (ConstantColorBuffer _) = return ()
-disableColor prog (VectorColorBuffer _ _) =
-  GL.vertexAttribArray (U.getAttrib prog "v_color") $= GL.Disabled
+disableColor p (VectorColorBuffer _ _) = disableAttrib p "v_color"
 
 vsSource, fsSource :: MeshColor -> BS.ByteString
 vsSource mc = BS.intercalate "\n"

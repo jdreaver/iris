@@ -53,10 +53,10 @@ main =
 
 
 lineVerts :: LineVertices
-lineVerts = [ L.V2 1 1
-            , L.V2 1 2
-            , L.V2 2 2
-            ]
+lineVerts = V.fromList [ L.V2 1 1
+                       , L.V2 1 2
+                       , L.V2 2 2
+                       ]
 
 meshVerts :: MeshVertices
 meshVerts = V.fromList [ L.V3 (L.V3 0 0 0) (L.V3 1 1 0) (L.V3 0 1 0)

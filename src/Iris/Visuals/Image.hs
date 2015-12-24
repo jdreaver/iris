@@ -18,7 +18,7 @@ import           Graphics.Rendering.OpenGL (($=))
 import qualified Graphics.Rendering.OpenGL as GL
 import qualified Linear as L
 
-
+import           Iris.Draw
 import           Iris.SceneGraph
 
 data ImageItem = ImageItem
@@ -66,27 +66,23 @@ imageFromFile filePath =
 
 drawImage :: ImageItem -> DrawFunc
 drawImage (ImageItem prog to vbo fbo tbo _ fs) (DrawData t _) =
-  do GL.currentProgram $= Just (U.program prog)
+  do enableProgram prog
 
-     U.enableAttrib prog "coord3d"
-     GL.bindBuffer GL.ArrayBuffer $= Just vbo
-     U.setAttrib prog "coord3d"
-        GL.ToFloat $ GL.VertexArrayDescriptor 3 GL.Float 0 U.offset0
-     GL.bindBuffer GL.ElementArrayBuffer $= Just fbo
+     enableAttrib prog "coord3d"
+     bindVertexBuffer prog "coord3d" vbo 3
+     bindElementBuffer fbo
 
-     U.enableAttrib prog "texcoord"
-     GL.bindBuffer GL.ArrayBuffer $= Just tbo
-     U.setAttrib prog "texcoord"
-        GL.ToFloat $ GL.VertexArrayDescriptor 2 GL.Float 0 U.offset0
+     enableAttrib prog "texcoord"
+     bindVertexBuffer prog "texcoord" tbo 2
 
-     U.asUniform t $ U.getUniform prog "mvp"
+     setUniform prog "mvp" t
 
      U.withTextures2D [to] $
-       do U.asUniform (0 :: GL.GLint) $ U.getUniform prog "mytexture"
+       do setUniform prog "mytexture" (0 :: GL.GLint)
           U.drawIndexedTris (fromIntegral $ V.length fs)
 
-     GL.vertexAttribArray (U.getAttrib prog "coord3d") $= GL.Disabled
-     GL.vertexAttribArray (U.getAttrib prog "texcoord") $= GL.Disabled
+     disableAttrib prog "coord3d"
+     disableAttrib prog "texcoord"
 
 
 vsSource, fsSource :: BS.ByteString

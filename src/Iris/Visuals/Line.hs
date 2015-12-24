@@ -15,12 +15,13 @@ module Iris.Visuals.Line
        ) where
 
 import qualified Data.ByteString as BS
+import qualified Data.Vector.Storable as V
 import qualified Graphics.GLUtil as U
-import           Graphics.Rendering.OpenGL (($=))
 import qualified Graphics.Rendering.OpenGL as GL
 import qualified Linear as L
 
 import Iris.Colors
+import Iris.Draw
 import Iris.SceneGraph
 
 
@@ -28,15 +29,15 @@ import Iris.SceneGraph
 data LineItem = LineItem U.ShaderProgram GL.BufferObject LineVertices Color
 
 -- | Input vertices for a line buffer object
-type LineVertices = [L.V2 GL.GLfloat]
+type LineVertices = V.Vector (L.V2 GL.GLfloat)
 
 data LineSpec = LineSpec
-  { lineSpecVertices :: [L.V2 GL.GLfloat]
+  { lineSpecVertices :: LineVertices
   , lineSpecColors   :: Color
   }
 
 lineSpec :: LineSpec
-lineSpec = LineSpec [] (L.V3 1 1 1)
+lineSpec = LineSpec V.empty (L.V3 1 1 1)
 
 -- | Create line visual from a LineSpec
 lineInit :: LineSpec -> IO DrawNode
@@ -54,17 +55,17 @@ makeLine (LineSpec verts' color') =
 -- | Draw a given line item to the current OpenGL context
 drawLine :: LineItem -> DrawFunc
 drawLine (LineItem prog vbuf verts' color') (DrawData t _) =
-  do GL.currentProgram $= Just (U.program prog)
-     U.enableAttrib prog "coord2d"
+  do enableProgram prog
 
-     GL.bindBuffer GL.ArrayBuffer $= Just vbuf
-     U.setAttrib prog "coord2d"
-        GL.ToFloat $ GL.VertexArrayDescriptor 2 GL.Float 0 U.offset0
-     U.asUniform t $ U.getUniform prog "mvp"
-     U.asUniform color' $ U.getUniform prog "f_color"
+     enableAttrib prog "coord2d"
+     bindVertexBuffer prog "coord2d" vbuf 2
 
-     GL.drawArrays GL.LineStrip 0 (fromIntegral $ length verts')
-     GL.vertexAttribArray (U.getAttrib prog "coord2d") $= GL.Disabled
+     setUniform prog "mvp" t
+     setUniform prog "f_color" color'
+
+     GL.drawArrays GL.LineStrip 0 (fromIntegral $ V.length verts')
+
+     disableAttrib prog "coord2d"
 
 
 vsSource, fsSource :: BS.ByteString
