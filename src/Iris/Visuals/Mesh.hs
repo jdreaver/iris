@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 -- | Defines a mesh item for plots
@@ -14,6 +15,10 @@ module Iris.Visuals.Mesh
        , meshSpec
        , meshInit
        ) where
+
+#if !MIN_VERSION_base(4,8,0)
+import           Prelude.Compat ((<$>))
+#endif
 
 import qualified Data.ByteString as BS
 import qualified Data.Vector.Storable as V
