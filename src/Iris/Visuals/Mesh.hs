@@ -1,4 +1,5 @@
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE OverloadedLists #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 -- | Defines a mesh item for plots
@@ -47,7 +48,7 @@ data MeshColorBuffer = ConstantColorBuffer Color
                      | VectorColorBuffer MeshVectorColor GL.BufferObject
 
 meshSpec :: MeshSpec
-meshSpec = MeshSpec (Vertexes $ V.fromList []) (ConstantMeshColor $ L.V3 1 1 1)
+meshSpec = MeshSpec (Vertexes []) (ConstantMeshColor $ L.V3 1 1 1)
 
 type MeshVertices = V.Vector (L.M33 GL.GLfloat)
 type MeshFaceVertices = V.Vector (L.V3 GL.GLfloat)

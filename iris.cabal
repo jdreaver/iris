@@ -124,7 +124,6 @@ executable line
     build-depends:    base -any
                     , iris -any
                     , linear >= 1.18
-                    , vector >= 0.10
     default-language: Haskell2010
     hs-source-dirs:   examples
     ghc-prof-options: -prof -fprof-auto
@@ -145,7 +144,6 @@ executable pure2d
     build-depends:    base -any
                     , iris -any
                     , linear >= 1.18
-                    , vector >= 0.10
     default-language: Haskell2010
     hs-source-dirs:   examples
     ghc-prof-options: -prof -fprof-auto
@@ -170,7 +168,6 @@ executable image
                     , base-compat == 0.8.2
                     , iris -any
                     , linear >= 1.18
-                    , vector >= 0.10
     default-language: Haskell2010
     hs-source-dirs:   examples
     ghc-prof-options: -prof -fprof-auto
@@ -183,7 +180,6 @@ executable text
                     , base-compat == 0.8.2
                     , iris -any
                     , linear >= 1.18
-                    , vector >= 0.10
     default-language: Haskell2010
     hs-source-dirs:   examples
     ghc-prof-options: -prof -fprof-auto

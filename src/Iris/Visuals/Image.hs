@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedLists #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 -- | Visual to show an image overlaid on a rectangle
@@ -110,14 +111,14 @@ fsSource = BS.intercalate "\n"
 
 
 faces :: ImageFaces
-faces = V.fromList [ L.V3 0 1 2
-                   , L.V3 2 3 0
-                   ]
+faces = [ L.V3 0 1 2
+        , L.V3 2 3 0
+        ]
 
 
 texCoords :: V.Vector (L.V2 GL.GLfloat)
-texCoords = V.fromList [ L.V2 0 0
-                       , L.V2 1 0
-                       , L.V2 1 1
-                       , L.V2 0 1
-                       ]
+texCoords = [ L.V2 0 0
+            , L.V2 1 0
+            , L.V2 1 1
+            , L.V2 0 1
+            ]

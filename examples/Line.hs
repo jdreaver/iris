@@ -1,11 +1,10 @@
-{-# LANGUAGE MultiWayIf, OverloadedStrings #-}
+{-# LANGUAGE OverloadedLists #-}
 
 -- | This is simply a test to make sure things work until I can come up with
 -- some real examples.
 
 module Main where
 
-import qualified Data.Vector.Storable as V
 import qualified Linear as L
 
 import qualified Iris.Backends.GLFW as W
@@ -53,33 +52,33 @@ main =
 
 
 lineVerts :: LineVertices
-lineVerts = V.fromList [ L.V3 1 1 0
-                       , L.V3 1 2 0
-                       , L.V3 2 2 0
-                       ]
+lineVerts = [ L.V3 1 1 0
+            , L.V3 1 2 0
+            , L.V3 2 2 0
+            ]
 
 meshVerts :: MeshVertices
-meshVerts = V.fromList [ L.V3 (L.V3 0 0 0) (L.V3 1 1 0) (L.V3 0 1 0)
-                       , L.V3 (L.V3 0 0 0) (L.V3 1 0 0) (L.V3 1 1 0)
-                       ]
+meshVerts = [ L.V3 (L.V3 0 0 0) (L.V3 1 1 0) (L.V3 0 1 0)
+            , L.V3 (L.V3 0 0 0) (L.V3 1 0 0) (L.V3 1 1 0)
+            ]
 
 meshVertColors :: MeshVectorColor
-meshVertColors = V.fromList [ L.V3 0 1 0
-                            , L.V3 1 0 0
-                            , L.V3 0 0 1
-                            , L.V3 1 1 0
-                            , L.V3 0 1 1
-                            , L.V3 1 0 1
-                            ]
+meshVertColors = [ L.V3 0 1 0
+                 , L.V3 1 0 0
+                 , L.V3 0 0 1
+                 , L.V3 1 1 0
+                 , L.V3 0 1 1
+                 , L.V3 1 0 1
+                 ]
 
 meshFaceVerts :: MeshFaceVertices
-meshFaceVerts = V.fromList [ L.V3 0 0 0
-                           , L.V3 1 1 0
-                           , L.V3 1 2 0
-                           , L.V3 0 1 0
-                           ]
+meshFaceVerts = [ L.V3 0 0 0
+                , L.V3 1 1 0
+                , L.V3 1 2 0
+                , L.V3 0 1 0
+                ]
 
 meshFaceIndices :: MeshFaceIndices
-meshFaceIndices = V.fromList [ L.V3 0 1 2
-                             , L.V3 2 3 0
-                             ]
+meshFaceIndices = [ L.V3 0 1 2
+                  , L.V3 2 3 0
+                  ]

@@ -1,8 +1,9 @@
+{-# LANGUAGE OverloadedLists #-}
+
 -- | Show a simple image.
 
 module Main where
 
-import qualified Data.Vector.Storable as V
 import qualified Linear as L
 import           System.Environment (getArgs)
 
@@ -42,13 +43,13 @@ getFilePath :: IO FilePath
 getFilePath =
   do args <- getArgs
      case args of
-       []    -> fail "Please supply image path"
        (x:_) -> return x
+       _     -> fail "Please supply image path"
 
 
 verts :: ImageVerts
-verts = V.fromList [ L.V3 (-0.5) (-0.5) 0
-                   , L.V3   0.5  (-0.5) 0
-                   , L.V3   0.5    0.5  0
-                   , L.V3 (-0.5)   0.5  0
-                   ]
+verts = [ L.V3 (-0.5) (-0.5) 0
+        , L.V3   0.5  (-0.5) 0
+        , L.V3   0.5    0.5  0
+        , L.V3 (-0.5)   0.5  0
+        ]

@@ -1,8 +1,9 @@
+{-# LANGUAGE OverloadedLists #-}
+
 -- | Example using the pure scene graph to make a static scene.
 
 module Main where
 
-import qualified Data.Vector.Storable as V
 import qualified Linear as L
 
 import qualified Iris.Backends.GLFW as W
@@ -26,9 +27,9 @@ main =
 
 
 lineVerts :: LineVertices
-lineVerts = V.fromList [ L.V3 0 0 0
-                       , L.V3 0 1 0
-                       , L.V3 1 1 0
-                       , L.V3 1 0 0
-                       , L.V3 0 0 0
-                       ]
+lineVerts = [ L.V3 0 0 0
+            , L.V3 0 1 0
+            , L.V3 1 1 0
+            , L.V3 1 0 0
+            , L.V3 0 0 0
+            ]

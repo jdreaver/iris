@@ -1,8 +1,9 @@
+{-# LANGUAGE OverloadedLists #-}
+
 -- | Shows a text item
 
 module Main where
 
-import qualified Data.Vector.Storable as V
 import qualified Linear as L
 import           System.Environment (getArgs)
 
@@ -39,8 +40,8 @@ getFilePath =
 
 
 verts :: ImageVerts
-verts = V.fromList [ L.V3 (-0.5) (-0.5) 0
-                   , L.V3   0.5  (-0.5) 0
-                   , L.V3   0.5    0.5  0
-                   , L.V3 (-0.5)   0.5  0
-                   ]
+verts = [ L.V3 (-0.5) (-0.5) 0
+        , L.V3   0.5  (-0.5) 0
+        , L.V3   0.5    0.5  0
+        , L.V3 (-0.5)   0.5  0
+        ]
