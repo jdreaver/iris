@@ -5,20 +5,22 @@
 
 module Iris.Text
        ( loadCharacter
+       , Character (..)
        ) where
 
 
 import           Control.Monad
-import           Graphics.Rendering.OpenGL hiding (bitmap)
-import           Graphics.Rendering.FreeType.Internal
-import           Graphics.Rendering.FreeType.Internal.PrimitiveTypes
-import           Graphics.Rendering.FreeType.Internal.Library
-import           Graphics.Rendering.FreeType.Internal.FaceType
-import           Graphics.Rendering.FreeType.Internal.Face
-import           Graphics.Rendering.FreeType.Internal.GlyphSlot
 import           Foreign
 import           Foreign.C.String
+import           Graphics.Rendering.OpenGL hiding (bitmap)
+import           Graphics.Rendering.FreeType.Internal
 import           Graphics.Rendering.FreeType.Internal.Bitmap
+import           Graphics.Rendering.FreeType.Internal.Face
+import           Graphics.Rendering.FreeType.Internal.GlyphMetrics hiding (width)
+import           Graphics.Rendering.FreeType.Internal.GlyphSlot
+import           Graphics.Rendering.FreeType.Internal.Library
+import           Graphics.Rendering.FreeType.Internal.PrimitiveTypes
+import qualified Linear as L
 import           System.IO (hPutStrLn, stderr)
 
 -- | Loads the a FreeType font from a file path.
@@ -29,8 +31,17 @@ loadFont path =
 
      fontFace ft path
 
+
+data Character = Character
+  { characterChar    :: Char
+  , characterTexture :: TextureObject
+  , characterSize    :: L.V2 GLsizei
+  , characterBearing :: L.V2 GLfloat
+  , characterAdvance :: GLfloat
+  } deriving (Show)
+
 -- | Returns a TextureObject for a given character.
-loadCharacter :: FilePath -> Char -> Int -> IO TextureObject
+loadCharacter :: FilePath -> Char -> Int -> IO Character
 loadCharacter path char px = do
     ff <- loadFont path
     runFreeType $ ft_Set_Pixel_Sizes ff 0 (fromIntegral px)
@@ -48,9 +59,13 @@ loadCharacter path char px = do
 
     -- Get the char bitmap.
     bmp <- peek $ bitmap slot
+    metrics' <- peek $ metrics slot
 
-    let w' = fromIntegral $ width bmp
-        h' = fromIntegral $ rows bmp
+    let w'       = fromIntegral $ width bmp
+        h'       = fromIntegral $ rows bmp
+        bearX    = fromIntegral (horiBearingX metrics') / 64
+        bearY    = fromIntegral (horiBearingY metrics') / 64
+        advance' = fromIntegral (horiAdvance metrics') / 64
 
     -- Set the texture params on our bound texture.
     texture Texture2D $= Enabled
@@ -77,7 +92,7 @@ loadCharacter path char px = do
     textureWrapMode Texture2D S $= (Repeated, ClampToEdge)
     textureWrapMode Texture2D T $= (Repeated, ClampToEdge)
 
-    return tex
+    return $ Character char tex (L.V2 w' h') (L.V2 bearX bearY) advance'
 
 
 newBoundTexUnit :: IO TextureObject
