@@ -33,7 +33,7 @@ loadFont path =
 loadCharacter :: FilePath -> Char -> Int -> Int -> IO TextureObject
 loadCharacter path char px texUnit = do
     ff <- loadFont path
-    runFreeType $ ft_Set_Pixel_Sizes ff (fromIntegral px) 0
+    runFreeType $ ft_Set_Pixel_Sizes ff 0 (fromIntegral px)
 
     -- Get the unicode char index.
     chNdx <- ft_Get_Char_Index ff $ fromIntegral $ fromEnum char
