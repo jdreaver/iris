@@ -45,6 +45,7 @@ library
                      , Iris.Visuals.Image
                      , Iris.Visuals.Line
                      , Iris.Visuals.Mesh
+                     , Iris.Visuals.Text
                      , Iris.Visuals.Visual
   other-modules:       Iris.Backends.Class
   -- other-extensions:

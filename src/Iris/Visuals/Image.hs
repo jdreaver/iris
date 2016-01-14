@@ -10,6 +10,8 @@ module Iris.Visuals.Image
        , U.readTexture
        , imageInit
        , imageFromFile
+       , makeImage
+       , drawImage
        ) where
 
 import qualified Data.ByteString as BS

@@ -13,7 +13,7 @@ import           Iris.Reactive
 import           Iris.SceneGraph
 import           Iris.Text
 import           Iris.Transformation
-import           Iris.Visuals.Image
+import           Iris.Visuals
 
 
 main :: IO ()
@@ -22,17 +22,11 @@ main =
      win <- W.makeWindow "Image" (640, 480)
      canvas <- W.initGLFW win
 
-     char1 <- loadCharacter path 'z' 512
-     node1 <- imageInit $ ImageSpec (characterTexture char1) verts
-     char2 <- loadCharacter path 'g' 512
-     node2 <- imageInit $ ImageSpec (characterTexture char2) verts
-     let cam = panZoomCamera { width = 2, height = 2 }
-         coll = groupNode
-                [ transNode (translation (L.V3 (-0.5) 0 0)) [node1]
-                , transNode (translation (L.V3 0.5 0 0)) [node2]
-                ]
+     node <- textInit $ TextSpec "Hello!" path (L.V2 0 0) 1 512
+     let cam = panZoomCamera { width = 5, height = 5 }
+         node' = transNode (translation (L.V3 (-1) 0 0)) [node]
 
-     network <- compile $ makeScene canvas (pure coll) (Just cam)
+     network <- compile $ makeScene canvas (pure node') (Just cam)
      actuate network
 
      W.mainLoop canvas

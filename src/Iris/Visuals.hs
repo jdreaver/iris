@@ -1,8 +1,9 @@
 module Iris.Visuals
-       ( module Iris.Visuals.Line
-       , module Iris.Visuals.Mesh
+       ( module X
        ) where
 
 
-import Iris.Visuals.Line
-import Iris.Visuals.Mesh
+import Iris.Visuals.Line as X
+import Iris.Visuals.Image as X
+import Iris.Visuals.Mesh as X
+import Iris.Visuals.Text as X
