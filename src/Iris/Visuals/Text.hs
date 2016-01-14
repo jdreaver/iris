@@ -1,3 +1,5 @@
+{-# LANGUAGE CPP #-}
+
 -- | Visual to render lines of text.
 
 module Iris.Visuals.Text
@@ -8,6 +10,9 @@ module Iris.Visuals.Text
        , makeText
        ) where
 
+#if !MIN_VERSION_base(4,8,0)
+import           Prelude.Compat ((<$>), (<*>))
+#endif
 
 import qualified Data.Vector.Storable as V
 import qualified Graphics.Rendering.OpenGL as GL

@@ -11,7 +11,6 @@ import qualified Iris.Backends.GLFW as W
 import           Iris.Camera
 import           Iris.Reactive
 import           Iris.SceneGraph
-import           Iris.Text
 import           Iris.Transformation
 import           Iris.Visuals
 
