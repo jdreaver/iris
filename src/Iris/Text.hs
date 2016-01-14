@@ -30,8 +30,8 @@ loadFont path =
      fontFace ft path
 
 -- | Returns a TextureObject for a given character.
-loadCharacter :: FilePath -> Char -> Int -> Int -> IO TextureObject
-loadCharacter path char px texUnit = do
+loadCharacter :: FilePath -> Char -> Int -> IO TextureObject
+loadCharacter path char px = do
     ff <- loadFont path
     runFreeType $ ft_Set_Pixel_Sizes ff 0 (fromIntegral px)
 
@@ -59,7 +59,7 @@ loadCharacter path char px texUnit = do
     rowAlignment Unpack $= 1
 
     -- Generate an opengl texture.
-    tex <- newBoundTexUnit texUnit
+    tex <- newBoundTexUnit
     printError
 
     -- Buffer glyph bitmap into texture
@@ -80,11 +80,11 @@ loadCharacter path char px texUnit = do
     return tex
 
 
-newBoundTexUnit :: Int -> IO TextureObject
-newBoundTexUnit u = do
+newBoundTexUnit :: IO TextureObject
+newBoundTexUnit = do
     [tex] <- genObjectNames 1
     texture Texture2D $= Enabled
-    activeTexture     $= TextureUnit (fromIntegral u)
+    activeTexture     $= TextureUnit 0
     textureBinding Texture2D $= Just tex
     return tex
 
