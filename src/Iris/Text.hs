@@ -1,3 +1,5 @@
+{-# LANGUAGE CPP #-}
+
 -- | Create text items with FreeType.
 --
 -- The first draft of this module was built with code and ideas taken from
@@ -10,6 +12,9 @@ module Iris.Text
        , Character (..)
        ) where
 
+#if !MIN_VERSION_base(4,8,0)
+import           Prelude.Compat ((<$>), (<*>))
+#endif
 
 import           Control.Monad
 import           Foreign
@@ -22,14 +27,16 @@ import           Graphics.Rendering.FreeType.Internal.GlyphMetrics hiding (heigh
 import           Graphics.Rendering.FreeType.Internal.GlyphSlot
 import           Graphics.Rendering.FreeType.Internal.Library
 import           Graphics.Rendering.FreeType.Internal.PrimitiveTypes
+import           Graphics.Rendering.FreeType.Internal.Vector
 import qualified Linear as L
 import           System.IO (hPutStrLn, stderr)
 
 
 data TextString = TextString
-  { textStringString :: String
-  , textStringChars  :: [Character]
-  , textStringHeight :: GLfloat
+  { textStringString   :: String
+  , textStringChars    :: [Character]
+  , textStringHeight   :: GLfloat
+  , textStringKerning  :: [GLfloat]
   } deriving (Show)
 
 
@@ -38,7 +45,8 @@ loadString fp s px =
   do ff <- loadFont fp
      faceHeight <- peek $ height ff
      chars <- mapM (loadCharacter ff px) s
-     return $ TextString s chars (fromIntegral faceHeight)
+     kernPairs' <- kernPairs ff s
+     return $ TextString s chars (fromIntegral faceHeight) kernPairs'
 
 -- | Loads the a FreeType font from a file path.
 loadFont :: FilePath -> IO FT_Face
@@ -143,3 +151,24 @@ fontFace ft fp = withCString fp $ \str ->
     alloca $ \ptr -> do
         runFreeType $ ft_New_Face ft str 0 ptr
         peek ptr
+
+-- | More type-safe rapper around ft_Get_Kerning
+getKerning :: FT_Face -> FT_Kerning_Mode -> Char -> Char -> IO FT_Vector
+getKerning ff (FT_Kerning_Mode kmint) cl cr  =
+  do idxl <- ft_Get_Char_Index ff $ fromIntegral $ fromEnum cl
+     idxr <- ft_Get_Char_Index ff $ fromIntegral $ fromEnum cr
+     alloca $ \ptr -> do
+        runFreeType $ ft_Get_Kerning ff idxl idxr (fromIntegral kmint) ptr
+        peek ptr
+
+-- | Gets horizontal kerning as a float
+getHorizontalKerning :: FT_Face -> Char -> Char -> IO GLfloat
+getHorizontalKerning ff cl cr =
+  do (FT_Vector kx _) <- getKerning ff ft_KERNING_DEFAULT cl cr
+     return $ fromIntegral kx / 64
+
+-- | Gives the advance delta due to kerning for each character in a string.
+kernPairs :: FT_Face -> String -> IO [GLfloat]
+kernPairs _ [] = return []
+kernPairs ff s = (++) <$> mapM (uncurry $ getHorizontalKerning ff) pairs <*> return [0]
+  where pairs = zip s (tail s)

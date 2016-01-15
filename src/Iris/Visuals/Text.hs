@@ -46,14 +46,15 @@ textInit spec =
 -- creating a quadrilateral
 makeText :: TextSpec -> IO TextItem
 makeText (TextSpec s fp pos h px) =
-  do textString <- loadString fp s px
-     images <- makeText' (textStringChars textString) pos h px
+  do ts <- loadString fp s px
+     images <- makeText' (textStringChars ts) (textStringKerning ts) pos h px
      return $ TextItem images
 
-makeText' :: [Character] -> L.V2 GL.GLfloat -> GL.GLfloat -> Int -> IO [ImageItem]
-makeText' [] _ _ _               = return []
-makeText' (c:s) (L.V2 x y) th px =
-  do
+makeText' :: [Character] -> [GL.GLfloat] -> L.V2 GL.GLfloat -> GL.GLfloat -> Int -> IO [ImageItem]
+makeText' [] _ _ _ _ = return []
+makeText' (c:s) (kx:kxs) (L.V2 x y) th px =
+  do -- Compute the dimensions of the quadrilateral for this character using
+     -- the dimensions from FreeType.
      let (Character _ to (L.V2 cw ch) (L.V2 bx by) adv) = c
          scale = th / fromIntegral px
          xpos  = x + bx * scale
@@ -65,8 +66,9 @@ makeText' (c:s) (L.V2 x y) th px =
                             , L.V3 (xpos + w) (ypos + h) 0
                             , L.V3 xpos       (ypos + h) 0
                             ]
-         x'    = x + adv * scale
-     (:) <$> makeImage (ImageSpec to verts) <*> makeText' s (L.V2 x' y) th px
+         -- Advance position for the next character, applying kerning.
+         x'    = x + (adv + kx) * scale
+     (:) <$> makeImage (ImageSpec to verts) <*> makeText' s kxs (L.V2 x' y) th px
 
 
 -- | Draw a given line item to the current OpenGL context
