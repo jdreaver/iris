@@ -59,7 +59,7 @@ library
                      , lens >= 4.7
                      , linear >= 1.18
                      , OpenGL >= 2.12
-                     , reactive-banana == 1.0.*
+                     , reactive-banana == 1.1.*
                      , stm == 2.4.*
                      , vector >= 0.10
   hs-source-dirs:      src
@@ -84,7 +84,7 @@ test-suite tests
                     , lens >= 4.7
                     , linear >= 1.18
                     , OpenGL >= 2.12
-                    , reactive-banana == 1.0.*
+                    , reactive-banana == 1.1.*
                     , stm == 2.4.*
                     , vector >= 0.10
 

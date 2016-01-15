@@ -3,4 +3,4 @@ packages:
   - '.'
 extra-deps:
   - freetype2-0.1.1
-  - reactive-banana-1.0.0.0
+  - reactive-banana-1.1.0.0
