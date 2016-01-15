@@ -45,15 +45,17 @@ textInit spec =
 -- | Create a `TextItem` by creating textures for individual characters, and
 -- creating a quadrilateral
 makeText :: TextSpec -> IO TextItem
-makeText (TextSpec s fp pos h fs) =
-  do images <- makeText' s fp pos h fs
+makeText (TextSpec s fp pos h px) =
+  do textString <- loadString fp s px
+     images <- makeText' (textStringChars textString) pos h px
      return $ TextItem images
 
-makeText' :: String -> FilePath -> L.V2 GL.GLfloat -> GL.GLfloat -> Int -> IO [ImageItem]
-makeText' [] _ _ _ _                = return []
-makeText' (c:s) fp (L.V2 x y) th fs =
-  do (Character _ to (L.V2 cw ch) (L.V2 bx by) adv) <- loadCharacter fp c fs
-     let scale = th / fromIntegral fs
+makeText' :: [Character] -> L.V2 GL.GLfloat -> GL.GLfloat -> Int -> IO [ImageItem]
+makeText' [] _ _ _               = return []
+makeText' (c:s) (L.V2 x y) th px =
+  do
+     let (Character _ to (L.V2 cw ch) (L.V2 bx by) adv) = c
+         scale = th / fromIntegral px
          xpos  = x + bx * scale
          ypos  = y - (fromIntegral ch - by) * scale
          w     = fromIntegral cw * scale
@@ -64,7 +66,7 @@ makeText' (c:s) fp (L.V2 x y) th fs =
                             , L.V3 xpos       (ypos + h) 0
                             ]
          x'    = x + adv * scale
-     (:) <$> makeImage (ImageSpec to verts) <*> makeText' s fp (L.V2 x' y) th fs
+     (:) <$> makeImage (ImageSpec to verts) <*> makeText' s (L.V2 x' y) th px
 
 
 -- | Draw a given line item to the current OpenGL context

@@ -4,7 +4,9 @@
 -- https://github.com/schell/editor
 
 module Iris.Text
-       ( loadCharacter
+       ( TextString (..)
+       , loadString
+       , loadCharacter
        , Character (..)
        ) where
 
@@ -16,12 +18,27 @@ import           Graphics.Rendering.OpenGL hiding (bitmap)
 import           Graphics.Rendering.FreeType.Internal
 import           Graphics.Rendering.FreeType.Internal.Bitmap
 import           Graphics.Rendering.FreeType.Internal.Face
-import           Graphics.Rendering.FreeType.Internal.GlyphMetrics hiding (width)
+import           Graphics.Rendering.FreeType.Internal.GlyphMetrics hiding (height, width)
 import           Graphics.Rendering.FreeType.Internal.GlyphSlot
 import           Graphics.Rendering.FreeType.Internal.Library
 import           Graphics.Rendering.FreeType.Internal.PrimitiveTypes
 import qualified Linear as L
 import           System.IO (hPutStrLn, stderr)
+
+
+data TextString = TextString
+  { textStringString :: String
+  , textStringChars  :: [Character]
+  , textStringHeight :: GLfloat
+  } deriving (Show)
+
+
+loadString :: FilePath -> String -> Int -> IO TextString
+loadString fp s px =
+  do ff <- loadFont fp
+     faceHeight <- peek $ height ff
+     chars <- mapM (loadCharacter ff px) s
+     return $ TextString s chars (fromIntegral faceHeight)
 
 -- | Loads the a FreeType font from a file path.
 loadFont :: FilePath -> IO FT_Face
@@ -40,10 +57,9 @@ data Character = Character
   , characterAdvance :: GLfloat
   } deriving (Show)
 
--- | Returns a TextureObject for a given character.
-loadCharacter :: FilePath -> Char -> Int -> IO Character
-loadCharacter path char px = do
-    ff <- loadFont path
+-- | Loads a character texture using FreeType
+loadCharacter :: FT_Face -> Int -> Char -> IO Character
+loadCharacter ff px char = do
     runFreeType $ ft_Set_Pixel_Sizes ff 0 (fromIntegral px)
 
     -- Get the unicode char index.
