@@ -58,8 +58,8 @@ initCamera' cam events =
      -- specifically, we want to create event handlers for camera actions, but
      -- we only have the root canvas events available. Therefore, we create
      -- dummy events that we will fire with the event handlers.
-     (ePos, hPos) <- eventHandler NotAccepted
-     (eScroll, hScroll) <- eventHandler NotAccepted
+     (ePos, hPos) <- newEvent
+     (eScroll, hScroll) <- newEvent
      ePressedButtons <- liftMoment $ recordButtons events
 
      let eClick = clickEvent ePressedButtons
@@ -67,8 +67,8 @@ initCamera' cam events =
          eScrolledCam = scrollEvent events eScroll
 
          winEventHandler = canvasEventHandler
-                           { mousePosEventHandler    = Just hPos
-                           , mouseScrollEventHandler = Just hScroll
+                           { mousePosEventHandler    = Just $ fromHandler hPos
+                           , mouseScrollEventHandler = Just $ fromHandler hScroll
                            }
 
      bCamState <- accumB (Map.fromList [], cam) $ unions [ eClick, eMovedCam, eScrolledCam ]

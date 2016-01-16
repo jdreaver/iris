@@ -35,8 +35,8 @@ makeScene win n maybeCam =
   do events <- makeEvents win
 
      -- Initialize camera and attach event handlers
-     (root, winEventHandlers) <- attachCam maybeCam events n []
-     attachEventHandlers events winEventHandlers
+     (root, winEventHandler) <- attachCam maybeCam events n
+     attachEventHandlers events winEventHandler
 
      let bTrans = aspectTrans <$> (events ^. canvasSizeObservable ^. behavior)
          tNode = transNode <$> bTrans <*> sequenceA [root]
@@ -54,14 +54,13 @@ attachCam :: (Camera c) =>
              Maybe c ->
              CanvasEvents ->
              DynamicDrawNode ->
-             [CanvasEventHandler] ->
-             MomentIO (DynamicDrawNode, [CanvasEventHandler])
-attachCam maybeCam es n hs =
+             MomentIO (DynamicDrawNode, CanvasEventHandler)
+attachCam maybeCam es n =
   case maybeCam of
-    Nothing    -> return (n, hs)
+    Nothing    -> return (n, canvasEventHandler)
     (Just cam) -> do (bCamTrans, camHandler) <- initCamera cam es
                      let n'  = transNode <$> bCamTrans <*> sequenceA [n]
-                         hs' = camHandler : hs
+                         hs' = camHandler
                      return (n', hs')
 
 
