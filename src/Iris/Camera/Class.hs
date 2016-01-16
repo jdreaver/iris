@@ -31,7 +31,7 @@ pressedButtons :: PressedButtons
 pressedButtons = Map.fromList []
 
 
--- | Creates a Behavior that holds the currently pressed buttons.
+-- | Creates an Event that holds the currently pressed buttons.
 recordButtons :: CanvasEvents ->
                  Moment (Event PressedButtons)
 recordButtons events = accumE pressedButtons eClickedCam
