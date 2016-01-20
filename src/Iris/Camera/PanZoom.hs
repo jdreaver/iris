@@ -44,18 +44,9 @@ panZoomTrans (PanZoomCamera (L.V2 cx cy) w h _) =
         scale' = scale (L.V3 (2/w) (2/h) 1)
 
 
--- | Holds the current camera state, and also the original state when we are
--- currently dragging.
-data PanZoomState = PanZoomState
-  { panZoomCurrentState  :: !PanZoomCamera
-  , panZoomOriginalState :: !PanZoomCamera -- ^ State at beginning of drag
-  , panZoomOriginalMouse :: !MousePosition -- ^ Mouse position at beginning of drag
-  } deriving (Show)
-{-# ANN panZoomOriginalState "HLint: ignore" #-}
-{-# ANN panZoomOriginalMouse "HLint: ignore" #-}
-
-panZoomState :: PanZoomCamera -> PanZoomState
-panZoomState cam = PanZoomState cam cam (MousePosition 0 0)
+-- | The first part of the tuple is a map of the mouse state and position when
+-- the mouse is pressed. The second part is the actual camera state.
+type PanZoomState = (Map.Map MouseButton (PanZoomCamera, MousePosition), PanZoomCamera)
 
 panZoomTransB :: PanZoomCamera
               -> CanvasEvents
@@ -67,31 +58,28 @@ panZoomTransB cam events =
          eMovedCam = panZoomDragEvent events
          eScrolledCam = panZoomScrollEvent events
 
-     bCamState <- accumB (panZoomState cam) $ unions [ eClick, eMovedCam, eScrolledCam ]
+     bCamState <- accumB (Map.fromList [], cam) $ unions [ eClick, eMovedCam, eScrolledCam ]
 
-     return $ panZoomTrans <$> (panZoomCurrentState <$> bCamState)
+     return $ panZoomTrans <$> (snd <$> bCamState)
 
 
 -- | Tags a PressedButtons map with the current camera state.
 panZoomClickEvent :: Event PressedButtons
                   -> Event (PanZoomState -> PanZoomState)
-panZoomClickEvent ePressedButtons = panZoomClick <$> ePressedButtons
+panZoomClickEvent ePressedButtons = f <$> ePressedButtons
+  where f :: PressedButtons -> PanZoomState -> PanZoomState
+        f pb (_, cs) = (fmap ((,) cs) pb, cs)
 
--- | If the drag button of the camera was clicked, then we record the current
--- state and mouse position into PanZoomState.
-panZoomClick :: PressedButtons -> PanZoomState -> PanZoomState
-panZoomClick pb pzs@(PanZoomState cs _ _) = maybe pzs updateState lookupButton
-  where lookupButton    = Map.lookup (dragButton cs) pb
-        updateState pos = PanZoomState cs cs pos
-{-# ANN panZoomClick "HLint: ignore Eta reduce" #-}
 
 panZoomDragEvent :: CanvasEvents
                  -> Event (PanZoomState -> PanZoomState)
 panZoomDragEvent events =
   doMove <$> events ^. canvasSizeObservable ^. behavior
          <@> events ^. mousePosObservable ^. event
-  where doMove size pos (PanZoomState cs ocs opos) =
-          PanZoomState (panZoomMouseDrag size opos ocs pos cs) ocs opos
+  where doMove size pos (cm, cs) =
+          maybe (cm, cs)
+          (\(cso, opos) -> (cm, panZoomMouseDrag size opos cso pos cs))
+          (Map.lookup (dragButton cs) cm)
 
 -- | Change the camera state with a mouse drag.
 panZoomMouseDrag :: CanvasSize
@@ -116,8 +104,7 @@ panZoomScrollEvent events =
   doZoom <$> events ^. canvasSizeObservable ^. behavior
          <*> events ^. mousePosObservable ^. behavior
          <@> events ^. mouseScrollEvent
-  where doZoom s p z (PanZoomState cs ocs opos) =
-          PanZoomState (panZoomMouseZoom s p cs z) ocs opos
+  where doZoom s p z (cm, cs) = (cm, panZoomMouseZoom s p cs z)
 
 
 -- | Zoom a camera, keeping the point under the mouse still while zooming.
