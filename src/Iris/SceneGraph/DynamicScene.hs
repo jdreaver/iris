@@ -8,10 +8,6 @@ module Iris.SceneGraph.DynamicScene
        , sceneRoot
        ) where
 
-#if !MIN_VERSION_base(4,8,0)
-import           Prelude.Compat (sequenceA)
-#endif
-
 import           Control.Lens
 import           Graphics.Rendering.OpenGL (($=))
 import qualified Graphics.Rendering.OpenGL as GL
@@ -38,8 +34,8 @@ makeScene win n maybeCam =
      root <- maybe (return n) (attachCam events n) maybeCam
 
      let bTrans = aspectTrans <$> (events ^. canvasSizeObservable ^. behavior)
-         tNode = transNode <$> bTrans <*> sequenceA [root]
-         root' = sceneRoot win <$> sequenceA [tNode]
+         tNode = transNode <$> bTrans <*> root
+         root' = sceneRoot win <$> tNode
 
      -- Hook up the draw event to drawGraph
      let eDraw = drawGraph <$> root' <@ (events ^. drawEvent)
@@ -55,10 +51,10 @@ attachCam :: (Camera c) =>
              MomentIO DynamicDrawNode
 attachCam es n cam =
     do bCamTrans <- initCamera cam es
-       return $ transNode <$> bCamTrans <*> sequenceA [n]
+       return $ transNode <$> bCamTrans <*> n
 
 
-sceneRoot :: (Canvas a) => a -> [DrawNode] -> DrawNode
+sceneRoot :: (Canvas a) => a -> DrawNode -> DrawNode
 sceneRoot can = effectNode (drawRoot can)
 
 drawRoot :: (Canvas a) => a -> IO ()

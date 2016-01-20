@@ -58,13 +58,13 @@ drawChildren :: [DrawNode] -> DrawFunc
 drawChildren cs trans = mapM_ (drawGraph' trans) cs
 
 -- | Modifies the current transformation, and then draws children.
-transNode :: Transformation -> [DrawNode] -> DrawNode
-transNode t cs = DrawNode (drawTrans t cs)
+transNode :: Transformation -> DrawNode -> DrawNode
+transNode t child = DrawNode (drawTrans t child)
 
-drawTrans :: Transformation -> [DrawNode] -> DrawFunc
-drawTrans t' cs (DrawData t s) = drawChildren cs (DrawData (t `apply` t') s)
+drawTrans :: Transformation -> DrawNode -> DrawFunc
+drawTrans t' child (DrawData t s) = drawGraph' (DrawData (t `apply` t') s) child
 
 -- | Performs some IO effect before drawing children. Useful for OpenGL setup
 -- functions.
-effectNode :: IO () -> [DrawNode] -> DrawNode
-effectNode f cs = DrawNode (\t -> f >> drawChildren cs t)
+effectNode :: IO () -> DrawNode -> DrawNode
+effectNode f child = DrawNode (\t -> f >> drawGraph' t child)
