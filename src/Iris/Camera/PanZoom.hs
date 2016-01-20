@@ -14,7 +14,6 @@ import qualified Linear as L
 
 import           Iris.Backends as W
 import           Iris.Camera.Class
-import           Iris.Events
 import           Iris.Mouse
 import           Iris.Reactive
 import           Iris.Transformation
@@ -51,29 +50,17 @@ panZoomTrans (PanZoomCamera (L.V2 cx cy) w h _) =
 type PanZoomState = (Map.Map MouseButton (PanZoomCamera, GL.Position), PanZoomCamera)
 
 initCamera' :: PanZoomCamera -> CanvasEvents ->
-               MomentIO (Behavior Transformation, CanvasEventHandler)
+               MomentIO (Behavior Transformation)
 initCamera' cam events =
-  do -- Why are we creating new events? We need them to avoid the circular
-     -- dependency on canvas events and events passed to event handlers. More
-     -- specifically, we want to create event handlers for camera actions, but
-     -- we only have the root canvas events available. Therefore, we create
-     -- dummy events that we will fire with the event handlers.
-     (ePos, hPos) <- newEvent
-     (eScroll, hScroll) <- newEvent
-     ePressedButtons <- liftMoment $ recordButtons events
+  do ePressedButtons <- liftMoment $ recordButtons events
 
      let eClick = clickEvent ePressedButtons
-         eMovedCam = dragEvent events ePos
-         eScrolledCam = scrollEvent events eScroll
-
-         winEventHandler = canvasEventHandler
-                           { mousePosEventHandler    = Just $ fromHandler hPos
-                           , mouseScrollEventHandler = Just $ fromHandler hScroll
-                           }
+         eMovedCam = dragEvent events
+         eScrolledCam = scrollEvent events
 
      bCamState <- accumB (Map.fromList [], cam) $ unions [ eClick, eMovedCam, eScrolledCam ]
 
-     return (panZoomTrans <$> (snd <$> bCamState), winEventHandler)
+     return $ panZoomTrans <$> (snd <$> bCamState)
 
 
 -- | Tags a PressedButtons map with the current camera state.
@@ -85,11 +72,10 @@ clickEvent ePressedButtons = f <$> ePressedButtons
 
 
 dragEvent :: CanvasEvents ->
-             Event GL.Position ->
              Event (PanZoomState -> PanZoomState)
-dragEvent events ePos =
+dragEvent events =
   doMove <$> events ^. canvasSizeObservable ^. behavior
-         <@> ePos
+         <@> events ^. mousePosObservable ^. event
   where doMove size pos (cm, cs) =
           maybe (cm, cs)
           (\(c1, opos) -> (cm, mouseDrag size pos opos c1 cs))
@@ -113,12 +99,11 @@ mouseDrag (GL.Size w h) (GL.Position x y) (GL.Position ox oy) ocs cs =
 
 
 scrollEvent :: CanvasEvents ->
-               Event GL.GLfloat ->
                Event (PanZoomState -> PanZoomState)
-scrollEvent events eScroll =
+scrollEvent events =
   doZoom <$> events ^. canvasSizeObservable ^. behavior
          <*> events ^. mousePosObservable ^. behavior
-         <@> eScroll
+         <@> events ^. mouseScrollEvent
   where doZoom s p z (cm, cs) = (cm, mouseZoom s p cs z)
 
 

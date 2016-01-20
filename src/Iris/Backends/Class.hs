@@ -9,21 +9,17 @@
 module Iris.Backends.Class
        ( Canvas (..)
        , CanvasEvents (..)
-       , CanvasEventHandler (..)
-       , canvasEventHandler
        , mousePosObservable
        , mouseButtonEvent
        , mouseScrollEvent
        , canvasSizeObservable
        , framebufferSizeObservable
        , drawEvent
-       , attachEventHandlers
        ) where
 
 import           Control.Lens
 import qualified Graphics.Rendering.OpenGL as GL
 
-import           Iris.Events
 import           Iris.Mouse
 import           Iris.Reactive
 
@@ -48,21 +44,3 @@ data CanvasEvents = CanvasEvents
   }
 
 makeFields ''CanvasEvents
-
-
-data CanvasEventHandler = CanvasEventHandler
-  { mousePosEventHandler    :: Maybe (EventHandler GL.Position)
-  , mouseButtonEventHandler :: Maybe (EventHandler MouseButtonEvent)
-  , mouseScrollEventHandler :: Maybe (EventHandler GL.GLfloat)
-  , canvasSizeEventHandler  :: Maybe (EventHandler GL.Size)
-  }
-
-canvasEventHandler :: CanvasEventHandler
-canvasEventHandler = CanvasEventHandler Nothing Nothing Nothing Nothing
-
-attachEventHandlers :: CanvasEvents -> CanvasEventHandler -> MomentIO ()
-attachEventHandlers es h =
-  do maybe (return ()) (\h' -> h' $ es ^. mousePosObservable ^. event) (mousePosEventHandler h)
-     maybe (return ()) (\h' -> h' $ es ^. mouseButtonEvent) (mouseButtonEventHandler h)
-     maybe (return ()) (\h' -> h' $ es ^. mouseScrollEvent) (mouseScrollEventHandler h)
-     maybe (return ()) (\h' -> h' $ es ^. canvasSizeObservable ^. event) (canvasSizeEventHandler h)

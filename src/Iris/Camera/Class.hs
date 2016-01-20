@@ -19,7 +19,7 @@ import           Iris.Transformation
 
 -- | Type class for all cameras.
 class Camera a where
-  initCamera :: a -> CanvasEvents -> MomentIO (Behavior Transformation, CanvasEventHandler)
+  initCamera :: a -> CanvasEvents -> MomentIO (Behavior Transformation)
 
 
 -- | Stores currently pressed buttons and the mouse coordinates when they were

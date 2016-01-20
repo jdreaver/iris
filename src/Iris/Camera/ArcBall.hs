@@ -15,7 +15,6 @@ import qualified Linear as L
 
 import           Iris.Backends
 import           Iris.Camera.Class
-import           Iris.Events
 import           Iris.Mouse
 import           Iris.Reactive
 import           Iris.Transformation
@@ -45,24 +44,17 @@ cameraTrans (ArcBallCamera (L.V3 cx cy cz) w a e _) =
 
 initCamera' :: ArcBallCamera ->
                CanvasEvents ->
-               MomentIO (Behavior Transformation, CanvasEventHandler)
+               MomentIO (Behavior Transformation)
 initCamera' cam events =
-  do (ePos, hPos) <- newEvent
-     (eScroll, hScroll) <- newEvent
-     ePressedButtons <- liftMoment $ recordButtons events
+  do ePressedButtons <- liftMoment $ recordButtons events
 
-     let eMovedCam = dragEvent events ePos
-         eScrolledCam = scrollEvent eScroll
+     let eMovedCam = dragEvent events
+         eScrolledCam = scrollEvent (events ^. mouseScrollEvent)
          eClick = clickEvent ePressedButtons
-
-         winEventHandler = canvasEventHandler
-                           { mousePosEventHandler    = Just $ fromHandler hPos
-                           , mouseScrollEventHandler = Just $ fromHandler hScroll
-                           }
 
      bCamState <- accumB (Map.fromList [], cam) $ unions [ eClick, eMovedCam, eScrolledCam ]
 
-     return (cameraTrans <$> (snd <$> bCamState), winEventHandler)
+     return (cameraTrans <$> (snd <$> bCamState))
 
 type ArcBallState = (Map.Map MouseButton (ArcBallCamera, GL.Position), ArcBallCamera)
 
@@ -72,11 +64,10 @@ clickEvent ePressedButtons = f <$> ePressedButtons
   where f pb (_, cs) = (fmap ((,) cs) pb, cs)
 
 dragEvent :: CanvasEvents ->
-             Event GL.Position ->
              Event (ArcBallState -> ArcBallState)
-dragEvent events ePos =
+dragEvent events =
   doMove <$> events ^. canvasSizeObservable ^. behavior
-         <@> ePos
+         <@> events ^. mousePosObservable ^. event
   where doMove size pos (cm, cs) =
           maybe (cm, cs)
           (\(c1, opos) -> (cm, mouseRotate size pos opos c1 cs))
