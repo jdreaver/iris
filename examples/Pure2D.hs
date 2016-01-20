@@ -7,7 +7,7 @@ module Main where
 import qualified Linear as L
 
 import qualified Iris.Backends.GLFW as W
-import           Iris.Camera.PanZoom
+import           Iris.Camera
 import           Iris.SceneGraph
 import           Iris.Visuals.Line
 
@@ -20,7 +20,7 @@ main =
      lineNode <- lineInit $ LineSpec lineVerts (L.V3 0.2 0.5 1)
 
      let cam = panZoomCamera { center = L.V2 1 2 , width = 10 , height = 7 }
-         camNode = transNode (panZoomTrans cam) lineNode
+         camNode = transNode (cameraTrans cam) lineNode
          scene = sceneRoot canvas camNode
 
      W.mainLoop' win (drawGraph scene)

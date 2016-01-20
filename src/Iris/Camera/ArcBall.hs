@@ -28,7 +28,8 @@ data ArcBallCamera = ArcBallCamera
   }
 
 instance Camera ArcBallCamera where
-  initCamera = initCamera'
+  cameraTrans         = arcBallCameraTrans
+  cameraTransBehavior = arcBallCameraTransB
 
 arcBallCamera :: ArcBallCamera
 arcBallCamera = ArcBallCamera (L.V3 0 0 0) 2 0 0 MouseButtonLeft
@@ -41,10 +42,10 @@ arcBallCameraTrans (ArcBallCamera (L.V3 cx cy cz) w a e _) =
         rotElev  = rotateX ((pi / 2) - e)
         scale'   = scale (L.V3 (2/w) (2/w) (2/1000))
 
-initCamera' :: ArcBallCamera ->
-               CanvasEvents ->
-               MomentIO (Behavior Transformation)
-initCamera' cam events =
+arcBallCameraTransB :: ArcBallCamera ->
+                       CanvasEvents ->
+                       MomentIO (Behavior Transformation)
+arcBallCameraTransB cam events =
   do ePressedButtons <- liftMoment $ recordButtons events
 
      let eMovedCam = arcBallDragEvent events

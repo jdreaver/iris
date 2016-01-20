@@ -3,7 +3,6 @@
 module Iris.Camera.PanZoom
        ( PanZoomCamera (..)
        , panZoomCamera
-       , panZoomTrans
        ) where
 
 import           Control.Lens
@@ -29,7 +28,8 @@ data PanZoomCamera = PanZoomCamera
   } deriving (Show)
 
 instance Camera PanZoomCamera where
-  initCamera = initCamera'
+  cameraTrans         = panZoomTrans
+  cameraTransBehavior = panZoomTransB
 
 -- | Default PanZoomCamera instance.
 panZoomCamera :: PanZoomCamera
@@ -49,9 +49,9 @@ panZoomTrans (PanZoomCamera (L.V2 cx cy) w h _) =
 -- the mouse is pressed. The second part is the actual camera state.
 type PanZoomState = (Map.Map MouseButton (PanZoomCamera, MousePosition), PanZoomCamera)
 
-initCamera' :: PanZoomCamera -> CanvasEvents ->
-               MomentIO (Behavior Transformation)
-initCamera' cam events =
+panZoomTransB :: PanZoomCamera -> CanvasEvents ->
+                 MomentIO (Behavior Transformation)
+panZoomTransB cam events =
   do ePressedButtons <- liftMoment $ recordButtons events
 
      let eClick = panZoomClickEvent ePressedButtons

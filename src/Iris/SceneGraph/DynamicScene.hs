@@ -50,7 +50,7 @@ attachCam :: (Camera c) =>
              c ->
              MomentIO DynamicDrawNode
 attachCam es n cam =
-    do bCamTrans <- initCamera cam es
+    do bCamTrans <- cameraTransBehavior cam es
        return $ transNode <$> bCamTrans <*> n
 
 
