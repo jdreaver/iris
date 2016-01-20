@@ -8,7 +8,6 @@ module Iris.Camera.Class
        , recordClick
        ) where
 
-import           Control.Lens
 import qualified Data.Map.Strict as Map
 
 import           Iris.Backends
@@ -32,12 +31,12 @@ pressedButtons = Map.fromList []
 
 
 -- | Creates an Event that holds the currently pressed buttons.
-recordButtons :: CanvasEvents ->
-                 Moment (Event PressedButtons)
-recordButtons events = accumE pressedButtons eClickedCam
+recordButtons :: Behavior MousePosition
+              -> Event MouseButtonEvent
+              -> Moment (Event PressedButtons)
+recordButtons posB mouseE = accumE pressedButtons eClickedCam
   where applyClick p (b, bs) = recordClick p b bs
-        eClickedCam = applyClick <$> (events ^. mousePosObservable ^. behavior)
-                                 <@> (events ^. mouseButtonEvent)
+        eClickedCam = applyClick <$> posB <@> mouseE
 
 
 -- | Record when a button is pressed in the `PressedButtons` state.

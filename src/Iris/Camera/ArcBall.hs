@@ -46,7 +46,9 @@ arcBallCameraTransB :: ArcBallCamera
                     -> CanvasEvents
                     -> MomentIO (Behavior Transformation)
 arcBallCameraTransB cam events =
-  do ePressedButtons <- liftMoment $ recordButtons events
+  do let mousePosB    = events ^. mousePosObservable ^. behavior
+         mouseButtonE = events ^. mouseButtonEvent
+     ePressedButtons <- liftMoment $ recordButtons mousePosB mouseButtonE
 
      let eMovedCam = arcBallDragEvent events
          eScrolledCam = arcBallScrollEvent (events ^. mouseScrollEvent)
