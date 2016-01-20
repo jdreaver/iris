@@ -35,14 +35,13 @@ makeScene win n maybeCam =
   do events <- makeEvents win
 
      -- Initialize camera and attach event handlers
-     root <- attachCam maybeCam events n
+     root <- maybe (return n) (attachCam events n) maybeCam
 
      let bTrans = aspectTrans <$> (events ^. canvasSizeObservable ^. behavior)
          tNode = transNode <$> bTrans <*> sequenceA [root]
          root' = sceneRoot win <$> sequenceA [tNode]
 
-     -- Recurse through the scene graph to hook up the draw event and
-     -- transformation behavior to all nodes.
+     -- Hook up the draw event to drawGraph
      let eDraw = drawGraph <$> root' <@ (events ^. drawEvent)
      reactimate eDraw
 
@@ -50,16 +49,13 @@ makeScene win n maybeCam =
 -- the camera node as root, and make the camera event handler the first event
 -- handler.
 attachCam :: (Camera c) =>
-             Maybe c ->
              CanvasEvents ->
              DynamicDrawNode ->
+             c ->
              MomentIO DynamicDrawNode
-attachCam maybeCam es n =
-  case maybeCam of
-    Nothing    -> return n
-    (Just cam) -> do bCamTrans <- initCamera cam es
-                     let n' = transNode <$> bCamTrans <*> sequenceA [n]
-                     return n'
+attachCam es n cam =
+    do bCamTrans <- initCamera cam es
+       return $ transNode <$> bCamTrans <*> sequenceA [n]
 
 
 sceneRoot :: (Canvas a) => a -> [DrawNode] -> DrawNode
