@@ -18,12 +18,11 @@ import           Iris.Reactive
 import           Iris.Transformation
 
 
-
 -- | Camera that pans along the XY plane.
 data PanZoomCamera = PanZoomCamera
-  { center :: L.V2 GL.GLfloat
-  , width  :: GL.GLfloat
-  , height :: GL.GLfloat
+  { center     :: L.V2 GL.GLfloat
+  , width      :: GL.GLfloat
+  , height     :: GL.GLfloat
   , dragButton :: MouseButton
   } deriving (Show)
 
@@ -58,8 +57,9 @@ data PanZoomState = PanZoomState
 panZoomState :: PanZoomCamera -> PanZoomState
 panZoomState cam = PanZoomState cam cam (MousePosition 0 0)
 
-panZoomTransB :: PanZoomCamera -> CanvasEvents ->
-                 MomentIO (Behavior Transformation)
+panZoomTransB :: PanZoomCamera
+              -> CanvasEvents
+              -> MomentIO (Behavior Transformation)
 panZoomTransB cam events =
   do ePressedButtons <- liftMoment $ recordButtons events
 
@@ -73,8 +73,8 @@ panZoomTransB cam events =
 
 
 -- | Tags a PressedButtons map with the current camera state.
-panZoomClickEvent :: Event PressedButtons ->
-                     Event (PanZoomState -> PanZoomState)
+panZoomClickEvent :: Event PressedButtons
+                  -> Event (PanZoomState -> PanZoomState)
 panZoomClickEvent ePressedButtons = panZoomClick <$> ePressedButtons
 
 -- | If the drag button of the camera was clicked, then we record the current
@@ -85,8 +85,8 @@ panZoomClick pb pzs@(PanZoomState cs _ _) = maybe pzs updateState lookupButton
         updateState pos = PanZoomState cs cs pos
 {-# ANN panZoomClick "HLint: ignore Eta reduce" #-}
 
-panZoomDragEvent :: CanvasEvents ->
-                    Event (PanZoomState -> PanZoomState)
+panZoomDragEvent :: CanvasEvents
+                 -> Event (PanZoomState -> PanZoomState)
 panZoomDragEvent events =
   doMove <$> events ^. canvasSizeObservable ^. behavior
          <@> events ^. mousePosObservable ^. event
@@ -94,12 +94,12 @@ panZoomDragEvent events =
           PanZoomState (panZoomMouseDrag size opos ocs pos cs) ocs opos
 
 -- | Change the camera state with a mouse drag.
-panZoomMouseDrag :: CanvasSize ->
-                    MousePosition -> -- ^ Original mouse position
-                    PanZoomCamera -> -- ^ Original state
-                    MousePosition -> -- ^ Current mouse position
-                    PanZoomCamera -> -- ^ Current state
-                    PanZoomCamera    -- ^ New state
+panZoomMouseDrag :: CanvasSize
+                 -> MousePosition -- ^ Original mouse position
+                 -> PanZoomCamera -- ^ Original state
+                 -> MousePosition -- ^ Current mouse position
+                 -> PanZoomCamera -- ^ Current state
+                 -> PanZoomCamera -- ^ New state
 panZoomMouseDrag (CanvasSize w h) (MousePosition ox oy) ocs (MousePosition x y) cs =
   cs { center = c }
   where
@@ -110,8 +110,8 @@ panZoomMouseDrag (CanvasSize w h) (MousePosition ox oy) ocs (MousePosition x y) 
     c   = center ocs + L.V2 (-dxw) dyw
 
 
-panZoomScrollEvent :: CanvasEvents ->
-                      Event (PanZoomState -> PanZoomState)
+panZoomScrollEvent :: CanvasEvents
+                   -> Event (PanZoomState -> PanZoomState)
 panZoomScrollEvent events =
   doZoom <$> events ^. canvasSizeObservable ^. behavior
          <*> events ^. mousePosObservable ^. behavior
@@ -121,11 +121,11 @@ panZoomScrollEvent events =
 
 
 -- | Zoom a camera, keeping the point under the mouse still while zooming.
-panZoomMouseZoom :: CanvasSize ->
-                    MousePosition ->     -- ^ Current mouse position
-                    PanZoomCamera ->     -- ^ Current state
-                    MouseScrollAmount -> -- ^ How much mouse wheel was turned
-                    PanZoomCamera        -- ^ New camera state
+panZoomMouseZoom :: CanvasSize
+                 -> MousePosition     -- ^ Current mouse position
+                 -> PanZoomCamera     -- ^ Current state
+                 -> MouseScrollAmount -- ^ How much mouse wheel was turned
+                 -> PanZoomCamera     -- ^ New camera state
 panZoomMouseZoom s p cs (MouseScrollAmount z) =
   cs { center = c' , width = w' , height = h' }
   where

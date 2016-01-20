@@ -42,9 +42,9 @@ arcBallCameraTrans (ArcBallCamera (L.V3 cx cy cz) w a e _) =
         rotElev  = rotateX ((pi / 2) - e)
         scale'   = scale (L.V3 (2/w) (2/w) (2/1000))
 
-arcBallCameraTransB :: ArcBallCamera ->
-                       CanvasEvents ->
-                       MomentIO (Behavior Transformation)
+arcBallCameraTransB :: ArcBallCamera
+                    -> CanvasEvents
+                    -> MomentIO (Behavior Transformation)
 arcBallCameraTransB cam events =
   do ePressedButtons <- liftMoment $ recordButtons events
 
@@ -58,13 +58,13 @@ arcBallCameraTransB cam events =
 
 type ArcBallState = (Map.Map MouseButton (ArcBallCamera, MousePosition), ArcBallCamera)
 
-arcBallClickEvent :: Event PressedButtons ->
-                     Event (ArcBallState -> ArcBallState)
+arcBallClickEvent :: Event PressedButtons
+                  -> Event (ArcBallState -> ArcBallState)
 arcBallClickEvent ePressedButtons = f <$> ePressedButtons
   where f pb (_, cs) = (fmap ((,) cs) pb, cs)
 
-arcBallDragEvent :: CanvasEvents ->
-                    Event (ArcBallState -> ArcBallState)
+arcBallDragEvent :: CanvasEvents
+                 -> Event (ArcBallState -> ArcBallState)
 arcBallDragEvent events =
   doMove <$> events ^. canvasSizeObservable ^. behavior
          <@> events ^. mousePosObservable ^. event
@@ -80,12 +80,12 @@ arcBallDragEvent events =
 -- axis (azimuth cylinder). We compute the angle changes about these cylinders
 -- independently. This frees us from the nasty task of handling when the mouse
 -- goes outside the bounds of the arcball.
-arcBallMouseRotate :: CanvasSize ->
-                      MousePosition -> -- ^ Original mouse position
-                      ArcBallCamera -> -- ^ Original state
-                      MousePosition -> -- ^ Current mouse position
-                      ArcBallCamera -> -- ^ Current state
-                      ArcBallCamera    -- ^ New state
+arcBallMouseRotate :: CanvasSize
+                   -> MousePosition -- ^ Original mouse position
+                   -> ArcBallCamera -- ^ Original state
+                   -> MousePosition -- ^ Current mouse position
+                   -> ArcBallCamera -- ^ Current state
+                   -> ArcBallCamera -- ^ New state
 arcBallMouseRotate (CanvasSize w h) (MousePosition ox oy) ocs (MousePosition x y) cs =
   cs { arcBallAzimuth = azim', arcBallElevation = elev' }
   where
@@ -123,8 +123,8 @@ circleAngle x =
       y    = if norm < 1 then sqrt (1 - norm) else 0
   in atan (x / y)
 
-arcBallScrollEvent :: Event MouseScrollAmount ->
-                      Event (ArcBallState -> ArcBallState)
+arcBallScrollEvent :: Event MouseScrollAmount
+                   -> Event (ArcBallState -> ArcBallState)
 arcBallScrollEvent eScroll = doZoom <$> eScroll
   where doZoom z (cm, cs) = (cm, arcBallMouseZoom cs z)
 
