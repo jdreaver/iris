@@ -3,7 +3,6 @@
 module Iris.Camera.ArcBall
        ( ArcBallCamera (..)
        , arcBallCamera
-       , cameraTrans
        ) where
 
 import           Control.Lens
@@ -34,8 +33,8 @@ instance Camera ArcBallCamera where
 arcBallCamera :: ArcBallCamera
 arcBallCamera = ArcBallCamera (L.V3 0 0 0) 2 0 0 MouseButtonLeft
 
-cameraTrans :: ArcBallCamera -> Transformation
-cameraTrans (ArcBallCamera (L.V3 cx cy cz) w a e _) =
+arcBallCameraTrans :: ArcBallCamera -> Transformation
+arcBallCameraTrans (ArcBallCamera (L.V3 cx cy cz) w a e _) =
   foldl1' Iris.Transformation.apply [scale', rotElev, rotAzim, trans, identity]
   where trans    = translation (L.V3 (-cx) (-cy) (-cz))
         rotAzim  = rotateZ a
@@ -48,29 +47,29 @@ initCamera' :: ArcBallCamera ->
 initCamera' cam events =
   do ePressedButtons <- liftMoment $ recordButtons events
 
-     let eMovedCam = dragEvent events
-         eScrolledCam = scrollEvent (events ^. mouseScrollEvent)
-         eClick = clickEvent ePressedButtons
+     let eMovedCam = arcBallDragEvent events
+         eScrolledCam = arcBallScrollEvent (events ^. mouseScrollEvent)
+         eClick = arcBallClickEvent ePressedButtons
 
      bCamState <- accumB (Map.fromList [], cam) $ unions [ eClick, eMovedCam, eScrolledCam ]
 
-     return (cameraTrans <$> (snd <$> bCamState))
+     return (arcBallCameraTrans <$> (snd <$> bCamState))
 
 type ArcBallState = (Map.Map MouseButton (ArcBallCamera, MousePosition), ArcBallCamera)
 
-clickEvent :: Event PressedButtons ->
-              Event (ArcBallState -> ArcBallState)
-clickEvent ePressedButtons = f <$> ePressedButtons
+arcBallClickEvent :: Event PressedButtons ->
+                     Event (ArcBallState -> ArcBallState)
+arcBallClickEvent ePressedButtons = f <$> ePressedButtons
   where f pb (_, cs) = (fmap ((,) cs) pb, cs)
 
-dragEvent :: CanvasEvents ->
-             Event (ArcBallState -> ArcBallState)
-dragEvent events =
+arcBallDragEvent :: CanvasEvents ->
+                    Event (ArcBallState -> ArcBallState)
+arcBallDragEvent events =
   doMove <$> events ^. canvasSizeObservable ^. behavior
          <@> events ^. mousePosObservable ^. event
   where doMove size pos (cm, cs) =
           maybe (cm, cs)
-          (\(c1, opos) -> (cm, mouseRotate size pos opos c1 cs))
+          (\(cso, opos) -> (cm, arcBallMouseRotate size opos cso pos cs))
           (Map.lookup (arcBallDragButton cs) cm)
 
 
@@ -80,13 +79,13 @@ dragEvent events =
 -- axis (azimuth cylinder). We compute the angle changes about these cylinders
 -- independently. This frees us from the nasty task of handling when the mouse
 -- goes outside the bounds of the arcball.
-mouseRotate :: CanvasSize ->
-               MousePosition ->
-               MousePosition ->
-               ArcBallCamera ->
-               ArcBallCamera ->
-               ArcBallCamera
-mouseRotate (CanvasSize w h) (MousePosition x y) (MousePosition ox oy) ocs cs =
+arcBallMouseRotate :: CanvasSize ->
+                      MousePosition -> -- ^ Original mouse position
+                      ArcBallCamera -> -- ^ Original state
+                      MousePosition -> -- ^ Current mouse position
+                      ArcBallCamera -> -- ^ Current state
+                      ArcBallCamera    -- ^ New state
+arcBallMouseRotate (CanvasSize w h) (MousePosition ox oy) ocs (MousePosition x y) cs =
   cs { arcBallAzimuth = azim', arcBallElevation = elev' }
   where
     -- Compute normalized x and y coordinates, both for the original mouse
@@ -123,12 +122,12 @@ circleAngle x =
       y    = if norm < 1 then sqrt (1 - norm) else 0
   in atan (x / y)
 
-scrollEvent :: Event MouseScrollAmount ->
-               Event (ArcBallState -> ArcBallState)
-scrollEvent eScroll = doZoom <$> eScroll
-  where doZoom z (cm, cs) = (cm, mouseZoom cs z)
+arcBallScrollEvent :: Event MouseScrollAmount ->
+                      Event (ArcBallState -> ArcBallState)
+arcBallScrollEvent eScroll = doZoom <$> eScroll
+  where doZoom z (cm, cs) = (cm, arcBallMouseZoom cs z)
 
 
-mouseZoom :: ArcBallCamera -> MouseScrollAmount -> ArcBallCamera
-mouseZoom cs (MouseScrollAmount z) =
+arcBallMouseZoom :: ArcBallCamera -> MouseScrollAmount -> ArcBallCamera
+arcBallMouseZoom cs (MouseScrollAmount z) =
   cs { arcBallWidth = arcBallWidth cs * (1.0 - 0.1 * z) }
