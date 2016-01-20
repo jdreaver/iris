@@ -9,6 +9,10 @@
 module Iris.Backends.Class
        ( Canvas (..)
        , CanvasEvents (..)
+       , CanvasSize (..)
+       , FramebufferSize (..)
+       , MousePosition (..)
+       , MouseScrollAmount (..)
        , mousePosObservable
        , mouseButtonEvent
        , mouseScrollEvent
@@ -27,19 +31,33 @@ import           Iris.Reactive
 -- | Used for a common interface for OpenGL windows.
 class Canvas a where
 
-  canvasSize      :: a -> IO GL.Size
-  framebufferSize :: a -> IO GL.Size
+  canvasSize      :: a -> IO CanvasSize
+  framebufferSize :: a -> IO FramebufferSize
   drawLoop        :: a -> IO ()
-  cursorPos       :: a -> IO GL.Position
+  cursorPos       :: a -> IO MousePosition
   makeEvents      :: a -> MomentIO CanvasEvents
+
+-- The following data types are just wrappers around common OpenGL types,
+-- except more specific.
+data CanvasSize = CanvasSize !GL.GLsizei !GL.GLsizei
+  deriving (Show, Ord, Eq)
+
+data FramebufferSize = FramebufferSize !GL.GLsizei !GL.GLsizei
+  deriving (Show, Ord, Eq)
+
+data MousePosition = MousePosition !GL.GLint !GL.GLint
+  deriving (Show, Ord, Eq)
+
+newtype MouseScrollAmount = MouseScrollAmount GL.GLfloat
+  deriving (Show, Ord, Eq)
 
 -- | Data type containing all needed events from a backend Canvas
 data CanvasEvents = CanvasEvents
-  { _canvasEventsMousePosObservable        :: Observable GL.Position
+  { _canvasEventsMousePosObservable        :: Observable MousePosition
   , _canvasEventsMouseButtonEvent          :: Event MouseButtonEvent
-  , _canvasEventsMouseScrollEvent          :: Event GL.GLfloat
-  , _canvasEventsCanvasSizeObservable      :: Observable GL.Size
-  , _canvasEventsFramebufferSizeObservable :: Observable GL.Size
+  , _canvasEventsMouseScrollEvent          :: Event MouseScrollAmount
+  , _canvasEventsCanvasSizeObservable      :: Observable CanvasSize
+  , _canvasEventsFramebufferSizeObservable :: Observable FramebufferSize
   , _canvasEventsDrawEvent                 :: Event ()
   }
 

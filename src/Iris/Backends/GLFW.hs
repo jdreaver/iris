@@ -21,7 +21,6 @@ module Iris.Backends.GLFW
 
 import           Control.Lens
 import           Control.Monad
-import qualified Graphics.Rendering.OpenGL as GL
 import qualified Graphics.UI.GLFW as GLFW
 import           System.Exit
 import           System.IO
@@ -119,21 +118,21 @@ cleanup win = do
     exitSuccess
 
 -- | Overload of `GLFW.getWindowSize` to return `GL.Size`
-windowSize' :: GLFW.Window -> IO GL.Size
+windowSize' :: GLFW.Window -> IO CanvasSize
 windowSize' win =
   do (w, h) <- GLFW.getWindowSize win
-     return $ GL.Size (fromIntegral w) (fromIntegral h)
+     return $ CanvasSize (fromIntegral w) (fromIntegral h)
 
-framebufferSize' :: GLFW.Window -> IO GL.Size
+framebufferSize' :: GLFW.Window -> IO FramebufferSize
 framebufferSize' win =
   do (x, y) <- GLFW.getFramebufferSize win
-     return $ GL.Size (fromIntegral x) (fromIntegral y)
+     return $ FramebufferSize (fromIntegral x) (fromIntegral y)
 
 -- | Overload of `GLFW.getCursorPos` to return `GL.Position`
-cursorPos' :: GLFW.Window -> IO GL.Position
+cursorPos' :: GLFW.Window -> IO MousePosition
 cursorPos' w =
   do (x, y) <- GLFW.getCursorPos w
-     return $ GL.Position (floor x) (floor y)
+     return $ MousePosition (floor x) (floor y)
 
 
 -- | Convert from GLFW mouse buttons to iris mouse buttons
@@ -150,12 +149,12 @@ mouseButtonState GLFW.MouseButtonState'Released = Released
 
 -- | Create an Observable for the mouse position using the GLFW mouse
 -- position callback.
-mousePosObservable' :: GLFW.Window -> IO (MomentIO (Observable GL.Position))
+mousePosObservable' :: GLFW.Window -> IO (MomentIO (Observable MousePosition))
 mousePosObservable' win =
   do (addHandler, fire) <- newAddHandler
      let callback :: GLFW.CursorPosCallback
          callback _ x y = fire pos
-           where pos = GL.Position (floor x) (floor y)
+           where pos = MousePosition (floor x) (floor y)
      liftIO $ GLFW.setCursorPosCallback win $ Just callback
      currentPos <- cursorPos' win
      return $ do e <- fromAddHandler addHandler
@@ -178,33 +177,33 @@ mouseButtonEvent' win =
      return $ fromAddHandler addHandler
 
 -- | Create an Event for mouse button scrolling using the GLFW scroll callback.
-mouseScrollEvent' :: GLFW.Window -> IO (MomentIO (Event GL.GLfloat))
+mouseScrollEvent' :: GLFW.Window -> IO (MomentIO (Event MouseScrollAmount))
 mouseScrollEvent' win =
   do (addHandler, fire) <- newAddHandler
      let callback :: GLFW.ScrollCallback
-         callback _ _ ds = fire (realToFrac ds)
+         callback _ _ ds = fire (MouseScrollAmount $ realToFrac ds)
      liftIO $ GLFW.setScrollCallback win $ Just callback
      return $ fromAddHandler addHandler
 
 -- | Create an Observable for the window size using the GLFW window size
 -- callback.
-windowSizeObservable' :: GLFW.Window -> IO (MomentIO (Observable GL.Size))
+windowSizeObservable' :: GLFW.Window -> IO (MomentIO (Observable CanvasSize))
 windowSizeObservable' win =
   do currentSize <- windowSize' win
      (h, sub) <- subjectIO currentSize
      let callback :: GLFW.WindowSizeCallback
-         callback _ x y = h $ GL.Size (fromIntegral x) (fromIntegral y)
+         callback _ x y = h $ CanvasSize (fromIntegral x) (fromIntegral y)
      liftIO $ GLFW.setWindowSizeCallback win $ Just callback
      return $ liftM asObservable sub
 
 
 -- | Create an Observable for the framebuffer size using the GLFW framebuffer size
 -- callback.
-framebufferSizeObservable' :: GLFW.Window -> IO (MomentIO (Observable GL.Size))
+framebufferSizeObservable' :: GLFW.Window -> IO (MomentIO (Observable FramebufferSize))
 framebufferSizeObservable' win =
   do currentSize <- framebufferSize' win
      (h, sub) <- subjectIO currentSize
      let callback :: GLFW.FramebufferSizeCallback
-         callback _ x y = h $ GL.Size (fromIntegral x) (fromIntegral y)
+         callback _ x y = h $ FramebufferSize (fromIntegral x) (fromIntegral y)
      liftIO $ GLFW.setFramebufferSizeCallback win $ Just callback
      return $ liftM asObservable sub

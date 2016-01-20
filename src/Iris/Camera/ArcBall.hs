@@ -56,7 +56,7 @@ initCamera' cam events =
 
      return (cameraTrans <$> (snd <$> bCamState))
 
-type ArcBallState = (Map.Map MouseButton (ArcBallCamera, GL.Position), ArcBallCamera)
+type ArcBallState = (Map.Map MouseButton (ArcBallCamera, MousePosition), ArcBallCamera)
 
 clickEvent :: Event PressedButtons ->
               Event (ArcBallState -> ArcBallState)
@@ -80,13 +80,13 @@ dragEvent events =
 -- axis (azimuth cylinder). We compute the angle changes about these cylinders
 -- independently. This frees us from the nasty task of handling when the mouse
 -- goes outside the bounds of the arcball.
-mouseRotate :: GL.Size ->
-               GL.Position ->
-               GL.Position ->
+mouseRotate :: CanvasSize ->
+               MousePosition ->
+               MousePosition ->
                ArcBallCamera ->
                ArcBallCamera ->
                ArcBallCamera
-mouseRotate (GL.Size w h) (GL.Position x y) (GL.Position ox oy) ocs cs =
+mouseRotate (CanvasSize w h) (MousePosition x y) (MousePosition ox oy) ocs cs =
   cs { arcBallAzimuth = azim', arcBallElevation = elev' }
   where
     -- Compute normalized x and y coordinates, both for the original mouse
@@ -123,11 +123,12 @@ circleAngle x =
       y    = if norm < 1 then sqrt (1 - norm) else 0
   in atan (x / y)
 
-scrollEvent :: Event GL.GLfloat ->
+scrollEvent :: Event MouseScrollAmount ->
                Event (ArcBallState -> ArcBallState)
 scrollEvent eScroll = doZoom <$> eScroll
   where doZoom z (cm, cs) = (cm, mouseZoom cs z)
 
 
-mouseZoom :: ArcBallCamera -> GL.GLfloat -> ArcBallCamera
-mouseZoom cs z = cs { arcBallWidth = arcBallWidth cs * (1.0 - 0.1 * z) }
+mouseZoom :: ArcBallCamera -> MouseScrollAmount -> ArcBallCamera
+mouseZoom cs (MouseScrollAmount z) =
+  cs { arcBallWidth = arcBallWidth cs * (1.0 - 0.1 * z) }

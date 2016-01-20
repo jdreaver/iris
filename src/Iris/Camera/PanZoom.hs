@@ -47,7 +47,7 @@ panZoomTrans (PanZoomCamera (L.V2 cx cy) w h _) =
 
 -- | The first part of the tuple is a map of the mouse state and position when
 -- the mouse is pressed. The second part is the actual camera state.
-type PanZoomState = (Map.Map MouseButton (PanZoomCamera, GL.Position), PanZoomCamera)
+type PanZoomState = (Map.Map MouseButton (PanZoomCamera, MousePosition), PanZoomCamera)
 
 initCamera' :: PanZoomCamera -> CanvasEvents ->
                MomentIO (Behavior Transformation)
@@ -82,13 +82,13 @@ dragEvent events =
           (Map.lookup (dragButton cs) cm)
 
 -- | Change the camera state with a mouse drag.
-mouseDrag :: GL.Size ->
-             GL.Position ->
-             GL.Position ->
+mouseDrag :: CanvasSize ->
+             MousePosition ->
+             MousePosition ->
              PanZoomCamera ->
              PanZoomCamera ->
              PanZoomCamera
-mouseDrag (GL.Size w h) (GL.Position x y) (GL.Position ox oy) ocs cs =
+mouseDrag (CanvasSize w h) (MousePosition x y) (MousePosition ox oy) ocs cs =
   cs { center = c }
   where
     (dx, dy) = (x - ox, y - oy)
@@ -108,8 +108,8 @@ scrollEvent events =
 
 
 -- | Zoom a camera, keeping the point under the mouse still while zooming.
-mouseZoom :: GL.Size -> GL.Position -> PanZoomCamera -> GL.GLfloat -> PanZoomCamera
-mouseZoom s p cs z =
+mouseZoom :: CanvasSize -> MousePosition -> PanZoomCamera -> MouseScrollAmount -> PanZoomCamera
+mouseZoom s p cs (MouseScrollAmount z) =
   cs { center = c' , width = w' , height = h' }
   where
     f = realToFrac $ 1 - 0.1 * z  -- Zoom factor
@@ -128,8 +128,8 @@ mouseZoom s p cs z =
 
 
 -- | Map from pixel canvas coordinates to world coordinates.
-mapToWorld :: GL.Size -> GL.Position -> PanZoomCamera -> (GL.GLfloat, GL.GLfloat)
-mapToWorld (GL.Size w h) (GL.Position xp yp) cam = (x, y)
+mapToWorld :: CanvasSize -> MousePosition -> PanZoomCamera -> (GL.GLfloat, GL.GLfloat)
+mapToWorld (CanvasSize w h) (MousePosition xp yp) cam = (x, y)
   where (L.V2 cx cy) = center cam
         (w', h')   = (fromIntegral w, fromIntegral h)
         (cxp, cyp) = (w' / 2, h' / 2)  -- Camera center in pixels

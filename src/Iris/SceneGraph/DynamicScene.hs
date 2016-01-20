@@ -64,7 +64,7 @@ drawRoot win =
      GL.blend $= GL.Enabled
      GL.blendFunc $= (GL.SrcAlpha, GL.OneMinusSrcAlpha)
 
-     winSize <- framebufferSize win
-     clip (Viewport (GL.Position 0 0) winSize)
+     (FramebufferSize fbw fbh) <- framebufferSize win
+     clip (Viewport (GL.Position 0 0) (GL.Size fbw fbh))
 
      GL.clear [GL.ColorBuffer, GL.DepthBuffer]

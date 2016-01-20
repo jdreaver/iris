@@ -14,6 +14,8 @@ module Iris.Transformation
 import qualified Graphics.Rendering.OpenGL as GL
 import qualified Linear as L
 
+import           Iris.Backends.Class
+
 -- | Type used to represent a transformation on a plot item.
 type Transformation = L.M44 GL.GLfloat
 
@@ -39,8 +41,8 @@ apply = (L.!*!)
 -- | Scales a view so the lengths are invariant to the window aspect ratio. If
 -- we have a viewport aspect ratio not equal to one, then the clip coordinates
 -- of -1 to 1 will have pixel lengths, making an image look distorted.
-aspectTrans :: GL.Size -> Transformation
-aspectTrans (GL.Size w h)
+aspectTrans :: CanvasSize -> Transformation
+aspectTrans (CanvasSize w h)
   | aspect >= 1 = scale $ L.V3 1 aspect 1
   | otherwise   = scale $ L.V3 (1 / aspect) 1 1
   where aspect = fromIntegral w / fromIntegral h

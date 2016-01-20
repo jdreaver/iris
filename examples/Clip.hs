@@ -50,6 +50,6 @@ clipBehaviors :: (Canvas a) => a -> MomentIO (Behavior Viewport, Behavior Viewpo
 clipBehaviors c =
   do events <- makeEvents c
      let buffSizeB = events ^. framebufferSizeObservable ^. behavior
-         f1 (GL.Size w h) = Viewport (GL.Position 0 0) (GL.Size (w `quot` 2) h)
-         f2 (GL.Size w h) = Viewport (GL.Position (w `quot` 2) 0) (GL.Size (w `quot` 2) h)
+         f1 (FramebufferSize w h) = Viewport (GL.Position 0 0) (GL.Size (w `quot` 2) h)
+         f2 (FramebufferSize w h) = Viewport (GL.Position (w `quot` 2) 0) (GL.Size (w `quot` 2) h)
      return (f1 <$> buffSizeB, f2 <$> buffSizeB)

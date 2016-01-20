@@ -10,7 +10,6 @@ module Iris.Camera.Class
 
 import           Control.Lens
 import qualified Data.Map.Strict as Map
-import qualified Graphics.Rendering.OpenGL as GL
 
 import           Iris.Backends
 import           Iris.Mouse
@@ -24,7 +23,7 @@ class Camera a where
 
 -- | Stores currently pressed buttons and the mouse coordinates when they were
 -- pressed.
-type PressedButtons = Map.Map MouseButton GL.Position
+type PressedButtons = Map.Map MouseButton MousePosition
 
 -- | Default constructor for `PressedButtons`
 pressedButtons :: PressedButtons
@@ -41,7 +40,7 @@ recordButtons events = accumE pressedButtons eClickedCam
 
 
 -- | Record when a button is pressed in the `PressedButtons` state.
-recordClick :: GL.Position ->
+recordClick :: MousePosition ->
                MouseButton ->
                MouseButtonState ->
                PressedButtons ->
