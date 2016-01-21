@@ -91,26 +91,26 @@ arcBallMouseRotate :: CanvasSize
 arcBallMouseRotate (CanvasSize w h) (MousePosition ox oy) ocs (MousePosition x y) cs =
   cs { arcBallAzimuth = azim', arcBallElevation = elev' }
   where
-    -- Compute normalized x and y coordinates, both for the original mouse
-    -- position and the current mouse position.
-    (ox', oy') = (normalizeCoord ox w, normalizeCoord oy h)
-    (x' , y' ) = (normalizeCoord x  w, normalizeCoord y  h)
+    -- Compute the difference of azimuth and elevation
+    da = rotateDelta w ox x
+    de = rotateDelta h oy y
 
-    -- Compute the original and new azimuth and elevations of the clicks. The
-    -- azimuth spans the x-z plane, and the elevation spans the z-y plane.
-    oa = circleAngle ox'
-    oe = circleAngle oy'
-    a  = circleAngle x'
-    e  = circleAngle y'
+    -- Apply the differences
+    a = arcBallAzimuth   ocs + da
+    e = arcBallElevation ocs + de
 
-    -- da = acos $ (oxp * xp) + (ozp * zp)
-    -- de = acos $ (oyp * yp) + (ozp * zp)
-    -- angle = acos $ min 1 (oxp * xp + oyp * xp + ozp * zp)
+    -- Don't allow azimuth and elevation out of bounds
+    azim' = mod' a (pi * 2)
+    elev' = min (pi / 2) $ max ((-pi) / 2) e
 
-    a' = arcBallAzimuth   ocs + (a - oa)
-    e' = arcBallElevation ocs + (e - oe)
-    azim' = mod' a' (pi * 2)
-    elev' = min (pi / 2) $ max ((-pi) / 2) e'
+-- | Change in angle from two x coordinates on a circle of a given radius.
+rotateDelta :: GL.GLint -- ^ Radius
+            -> GL.GLint -- ^ Original x
+            -> GL.GLint -- ^ New x
+            -> GL.GLfloat
+rotateDelta r ox x = a - oa
+  where oa = circleAngle $ normalizeCoord ox r
+        a  = circleAngle $ normalizeCoord x r
 
 
 -- | Maps a coordinate from [0, len] to [-1, 1]

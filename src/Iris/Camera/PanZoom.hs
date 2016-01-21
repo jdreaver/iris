@@ -91,13 +91,20 @@ panZoomMouseDrag :: CanvasSize
                  -> PanZoomCamera -- ^ Current state
                  -> PanZoomCamera -- ^ New state
 panZoomMouseDrag (CanvasSize w h) (MousePosition ox oy) ocs (MousePosition x y) cs =
-  cs { center = c }
+  cs { center = center ocs + L.V2 (-dxw) dyw }
   where
-    (dx, dy) = (x - ox, y - oy)
-    (cw, ch) = (width cs, height cs)
-    dxw = realToFrac $ fromIntegral dx * cw / fromIntegral w
-    dyw = realToFrac $ fromIntegral dy * ch / fromIntegral h
-    c   = center ocs + L.V2 (-dxw) dyw
+    dxw = panZoomAxisDrag ox x (width cs) w
+    dyw = panZoomAxisDrag oy y (height cs) h
+
+-- | Computes the difference in the camera center coordinate needed to move a
+-- corresponding mouse coordinate while keeping the point under the mouse still
+-- under the mouse.
+panZoomAxisDrag :: GL.GLint   -- ^ Original mouse coordinate
+                -> GL.GLint   -- ^ Current mouse coordinate
+                -> GL.GLfloat -- ^ Camera width
+                -> GL.GLint   -- ^ Canvas width
+                -> GL.GLfloat -- ^ Change in camera width
+panZoomAxisDrag ox x cw w = realToFrac $ fromIntegral (x - ox) * cw / fromIntegral w
 
 
 panZoomScrollEvent :: CanvasEvents
@@ -131,7 +138,6 @@ panZoomMouseZoom s p cs (MouseScrollAmount z) =
     dx' = dx * realToFrac f
     c = center cs
     c' = x - dx'
-
 
 -- | Map from pixel canvas coordinates to world coordinates.
 mapToWorld :: CanvasSize -> MousePosition -> PanZoomCamera -> (GL.GLfloat, GL.GLfloat)
