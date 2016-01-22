@@ -122,32 +122,28 @@ panZoomMouseZoom :: CanvasSize
                  -> PanZoomCamera     -- ^ Current state
                  -> MouseScrollAmount -- ^ How much mouse wheel was turned
                  -> PanZoomCamera     -- ^ New camera state
-panZoomMouseZoom s p cs (MouseScrollAmount z) =
-  cs { center = c' , width = w' , height = h' }
+panZoomMouseZoom (CanvasSize w h)
+                 (MousePosition xp yp)
+                 (PanZoomCamera (L.V2 cx cy) cw ch b)
+                 (MouseScrollAmount z) =
+  PanZoomCamera (L.V2 cx' cy') (cw * factor) (ch * factor) b
   where
-    f = realToFrac $ 1 - 0.1 * z  -- Zoom factor
-    w = width cs
-    h = height cs
-    w' = w * f
-    h' = h * f
+    factor = realToFrac $ 1 - 0.1 * z  -- Zoom factor
 
     -- Translate center
-    (x', y') = mapToWorld s p cs
-    x = L.V2 (realToFrac x') (realToFrac y')
-    dx = x - c
-    dx' = dx * realToFrac f
-    c = center cs
-    c' = x - dx'
+    x   = mapAxisPixelToWorld w xp cw cx
+    y   = mapAxisPixelToWorld h (h - yp) ch cy
+    cx' = x - (x - cx) * factor
+    cy' = y - (y - cy) * factor
 
--- | Map from pixel canvas coordinates to world coordinates.
-mapToWorld :: CanvasSize -> MousePosition -> PanZoomCamera -> (GL.GLfloat, GL.GLfloat)
-mapToWorld (CanvasSize w h) (MousePosition xp yp) cam = (x, y)
-  where (L.V2 cx cy) = center cam
-        (w', h')   = (fromIntegral w, fromIntegral h)
-        (cxp, cyp) = (w' / 2, h' / 2)  -- Camera center in pixels
-        (xp', yp') = (fromIntegral xp, fromIntegral yp)
-        (dxp, dyp) = (xp' - cxp, yp' - cyp)
-        (cw', ch') = (width cam, height cam)
-        (cx', cy') = (cx, cy)
-        (dx, dy)   = (dxp * cw' / w', dyp * ch' / h' * (-1))
-        (x, y)     = (cx' + dx, cy' + dy)
+-- | Map from a pixel coordinate (like a mouse coordinate) to world coordinates
+-- along an axis.
+mapAxisPixelToWorld :: GL.GLint   -- ^ Canvas width
+                    -> GL.GLint   -- ^ Mouse pixel position
+                    -> GL.GLfloat -- ^ Camera width in world coordinates
+                    -> GL.GLfloat -- ^ Camera center in world coordinates
+                    -> GL.GLfloat -- ^ Mouse in world coordinates
+mapAxisPixelToWorld w xp cw cx = cx + dx
+  where cxp = fromIntegral w / 2    -- Camera center in pixels
+        dxp = fromIntegral xp - cxp -- Diff between cam center and mouse in pixels
+        dx  = dxp * cw / fromIntegral w -- Diff in world coordinates
