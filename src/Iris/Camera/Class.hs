@@ -6,6 +6,8 @@ module Iris.Camera.Class
        , pressedButtons
        , recordButtons
        , recordClick
+       , mouseDragEvent
+       , MouseDrag (..)
        ) where
 
 import qualified Data.Map.Strict as Map
@@ -47,3 +49,35 @@ recordClick :: MousePosition ->
                PressedButtons
 recordClick p button Pressed bmap = Map.insert button p bmap
 recordClick _ button Released bmap = Map.delete button bmap
+
+
+-- | Constructs an event that fires whenever the mouse is dragged. A mouse drag
+-- begins when any mouse button is pressed, and the mouse is moved. While the
+-- drag is happening, any other button can be pressed too, but this doesn't
+-- "restart" the drag.
+mouseDragEvent :: Event MouseButtonEvent
+               -> Observable MousePosition
+               -> MomentIO (Event MouseDrag)
+mouseDragEvent buttonE (Observable posB posE) =
+  do pressedButtonsE <- liftMoment $ recordButtons posB buttonE
+     pressedButtonsB <- stepper Map.empty pressedButtonsE
+     let updateDragE = updateMouseDrag <$> pressedButtonsB <@> posE
+     eDragMaybe <- accumE Nothing updateDragE
+     return $ filterJust eDragMaybe
+
+-- | Container to hold information about a mouse drag event.
+data MouseDrag = MouseDrag
+  { mouseDragOriginPos  :: !MousePosition
+  , mouseDragCurrentPos :: !MousePosition
+  , mouseDragButtons    :: ![MouseButton]
+  } deriving (Show, Ord, Eq)
+
+
+updateMouseDrag :: PressedButtons
+                -> MousePosition
+                -> Maybe MouseDrag -- ^ Current drag state; Nothing = no drag
+                -> Maybe MouseDrag
+updateMouseDrag pbs pos maybeDrag = if null buttons then Nothing else newDrag
+  where buttons = map fst $ Map.toList pbs
+        origin  = maybe pos mouseDragOriginPos maybeDrag
+        newDrag = Just $ MouseDrag origin pos buttons
