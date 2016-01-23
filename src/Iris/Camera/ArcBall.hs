@@ -88,12 +88,12 @@ arcBallMouseRotate :: CanvasSize
                    -> MousePosition -- ^ Current mouse position
                    -> ArcBallCamera -- ^ Current state
                    -> ArcBallCamera -- ^ New state
-arcBallMouseRotate (CanvasSize w h) (MousePosition ox oy) ocs (MousePosition x y) cs =
+arcBallMouseRotate (CanvasSize wp hp) (MousePosition oxp oyp) ocs (MousePosition xp yp) cs =
   cs { arcBallAzimuth = azim', arcBallElevation = elev' }
   where
     -- Compute the difference of azimuth and elevation
-    da = rotateDelta w ox x
-    de = rotateDelta h oy y
+    da = rotateDelta wp oxp xp
+    de = rotateDelta hp oyp yp
 
     -- Apply the differences
     a = arcBallAzimuth   ocs + da
@@ -108,9 +108,9 @@ rotateDelta :: GL.GLint -- ^ Radius
             -> GL.GLint -- ^ Original x
             -> GL.GLint -- ^ New x
             -> GL.GLfloat
-rotateDelta r ox x = a - oa
-  where oa = circleAngle $ normalizeCoord ox r
-        a  = circleAngle $ normalizeCoord x r
+rotateDelta r oxp xp = a - oa
+  where oa = circleAngle $ normalizeCoord oxp r
+        a  = circleAngle $ normalizeCoord xp r
 
 
 -- | Maps a coordinate from [0, len] to [-1, 1]

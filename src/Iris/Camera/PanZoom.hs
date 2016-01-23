@@ -90,11 +90,11 @@ panZoomMouseDrag :: CanvasSize
                  -> MousePosition -- ^ Current mouse position
                  -> PanZoomCamera -- ^ Current state
                  -> PanZoomCamera -- ^ New state
-panZoomMouseDrag (CanvasSize w h) (MousePosition ox oy) ocs (MousePosition x y) cs =
+panZoomMouseDrag (CanvasSize wp hp) (MousePosition oxp oyp) ocs (MousePosition xp yp) cs =
   cs { center = center ocs + L.V2 (-dxw) dyw }
   where
-    dxw = panZoomAxisDrag ox x (width cs) w
-    dyw = panZoomAxisDrag oy y (height cs) h
+    dxw = panZoomAxisDrag oxp xp (width cs) wp
+    dyw = panZoomAxisDrag oyp yp (height cs) hp
 
 -- | Computes the difference in the camera center coordinate needed to move a
 -- corresponding mouse coordinate while keeping the point under the mouse still
@@ -104,7 +104,7 @@ panZoomAxisDrag :: GL.GLint   -- ^ Original mouse coordinate
                 -> GL.GLfloat -- ^ Camera width
                 -> GL.GLint   -- ^ Canvas width
                 -> GL.GLfloat -- ^ Change in camera width
-panZoomAxisDrag ox x cw w = realToFrac $ fromIntegral (x - ox) * cw / fromIntegral w
+panZoomAxisDrag oxp xp cw w = realToFrac $ fromIntegral (xp - oxp) * cw / fromIntegral w
 
 
 panZoomScrollEvent :: CanvasEvents
@@ -122,8 +122,8 @@ panZoomMouseZoom :: CanvasSize
                  -> PanZoomCamera     -- ^ Current state
                  -> MouseScrollAmount -- ^ How much mouse wheel was turned
                  -> PanZoomCamera     -- ^ New camera state
-panZoomMouseZoom (CanvasSize w h)
-                 (MousePosition xp yp)
+panZoomMouseZoom (CanvasSize wp hp)
+                 (MousePosition mxp myp)
                  (PanZoomCamera (L.V2 cx cy) cw ch b)
                  (MouseScrollAmount z) =
   PanZoomCamera (L.V2 cx' cy') (cw * factor) (ch * factor) b
@@ -131,10 +131,10 @@ panZoomMouseZoom (CanvasSize w h)
     factor = realToFrac $ 1 - 0.1 * z  -- Zoom factor
 
     -- Translate center
-    x   = mapAxisPixelToWorld w xp cw cx
-    y   = mapAxisPixelToWorld h (h - yp) ch cy
-    cx' = x - (x - cx) * factor
-    cy' = y - (y - cy) * factor
+    mx  = mapAxisPixelToWorld wp mxp cw cx
+    my  = mapAxisPixelToWorld hp (hp - myp) ch cy
+    cx' = (cx - mx) * factor + mx
+    cy' = (cy - my) * factor + my
 
 -- | Map from a pixel coordinate (like a mouse coordinate) to world coordinates
 -- along an axis.
@@ -143,7 +143,7 @@ mapAxisPixelToWorld :: GL.GLint   -- ^ Canvas width
                     -> GL.GLfloat -- ^ Camera width in world coordinates
                     -> GL.GLfloat -- ^ Camera center in world coordinates
                     -> GL.GLfloat -- ^ Mouse in world coordinates
-mapAxisPixelToWorld w xp cw cx = cx + dx
-  where cxp = fromIntegral w / 2    -- Camera center in pixels
-        dxp = fromIntegral xp - cxp -- Diff between cam center and mouse in pixels
+mapAxisPixelToWorld w mxp cw cx = cx + dx
+  where cxp = fromIntegral w / 2        -- Camera center in pixels
+        dxp = fromIntegral mxp - cxp    -- Diff between cam center and mouse in pixels
         dx  = dxp * cw / fromIntegral w -- Diff in world coordinates
