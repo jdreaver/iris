@@ -14,7 +14,7 @@ import           Iris.Visuals.Line
 
 main :: IO ()
 main =
-  do win <- W.makeWindow "Line Plot" (640, 480)
+  do win <- W.makeWindow "Line Plot" (640, 640)
      canvas <- W.initGLFW win
 
      lineNode <- lineInit $ LineSpec lineVerts (L.V3 0.2 0.5 1)

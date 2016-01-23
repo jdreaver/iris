@@ -18,7 +18,7 @@ import           Iris.Visuals
 main :: IO ()
 main =
   do path <- getFilePath
-     win <- W.makeWindow "Image" (640, 480)
+     win <- W.makeWindow "Image" (640, 640)
      canvas <- W.initGLFW win
 
      node <- textInit $ TextSpec "Hello! AVWY" path (L.V2 0 0) 1 512

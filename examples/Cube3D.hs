@@ -12,7 +12,7 @@ import           Iris.Util
 
 main :: IO ()
 main =
-  do win <- W.makeWindow "3D Cube" (640, 480)
+  do win <- W.makeWindow "3D Cube" (640, 640)
      canvas <- W.initGLFW win
 
      cube <- makeCube

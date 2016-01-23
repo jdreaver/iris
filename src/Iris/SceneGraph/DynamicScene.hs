@@ -17,7 +17,6 @@ import           Iris.Camera
 import           Iris.Reactive
 import           Iris.SceneGraph.Clipper
 import           Iris.SceneGraph.DrawGraph
-import           Iris.Transformation
 
 
 type DynamicDrawNode = Behavior DrawNode
@@ -33,12 +32,8 @@ makeScene win n maybeCam =
      -- Initialize camera and attach event handlers
      root <- maybe (return n) (attachCam events n) maybeCam
 
-     let bTrans = aspectTrans <$> (events ^. canvasSizeObservable ^. behavior)
-         tNode = transNode <$> bTrans <*> root
-         root' = sceneRoot win <$> tNode
-
-     -- Hook up the draw event to drawGraph
-     let eDraw = drawGraph <$> root' <@ (events ^. drawEvent)
+     let root' = sceneRoot win <$> root
+         eDraw = drawGraph <$> root' <@ (events ^. drawEvent)
      reactimate eDraw
 
 -- | If we have a camera, then initialize the reactive form of the camera, set

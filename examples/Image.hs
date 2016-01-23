@@ -17,7 +17,7 @@ import           Iris.Visuals.Image
 main :: IO ()
 main =
   do path <- getFilePath
-     win <- W.makeWindow "Image" (640, 480)
+     win <- W.makeWindow "Image" (640, 640)
      canvas <- W.initGLFW win
 
      to <- imageFromFile path
