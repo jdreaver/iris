@@ -46,7 +46,6 @@ library
                      , Iris.Visuals.Line
                      , Iris.Visuals.Mesh
                      , Iris.Visuals.Text
-                     , Iris.Visuals.Visual
   other-modules:       Iris.Backends.Class
   -- other-extensions:
   build-depends:       base >=4 && <5
