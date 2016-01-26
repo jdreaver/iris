@@ -5,7 +5,6 @@ module Iris.Camera.ArcBall
        , arcBallCamera
        ) where
 
-import           Control.Lens
 import           Data.Fixed (mod')
 import           Data.List (foldl1')
 import qualified Data.Map.Strict as Map
@@ -45,13 +44,12 @@ arcBallCameraTrans (ArcBallCamera (L.V3 cx cy cz) w a e _) =
 arcBallCameraTransB :: ArcBallCamera
                     -> CanvasEvents
                     -> MomentIO (Behavior Transformation)
-arcBallCameraTransB cam events =
-  do let mousePosB    = events ^. mousePosObservable ^. behavior
-         mouseButtonE = events ^. mouseButtonEvent
+arcBallCameraTransB cam events@(CanvasEvents mousePosO mouseButtonE _ _ _ _) =
+  do let mousePosB = observableBehavior mousePosO
      ePressedButtons <- liftMoment $ recordButtons mousePosB mouseButtonE
 
      let eMovedCam = arcBallDragEvent events
-         eScrolledCam = arcBallScrollEvent (events ^. mouseScrollEvent)
+         eScrolledCam = arcBallScrollEvent (mouseScrollEvent events)
          eClick = arcBallClickEvent ePressedButtons
 
      bCamState <- accumB (Map.fromList [], cam) $ unions [ eClick, eMovedCam, eScrolledCam ]
@@ -68,8 +66,8 @@ arcBallClickEvent ePressedButtons = f <$> ePressedButtons
 arcBallDragEvent :: CanvasEvents
                  -> Event (ArcBallState -> ArcBallState)
 arcBallDragEvent events =
-  doMove <$> events ^. canvasSizeObservable ^. behavior
-         <@> events ^. mousePosObservable ^. event
+  doMove <$> observableBehavior (canvasSizeObservable events)
+         <@> observableEvent (mousePosObservable events)
   where doMove size pos (cm, cs) =
           maybe (cm, cs)
           (\(cso, opos) -> (cm, arcBallMouseRotate size opos cso pos cs))

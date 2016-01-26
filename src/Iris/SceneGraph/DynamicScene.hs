@@ -8,7 +8,6 @@ module Iris.SceneGraph.DynamicScene
        , sceneRoot
        ) where
 
-import           Control.Lens
 import           Graphics.Rendering.OpenGL (($=))
 import qualified Graphics.Rendering.OpenGL as GL
 
@@ -33,7 +32,7 @@ makeScene win n maybeCam =
      root <- maybe (return n) (attachCam events n) maybeCam
 
      let root' = sceneRoot win <$> root
-         eDraw = drawGraph <$> root' <@ (events ^. drawEvent)
+         eDraw = drawGraph <$> root' <@ drawEvent events
      reactimate eDraw
 
 -- | If we have a camera, then initialize the reactive form of the camera, set

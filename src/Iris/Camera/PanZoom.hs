@@ -5,7 +5,6 @@ module Iris.Camera.PanZoom
        , panZoomCamera
        ) where
 
-import           Control.Lens
 import           Data.List (foldl1')
 import qualified Data.Map.Strict as Map
 import qualified Graphics.Rendering.OpenGL as GL
@@ -51,9 +50,8 @@ type PanZoomState = (Map.Map MouseButton (PanZoomCamera, MousePosition), PanZoom
 panZoomTransB :: PanZoomCamera
               -> CanvasEvents
               -> MomentIO (Behavior Transformation)
-panZoomTransB cam events =
-  do let mousePosB    = events ^. mousePosObservable ^. behavior
-         mouseButtonE = events ^. mouseButtonEvent
+panZoomTransB cam events@(CanvasEvents mousePosO mouseButtonE _ _ _ _) =
+  do let mousePosB    = observableBehavior mousePosO
      ePressedButtons <- liftMoment $ recordButtons mousePosB mouseButtonE
 
      let eClick = panZoomClickEvent ePressedButtons
@@ -76,8 +74,8 @@ panZoomClickEvent ePressedButtons = f <$> ePressedButtons
 panZoomDragEvent :: CanvasEvents
                  -> Event (PanZoomState -> PanZoomState)
 panZoomDragEvent events =
-  doMove <$> events ^. canvasSizeObservable ^. behavior
-         <@> events ^. mousePosObservable ^. event
+  doMove <$> observableBehavior (canvasSizeObservable events)
+         <@> observableEvent (mousePosObservable events)
   where doMove size pos (cm, cs) =
           maybe (cm, cs)
           (\(cso, opos) -> (cm, panZoomMouseDrag size opos cso pos cs))
@@ -110,9 +108,9 @@ panZoomAxisDrag oxp xp cw w = realToFrac $ fromIntegral (xp - oxp) * cw / fromIn
 panZoomScrollEvent :: CanvasEvents
                    -> Event (PanZoomState -> PanZoomState)
 panZoomScrollEvent events =
-  doZoom <$> events ^. canvasSizeObservable ^. behavior
-         <*> events ^. mousePosObservable ^. behavior
-         <@> events ^. mouseScrollEvent
+  doZoom <$> observableBehavior (canvasSizeObservable events)
+         <*> observableBehavior (mousePosObservable events)
+         <@> mouseScrollEvent events
   where doZoom s p z (cm, cs) = (cm, panZoomMouseZoom s p cs z)
 
 

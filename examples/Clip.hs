@@ -8,7 +8,6 @@ module Main where
 import           Prelude.Compat (sequenceA)
 #endif
 
-import           Control.Lens
 import qualified Graphics.Rendering.OpenGL as GL
 
 import           Iris.Backends
@@ -49,7 +48,7 @@ makeNetwork can =
 clipBehaviors :: (Canvas a) => a -> MomentIO (Behavior Viewport, Behavior Viewport)
 clipBehaviors c =
   do events <- makeEvents c
-     let buffSizeB = events ^. framebufferSizeObservable ^. behavior
+     let buffSizeB = observableBehavior $ framebufferSizeObservable events
          f1 (FramebufferSize w h) = Viewport (GL.Position 0 0) (GL.Size (w `quot` 2) h)
          f2 (FramebufferSize w h) = Viewport (GL.Position (w `quot` 2) 0) (GL.Size (w `quot` 2) h)
      return (f1 <$> buffSizeB, f2 <$> buffSizeB)

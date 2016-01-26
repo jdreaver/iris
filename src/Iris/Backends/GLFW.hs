@@ -1,9 +1,3 @@
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE FunctionalDependencies #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TemplateHaskell #-}
-
 -- | Module to easily create a GLFW window and clean up when done. Most of this
 -- is copied verbatim from <https://github.com/bergey/haskell-OpenGL-examples>.
 -- We will probably replace this file once we have an official GLFW backend.
@@ -19,7 +13,6 @@ module Iris.Backends.GLFW
        , module Iris.Backends.Class
        ) where
 
-import           Control.Lens
 import           Control.Monad
 import qualified Graphics.UI.GLFW as GLFW
 import           System.Exit
@@ -30,19 +23,17 @@ import           Iris.Mouse
 import           Iris.Reactive
 
 data GLFWCanvas = GLFWCanvas
-  { _gLFWCanvasGlfwWindow        :: GLFW.Window
-  , _gLFWCanvasGlfwWindowEvents  :: MomentIO CanvasEvents
-  , _gLFWCanvasFireDraw          :: Handler ()
+  { glfwCanvasWindow        :: GLFW.Window
+  , glfwCanvasWindowEvents  :: MomentIO CanvasEvents
+  , glfwCanvasFireDraw          :: Handler ()
   }
 
-makeFields ''GLFWCanvas
-
 instance Canvas GLFWCanvas where
-  canvasSize      = windowSize' . view glfwWindow
-  framebufferSize = framebufferSize' . view glfwWindow
+  canvasSize      = windowSize' . glfwCanvasWindow
+  framebufferSize = framebufferSize' . glfwCanvasWindow
   drawLoop        = mainLoop
-  cursorPos       = cursorPos' . view glfwWindow
-  makeEvents      = view glfwWindowEvents
+  cursorPos       = cursorPos' . glfwCanvasWindow
+  makeEvents      = glfwCanvasWindowEvents
 
 -- | Create a GLFWCanvas from a raw GLFW Window. The only point of this
 -- function is to create an event for the draw callback. GLFW doesn't have a
@@ -97,7 +88,7 @@ keyCallback window key _ action _ =
 -- | Runs the given drawing function in GLFW's main loop, and cleans up the
 -- window when the user exits.
 mainLoop :: GLFWCanvas -> IO ()
-mainLoop c = mainLoop' (c ^. glfwWindow) (c ^. fireDraw $ ())
+mainLoop c = mainLoop' (glfwCanvasWindow c) (glfwCanvasFireDraw c ())
 
 
 mainLoop' :: GLFW.Window -> IO () -> IO ()

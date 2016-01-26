@@ -1,10 +1,4 @@
 {-# LANGUAGE DeriveFunctor #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE FunctionalDependencies #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE TypeSynonymInstances #-}
 
 -- | Utility module for functional reactive programming.
 
@@ -12,10 +6,6 @@ module Iris.Reactive
        ( Observable (..)
        , Subject (..)
        , asObservable
-       , behavior
-       , currentValue
-       , event
-       , handler
        , mapObservableIO
        , merge
        , subject
@@ -26,7 +16,6 @@ module Iris.Reactive
        ) where
 
 import           Control.Concurrent.STM
-import           Control.Lens
 import           Control.Monad (void, (>=>))
 import           Reactive.Banana
 import           Reactive.Banana.Frameworks
@@ -36,10 +25,9 @@ import           Reactive.Banana.Frameworks
 -- Event when there is a meaningful value over time that is associated with the
 -- event, like the cursor position or the window size.
 data Observable a = Observable
-  { _observableBehavior :: Behavior a
-  , _observableEvent    :: Event a
+  { observableBehavior :: Behavior a
+  , observableEvent    :: Event a
   } deriving (Functor)
-makeFields ''Observable
 
 -- | Combines two Observables
 merge :: (a -> b -> c) -> Observable a -> Observable b -> Observable c
@@ -54,15 +42,10 @@ merge f (Observable b1 e1) (Observable b2 e2) =
 -- over an `Observable` when the value of the Behavior is meant to be set from
 -- the outside.
 data Subject a = Subject
-  { _subjectBehavior :: Behavior a
-  , _subjectEvent    :: Event a
-  , _subjectHandler  :: Handler a
+  { subjectBehavior :: Behavior a
+  , subjectEvent    :: Event a
+  , subjectHandler  :: Handler a
   }
-makeFields ''Subject
-
--- | Get current value of an object with a behavior.
-currentValue :: (MonadMoment m, HasBehavior s (Behavior a)) => s -> m a
-currentValue s = valueB $ s ^. behavior
 
 -- | Create subject from initial value
 subject :: a -> MomentIO (Subject a)
@@ -83,15 +66,15 @@ subjectIO x0 =
 -- | View a subject as an observable. This makes the behavior/event pair
 -- "read-only", as it hides the Handler to trigger the event.
 asObservable :: Subject a -> Observable a
-asObservable s = Observable (s ^. behavior) (s ^. event)
+asObservable (Subject b e _) = Observable b e
 
 -- | Create a new Observable by mapping an IO function over the old observable.
 mapObservableIO :: Observable a -> (a -> IO b) -> MomentIO (Observable b)
-mapObservableIO o f =
-  do v0 <- currentValue o
+mapObservableIO (Observable b e) f =
+  do v0 <- valueB b
      x0 <- liftIO $ f v0
      s  <- subject x0
-     reactimate $ (f >=> (s ^. handler)) <$> o ^. event
+     reactimate $ (f >=> subjectHandler s) <$> e
      return (asObservable s)
 
 -- | Wrap a TVar with a reactive-banana Behavior/Event/Handler. Note that this
@@ -100,5 +83,5 @@ tVarSubject :: TVar a -> MomentIO (Subject a)
 tVarSubject tvar =
   do currentVal <- liftIO $ readTVarIO tvar
      s <- subject currentVal
-     reactimate $ (void . atomically . writeTVar tvar) <$> s ^. event
+     reactimate $ (void . atomically . writeTVar tvar) <$> subjectEvent s
      return s

@@ -1,9 +1,3 @@
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE FunctionalDependencies #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE TypeSynonymInstances #-}
-
 -- | Defines the interface that all backends need to conform to.
 
 module Iris.Backends.Class
@@ -13,15 +7,8 @@ module Iris.Backends.Class
        , FramebufferSize (..)
        , MousePosition (..)
        , MouseScrollAmount (..)
-       , mousePosObservable
-       , mouseButtonEvent
-       , mouseScrollEvent
-       , canvasSizeObservable
-       , framebufferSizeObservable
-       , drawEvent
        ) where
 
-import           Control.Lens
 import qualified Graphics.Rendering.OpenGL as GL
 
 import           Iris.Mouse
@@ -53,12 +40,10 @@ newtype MouseScrollAmount = MouseScrollAmount GL.GLfloat
 
 -- | Data type containing all needed events from a backend Canvas
 data CanvasEvents = CanvasEvents
-  { _canvasEventsMousePosObservable        :: Observable MousePosition
-  , _canvasEventsMouseButtonEvent          :: Event MouseButtonEvent
-  , _canvasEventsMouseScrollEvent          :: Event MouseScrollAmount
-  , _canvasEventsCanvasSizeObservable      :: Observable CanvasSize
-  , _canvasEventsFramebufferSizeObservable :: Observable FramebufferSize
-  , _canvasEventsDrawEvent                 :: Event ()
+  { mousePosObservable        :: Observable MousePosition
+  , mouseButtonEvent          :: Event MouseButtonEvent
+  , mouseScrollEvent          :: Event MouseScrollAmount
+  , canvasSizeObservable      :: Observable CanvasSize
+  , framebufferSizeObservable :: Observable FramebufferSize
+  , drawEvent                 :: Event ()
   }
-
-makeFields ''CanvasEvents
