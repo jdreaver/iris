@@ -11,6 +11,7 @@ module Iris.Reactive
        , subject
        , subjectIO
        , tVarSubject
+       , mapSuccE
        , module Reactive.Banana
        , module Reactive.Banana.Frameworks
        ) where
@@ -85,3 +86,10 @@ tVarSubject tvar =
      s <- subject currentVal
      reactimate $ (void . atomically . writeTVar tvar) <$> subjectEvent s
      return s
+
+-- | Apply a function to successive values of an event stream to produce a new
+-- event.
+mapSuccE :: (a -> a -> b) -> a -> Event a -> Moment (Event b)
+mapSuccE f x0 event =
+  do pairs <- accumE (x0, x0) $ (\e' (_, e) -> (e, e')) <$> event
+     return $ uncurry f <$> pairs

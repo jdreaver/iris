@@ -65,9 +65,8 @@ mouseDragEvents buttonE (Observable posB posE) =
   do pressedButtonsE <- recordButtons posB buttonE
      pressedButtonsB <- stepper Map.empty pressedButtonsE
      let updateDragE = updateMouseDrag <$> pressedButtonsB <@> posE
-     dragMaybeE <- accumE Nothing updateDragE
-     dragMaybePairsE <- accumE (Nothing, Nothing) $ (\e' (_, e) -> (e, e')) <$> dragMaybeE
-     let startMaybeE  = dragStart <$> dragMaybePairsE
+     dragMaybeE  <- accumE Nothing updateDragE
+     startMaybeE <- mapSuccE (curry dragStart) Nothing dragMaybeE
      return (filterJust startMaybeE, filterJust dragMaybeE)
 
 -- | Container to hold information about a mouse drag event.
