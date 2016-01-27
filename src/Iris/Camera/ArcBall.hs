@@ -7,7 +7,6 @@ module Iris.Camera.ArcBall
 
 import           Data.Fixed (mod')
 import           Data.List (foldl1')
-import qualified Data.Map.Strict as Map
 import qualified Graphics.Rendering.OpenGL as GL
 import qualified Linear as L
 
@@ -44,34 +43,27 @@ arcBallCameraTrans (ArcBallCamera (L.V3 cx cy cz) w a e _) =
 arcBallCameraTransB :: ArcBallCamera
                     -> CanvasEvents
                     -> MomentIO (Behavior Transformation)
-arcBallCameraTransB cam events@(CanvasEvents mousePosO mouseButtonE _ _ _ _) =
-  do let mousePosB = observableBehavior mousePosO
-     ePressedButtons <- liftMoment $ recordButtons mousePosB mouseButtonE
+arcBallCameraTransB cam events@(CanvasEvents mousePosO mouseButtonE _ canvasSizeO _ _) =
+  do (_, dragE) <- liftMoment $ mouseDragEvents mouseButtonE mousePosO
+     bCamState <- accumB (cam, cam) $
+       unions [ click <$> mouseButtonE
+              , drag <$> observableBehavior canvasSizeO <@> dragE
+              , arcBallScrollEvent (mouseScrollEvent events)
+              ]
+     return $ arcBallCameraTrans <$> (snd <$> bCamState)
 
-     let eMovedCam = arcBallDragEvent events
-         eScrolledCam = arcBallScrollEvent (mouseScrollEvent events)
-         eClick = arcBallClickEvent ePressedButtons
+type ArcBallState = (ArcBallCamera, ArcBallCamera)
 
-     bCamState <- accumB (Map.fromList [], cam) $ unions [ eClick, eMovedCam, eScrolledCam ]
+click :: MouseButtonEvent -> ArcBallState -> ArcBallState
+click (bn, Pressed) cs@(_, cam)
+  | bn == arcBallDragButton cam = (cam, cam)
+  | otherwise                   = cs
+click _ cs = cs
 
-     return (arcBallCameraTrans <$> (snd <$> bCamState))
-
-type ArcBallState = (Map.Map MouseButton (ArcBallCamera, MousePosition), ArcBallCamera)
-
-arcBallClickEvent :: Event PressedButtons
-                  -> Event (ArcBallState -> ArcBallState)
-arcBallClickEvent ePressedButtons = f <$> ePressedButtons
-  where f pb (_, cs) = (fmap ((,) cs) pb, cs)
-
-arcBallDragEvent :: CanvasEvents
-                 -> Event (ArcBallState -> ArcBallState)
-arcBallDragEvent events =
-  doMove <$> observableBehavior (canvasSizeObservable events)
-         <@> observableEvent (mousePosObservable events)
-  where doMove size pos (cm, cs) =
-          maybe (cm, cs)
-          (\(cso, opos) -> (cm, arcBallMouseRotate size opos cso pos cs))
-          (Map.lookup (arcBallDragButton cs) cm)
+drag :: CanvasSize -> MouseDrag -> ArcBallState -> ArcBallState
+drag cs (MouseDrag opos pos bn) (ocam, cam) = (ocam, cam')
+  where cam' = if bn == [arcBallDragButton cam] then newCam else cam
+        newCam = arcBallMouseRotate cs opos ocam pos cam
 
 
 -- | Rotates the arcball camera. This is not actually true arcball rotation.
