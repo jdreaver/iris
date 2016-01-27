@@ -6,8 +6,9 @@ module Iris.Camera.Class
        , pressedButtons
        , recordButtons
        , recordClick
-       , mouseDragEvent
+       , mouseDragEvents
        , MouseDrag (..)
+       , MouseDragBegin (..)
        ) where
 
 import qualified Data.Map.Strict as Map
@@ -51,19 +52,23 @@ recordClick p button Pressed bmap = Map.insert button p bmap
 recordClick _ button Released bmap = Map.delete button bmap
 
 
--- | Constructs an event that fires whenever the mouse is dragged. A mouse drag
+-- | Constructs events that fires whenever the mouse is dragged. A mouse drag
 -- begins when any mouse button is pressed, and the mouse is moved. While the
 -- drag is happening, any other button can be pressed too, but this doesn't
 -- "restart" the drag.
-mouseDragEvent :: Event MouseButtonEvent
-               -> Observable MousePosition
-               -> MomentIO (Event MouseDrag)
-mouseDragEvent buttonE (Observable posB posE) =
-  do pressedButtonsE <- liftMoment $ recordButtons posB buttonE
+--
+-- The MouseDragBegin event occurs at the start of a drag.
+mouseDragEvents :: Event MouseButtonEvent
+                -> Observable MousePosition
+                -> Moment (Event MouseDragBegin, Event MouseDrag)
+mouseDragEvents buttonE (Observable posB posE) =
+  do pressedButtonsE <- recordButtons posB buttonE
      pressedButtonsB <- stepper Map.empty pressedButtonsE
      let updateDragE = updateMouseDrag <$> pressedButtonsB <@> posE
-     eDragMaybe <- accumE Nothing updateDragE
-     return $ filterJust eDragMaybe
+     dragMaybeE <- accumE Nothing updateDragE
+     dragMaybePairsE <- accumE (Nothing, Nothing) $ (\e' (_, e) -> (e, e')) <$> dragMaybeE
+     let startMaybeE  = dragStart <$> dragMaybePairsE
+     return (filterJust startMaybeE, filterJust dragMaybeE)
 
 -- | Container to hold information about a mouse drag event.
 data MouseDrag = MouseDrag
@@ -72,12 +77,23 @@ data MouseDrag = MouseDrag
   , mouseDragButtons    :: ![MouseButton]
   } deriving (Show, Ord, Eq)
 
+-- | Container for info about the beginning of a mouse drag.
+data MouseDragBegin = MouseDragBegin
+  { dragBeginPosition :: !MousePosition
+  , dragBeginButtons  :: [MouseButton]
+  } deriving (Show)
 
 updateMouseDrag :: PressedButtons
                 -> MousePosition
                 -> Maybe MouseDrag -- ^ Current drag state; Nothing = no drag
                 -> Maybe MouseDrag
 updateMouseDrag pbs pos maybeDrag = if null buttons then Nothing else newDrag
-  where buttons = map fst $ Map.toList pbs
-        origin  = maybe pos mouseDragOriginPos maybeDrag
-        newDrag = Just $ MouseDrag origin pos buttons
+  where buttons  = map fst $ Map.toList pbs
+        buttons' = maybe buttons mouseDragButtons maybeDrag
+        origin   = maybe pos mouseDragOriginPos maybeDrag
+        newDrag  = Just $ MouseDrag origin pos buttons'
+
+dragStart :: (Maybe MouseDrag, Maybe MouseDrag)
+          -> Maybe MouseDragBegin
+dragStart (Nothing, Just (MouseDrag pos _ bn)) = Just $ MouseDragBegin pos bn
+dragStart _ = Nothing
