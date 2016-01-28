@@ -15,6 +15,7 @@ module Iris.SceneGraph.DrawGraph
 
 import qualified Graphics.Rendering.OpenGL as GL
 
+import           Iris.Draw
 import           Iris.Transformation
 
 -- | DrawData is passed between and possible modified by nodes in the scene
@@ -22,11 +23,6 @@ import           Iris.Transformation
 data DrawData = DrawData
   { transform :: !Transformation
   , viewport  :: !Viewport
-  } deriving (Show)
-
-data Viewport = Viewport
-  { viewportPos  :: !GL.Position
-  , viewportSize :: !GL.Size
   } deriving (Show)
 
 drawData :: DrawData

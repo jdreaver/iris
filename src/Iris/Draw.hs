@@ -8,6 +8,7 @@ module Iris.Draw
        , disableAttrib
        , withAttrib
        , U.setUniform
+       , Viewport (..)
        ) where
 
 import qualified Graphics.GLUtil as U
@@ -39,3 +40,9 @@ withAttrib prog name f =
      result <- f
      disableAttrib prog name
      return result
+
+
+data Viewport = Viewport
+  { viewportPos  :: !GL.Position
+  , viewportSize :: !GL.Size
+  } deriving (Show)

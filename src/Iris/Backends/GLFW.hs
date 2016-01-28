@@ -14,6 +14,7 @@ module Iris.Backends.GLFW
        ) where
 
 import           Control.Monad
+import qualified Graphics.Rendering.OpenGL as GL
 import qualified Graphics.UI.GLFW as GLFW
 import           System.Exit
 import           System.IO
@@ -25,11 +26,11 @@ import           Iris.Reactive
 data GLFWCanvas = GLFWCanvas
   { glfwCanvasWindow        :: GLFW.Window
   , glfwCanvasWindowEvents  :: MomentIO CanvasEvents
-  , glfwCanvasFireDraw          :: Handler ()
+  , glfwCanvasFireDraw      :: Handler ()
   }
 
 instance Canvas GLFWCanvas where
-  canvasSize      = windowSize' . glfwCanvasWindow
+  canvasViewport  = windowSize' . glfwCanvasWindow
   framebufferSize = framebufferSize' . glfwCanvasWindow
   drawLoop        = mainLoop
   cursorPos       = cursorPos' . glfwCanvasWindow
@@ -108,11 +109,10 @@ cleanup win = do
     GLFW.terminate
     exitSuccess
 
--- | Overload of `GLFW.getWindowSize` to return `GL.Size`
-windowSize' :: GLFW.Window -> IO CanvasSize
+windowSize' :: GLFW.Window -> IO Viewport
 windowSize' win =
   do (w, h) <- GLFW.getWindowSize win
-     return $ CanvasSize (fromIntegral w) (fromIntegral h)
+     return $ Viewport (GL.Position 0 0) (GL.Size (fromIntegral w) (fromIntegral h))
 
 framebufferSize' :: GLFW.Window -> IO FramebufferSize
 framebufferSize' win =
@@ -178,12 +178,13 @@ mouseScrollEvent' win =
 
 -- | Create an Observable for the window size using the GLFW window size
 -- callback.
-windowSizeObservable' :: GLFW.Window -> IO (MomentIO (Observable CanvasSize))
+windowSizeObservable' :: GLFW.Window -> IO (MomentIO (Observable Viewport))
 windowSizeObservable' win =
   do currentSize <- windowSize' win
      (h, sub) <- subjectIO currentSize
      let callback :: GLFW.WindowSizeCallback
-         callback _ x y = h $ CanvasSize (fromIntegral x) (fromIntegral y)
+         callback _ x y = h $ Viewport (GL.Position 0 0) size
+           where size = GL.Size (fromIntegral x) (fromIntegral y)
      liftIO $ GLFW.setWindowSizeCallback win $ Just callback
      return $ liftM asObservable sub
 

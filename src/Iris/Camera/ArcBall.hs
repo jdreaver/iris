@@ -44,21 +44,21 @@ arcBallFromCanvasEvents :: ArcBallCamera
                         -> CanvasEvents
                         -> MomentIO (Behavior Transformation)
 arcBallFromCanvasEvents cam
-  (CanvasEvents mousePosO mouseButtonE mouseScrollE canvasSizeO _ _) =
-  arcBallTransB cam mousePosO mouseButtonE canvasSizeB mouseScrollE
-  where (Observable canvasSizeB _) = canvasSizeO
+  (CanvasEvents mousePosO mouseButtonE mouseScrollE viewportO _ _) =
+  arcBallTransB cam mousePosO mouseButtonE viewportB mouseScrollE
+  where (Observable viewportB _) = viewportO
 
 arcBallTransB :: ArcBallCamera
               -> Observable MousePosition
               -> Event MouseButtonEvent
-              -> Behavior CanvasSize
+              -> Behavior Viewport
               -> Event MouseScrollAmount
               -> MomentIO (Behavior Transformation)
-arcBallTransB cam mousePosO mouseButtonE canvasSizeB mouseScrollE =
+arcBallTransB cam mousePosO mouseButtonE viewportB mouseScrollE =
   do (_, dragE) <- liftMoment $ mouseDragEvents mouseButtonE mousePosO
      bCamState <- accumB (cam, cam) $
        unions [ arcBallClick <$> mouseButtonE
-              , arcBallDrag <$> canvasSizeB <@> dragE
+              , arcBallDrag <$> viewportB <@> dragE
               , arcBallScrollEvent mouseScrollE
               ]
      return $ arcBallTrans <$> (snd <$> bCamState)
@@ -71,7 +71,7 @@ arcBallClick (bn, Pressed) cs@(_, cam)
   | otherwise                   = cs
 arcBallClick _ cs = cs
 
-arcBallDrag :: CanvasSize -> MouseDrag -> ArcBallState -> ArcBallState
+arcBallDrag :: Viewport -> MouseDrag -> ArcBallState -> ArcBallState
 arcBallDrag cs (MouseDrag opos pos bn) (ocam, cam) = (ocam, cam')
   where cam' = if bn == [arcBallDragButton cam] then newCam else cam
         newCam = arcBallMouseRotate cs opos ocam pos cam
@@ -83,13 +83,17 @@ arcBallDrag cs (MouseDrag opos pos bn) (ocam, cam) = (ocam, cam')
 -- axis (azimuth cylinder). We compute the angle changes about these cylinders
 -- independently. This frees us from the nasty task of handling when the mouse
 -- goes outside the bounds of the arcball.
-arcBallMouseRotate :: CanvasSize
+arcBallMouseRotate :: Viewport
                    -> MousePosition -- ^ Original mouse position
                    -> ArcBallCamera -- ^ Original state
                    -> MousePosition -- ^ Current mouse position
                    -> ArcBallCamera -- ^ Current state
                    -> ArcBallCamera -- ^ New state
-arcBallMouseRotate (CanvasSize wp hp) (MousePosition oxp oyp) ocs (MousePosition xp yp) cs =
+arcBallMouseRotate (Viewport _ (GL.Size wp hp))
+                   (MousePosition oxp oyp)
+                   ocs
+                   (MousePosition xp yp)
+                   cs =
   cs { arcBallAzimuth = azim', arcBallElevation = elev' }
   where
     -- Compute the difference of azimuth and elevation

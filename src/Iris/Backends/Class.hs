@@ -3,7 +3,7 @@
 module Iris.Backends.Class
        ( Canvas (..)
        , CanvasEvents (..)
-       , CanvasSize (..)
+       , Viewport (..)
        , FramebufferSize (..)
        , MousePosition (..)
        , MouseScrollAmount (..)
@@ -11,6 +11,7 @@ module Iris.Backends.Class
 
 import qualified Graphics.Rendering.OpenGL as GL
 
+import           Iris.Draw
 import           Iris.Mouse
 import           Iris.Reactive
 
@@ -18,7 +19,7 @@ import           Iris.Reactive
 -- | Used for a common interface for OpenGL windows.
 class Canvas a where
 
-  canvasSize      :: a -> IO CanvasSize
+  canvasViewport  :: a -> IO Viewport
   framebufferSize :: a -> IO FramebufferSize
   drawLoop        :: a -> IO ()
   cursorPos       :: a -> IO MousePosition
@@ -26,9 +27,6 @@ class Canvas a where
 
 -- The following data types are just wrappers around common OpenGL types,
 -- except more specific.
-data CanvasSize = CanvasSize !GL.GLsizei !GL.GLsizei
-  deriving (Show, Ord, Eq)
-
 data FramebufferSize = FramebufferSize !GL.GLsizei !GL.GLsizei
   deriving (Show, Ord, Eq)
 
@@ -43,7 +41,7 @@ data CanvasEvents = CanvasEvents
   { mousePosObservable        :: Observable MousePosition
   , mouseButtonEvent          :: Event MouseButtonEvent
   , mouseScrollEvent          :: Event MouseScrollAmount
-  , canvasSizeObservable      :: Observable CanvasSize
+  , viewportObservable        :: Observable Viewport
   , framebufferSizeObservable :: Observable FramebufferSize
   , drawEvent                 :: Event ()
   }
