@@ -46,22 +46,22 @@ arcBallCameraTransB :: ArcBallCamera
 arcBallCameraTransB cam events@(CanvasEvents mousePosO mouseButtonE _ canvasSizeO _ _) =
   do (_, dragE) <- liftMoment $ mouseDragEvents mouseButtonE mousePosO
      bCamState <- accumB (cam, cam) $
-       unions [ click <$> mouseButtonE
-              , drag <$> observableBehavior canvasSizeO <@> dragE
+       unions [ arcBallClick <$> mouseButtonE
+              , arcBallDrag <$> observableBehavior canvasSizeO <@> dragE
               , arcBallScrollEvent (mouseScrollEvent events)
               ]
      return $ arcBallCameraTrans <$> (snd <$> bCamState)
 
 type ArcBallState = (ArcBallCamera, ArcBallCamera)
 
-click :: MouseButtonEvent -> ArcBallState -> ArcBallState
-click (bn, Pressed) cs@(_, cam)
+arcBallClick :: MouseButtonEvent -> ArcBallState -> ArcBallState
+arcBallClick (bn, Pressed) cs@(_, cam)
   | bn == arcBallDragButton cam = (cam, cam)
   | otherwise                   = cs
-click _ cs = cs
+arcBallClick _ cs = cs
 
-drag :: CanvasSize -> MouseDrag -> ArcBallState -> ArcBallState
-drag cs (MouseDrag opos pos bn) (ocam, cam) = (ocam, cam')
+arcBallDrag :: CanvasSize -> MouseDrag -> ArcBallState -> ArcBallState
+arcBallDrag cs (MouseDrag opos pos bn) (ocam, cam) = (ocam, cam')
   where cam' = if bn == [arcBallDragButton cam] then newCam else cam
         newCam = arcBallMouseRotate cs opos ocam pos cam
 

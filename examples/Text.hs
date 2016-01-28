@@ -22,7 +22,8 @@ main =
      canvas <- W.initGLFW win
 
      node <- textInit $ TextSpec "Hello! AVWY" path (L.V2 0 0) 1 512
-     let cam = panZoomCamera { width = 5, height = 5 }
+     let cam = panZoomCamera { panZoomWidth  = 5
+                             , panZoomHeight = 5 }
          node' = transNode (translation (L.V3 (-1) 0 0)) node
 
      network <- compile $ makeScene canvas (pure node') (Just cam)

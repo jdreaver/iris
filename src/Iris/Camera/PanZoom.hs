@@ -18,10 +18,10 @@ import           Iris.Transformation
 
 -- | Camera that pans along the XY plane.
 data PanZoomCamera = PanZoomCamera
-  { center     :: L.V2 GL.GLfloat
-  , width      :: GL.GLfloat
-  , height     :: GL.GLfloat
-  , dragButton :: MouseButton
+  { panZoomCenter     :: L.V2 GL.GLfloat
+  , panZoomWidth      :: GL.GLfloat
+  , panZoomHeight     :: GL.GLfloat
+  , panZoomDragButton :: MouseButton
   } deriving (Show)
 
 instance Camera PanZoomCamera where
@@ -52,23 +52,23 @@ panZoomTransB :: PanZoomCamera
 panZoomTransB cam events@(CanvasEvents mousePosO mouseButtonE _ canvasSizeO _ _) =
   do (_, dragE) <- liftMoment $ mouseDragEvents mouseButtonE mousePosO
      bCamState <- accumB (cam, cam) $
-       unions [ click <$> mouseButtonE
-              , drag <$> observableBehavior canvasSizeO <@> dragE
+       unions [ panZoomClick <$> mouseButtonE
+              , panZoomDrag <$> observableBehavior canvasSizeO <@> dragE
               , panZoomScrollEvent events
               ]
      return $ panZoomTrans <$> (snd <$> bCamState)
 
 -- | When we begin a drag, update the PanZoomState if the drag button is the
 -- same as the camera's drag button.
-click :: MouseButtonEvent -> PanZoomState -> PanZoomState
-click (bn, Pressed) cs@(_, cam)
-  | bn == dragButton cam = (cam, cam)
-  | otherwise            = cs
-click _ cs = cs
+panZoomClick :: MouseButtonEvent -> PanZoomState -> PanZoomState
+panZoomClick (bn, Pressed) cs@(_, cam)
+  | bn == panZoomDragButton cam = (cam, cam)
+  | otherwise                   = cs
+panZoomClick _ cs = cs
 
-drag :: CanvasSize -> MouseDrag -> PanZoomState -> PanZoomState
-drag cs (MouseDrag opos pos bn) (ocam, cam) = (ocam, cam')
-  where cam' = if bn == [dragButton cam] then newCam else cam
+panZoomDrag :: CanvasSize -> MouseDrag -> PanZoomState -> PanZoomState
+panZoomDrag cs (MouseDrag opos pos bn) (ocam, cam) = (ocam, cam')
+  where cam' = if bn == [panZoomDragButton cam] then newCam else cam
         newCam = panZoomMouseDrag cs opos ocam pos cam
 
 
@@ -80,10 +80,10 @@ panZoomMouseDrag :: CanvasSize
                  -> PanZoomCamera -- ^ Current state
                  -> PanZoomCamera -- ^ New state
 panZoomMouseDrag (CanvasSize wp hp) (MousePosition oxp oyp) ocs (MousePosition xp yp) cs =
-  cs { center = center ocs + L.V2 (-dxw) dyw }
+  cs { panZoomCenter = panZoomCenter ocs + L.V2 (-dxw) dyw }
   where
-    dxw = panZoomAxisDrag oxp xp (width cs) wp
-    dyw = panZoomAxisDrag oyp yp (height cs) hp
+    dxw = panZoomAxisDrag oxp xp (panZoomWidth cs) wp
+    dyw = panZoomAxisDrag oyp yp (panZoomHeight cs) hp
 
 -- | Computes the difference in the camera center coordinate needed to move a
 -- corresponding mouse coordinate while keeping the point under the mouse still

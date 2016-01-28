@@ -19,7 +19,9 @@ main =
 
      lineNode <- lineInit $ LineSpec lineVerts (L.V3 0.2 0.5 1)
 
-     let cam = panZoomCamera { center = L.V2 1 2 , width = 10 , height = 7 }
+     let cam = panZoomCamera { panZoomCenter = L.V2 1 2
+                             , panZoomWidth  = 10
+                             , panZoomHeight = 7 }
          camNode = transNode (cameraTrans cam) lineNode
          scene = sceneRoot canvas camNode
 

@@ -43,7 +43,9 @@ main =
                  , transNode (translation (L.V3 (-1) 1 0)) mesh
                  , transNode (translation (L.V3 (-2) 3 0)) mesh3
                  ]
-         cam = panZoomCamera { center = L.V2 1 2 , width = 10 , height = 7 }
+         cam = panZoomCamera { panZoomCenter = L.V2 1 2
+                             , panZoomWidth  = 10
+                             , panZoomHeight = 7 }
 
      network <- compile $ makeScene canvas (pure items) (Just cam)
      actuate network
