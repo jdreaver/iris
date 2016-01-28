@@ -26,8 +26,8 @@ data ArcBallCamera = ArcBallCamera
   }
 
 instance Camera ArcBallCamera where
-  cameraTrans         = arcBallCameraTrans
-  cameraTransBehavior = arcBallCameraTransB
+  cameraTrans    = arcBallCameraTrans
+  camFromEventsB = arcBallFromCanvasEvents
 
 arcBallCamera :: ArcBallCamera
 arcBallCamera = ArcBallCamera (L.V3 0 0 0) 2 0 0 MouseButtonLeft
@@ -40,15 +40,26 @@ arcBallCameraTrans (ArcBallCamera (L.V3 cx cy cz) w a e _) =
         rotElev  = rotateX ((pi / 2) - e)
         scale'   = scale (L.V3 (2/w) (2/w) (2/1000))
 
+arcBallFromCanvasEvents :: ArcBallCamera
+                        -> CanvasEvents
+                        -> MomentIO (Behavior Transformation)
+arcBallFromCanvasEvents cam
+  (CanvasEvents mousePosO mouseButtonE mouseScrollE canvasSizeO _ _) =
+  arcBallCameraTransB cam mousePosO mouseButtonE canvasSizeB mouseScrollE
+  where (Observable canvasSizeB _) = canvasSizeO
+
 arcBallCameraTransB :: ArcBallCamera
-                    -> CanvasEvents
+                    -> Observable MousePosition
+                    -> Event MouseButtonEvent
+                    -> Behavior CanvasSize
+                    -> Event MouseScrollAmount
                     -> MomentIO (Behavior Transformation)
-arcBallCameraTransB cam events@(CanvasEvents mousePosO mouseButtonE _ canvasSizeO _ _) =
+arcBallCameraTransB cam mousePosO mouseButtonE canvasSizeB mouseScrollE =
   do (_, dragE) <- liftMoment $ mouseDragEvents mouseButtonE mousePosO
      bCamState <- accumB (cam, cam) $
        unions [ arcBallClick <$> mouseButtonE
-              , arcBallDrag <$> observableBehavior canvasSizeO <@> dragE
-              , arcBallScrollEvent (mouseScrollEvent events)
+              , arcBallDrag <$> canvasSizeB <@> dragE
+              , arcBallScrollEvent mouseScrollE
               ]
      return $ arcBallCameraTrans <$> (snd <$> bCamState)
 

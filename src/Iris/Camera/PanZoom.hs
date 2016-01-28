@@ -25,8 +25,8 @@ data PanZoomCamera = PanZoomCamera
   } deriving (Show)
 
 instance Camera PanZoomCamera where
-  cameraTrans         = panZoomTrans
-  cameraTransBehavior = panZoomTransB
+  cameraTrans    = panZoomTrans
+  camFromEventsB = panZoomFromEvents
 
 -- | Default PanZoomCamera instance.
 panZoomCamera :: PanZoomCamera
@@ -46,15 +46,28 @@ panZoomTrans (PanZoomCamera (L.V2 cx cy) w h _) =
 -- drag. The second part is the actual camera state.
 type PanZoomState = (PanZoomCamera, PanZoomCamera)
 
+panZoomFromEvents :: PanZoomCamera
+                  -> CanvasEvents
+                  -> MomentIO (Behavior Transformation)
+panZoomFromEvents cam (CanvasEvents mousePosO mouseButtonE mouseScrollE canvasSizeO _ _) =
+  panZoomTransB cam mousePosO mouseButtonE canvasSizeB mouseScrollE
+  where (Observable canvasSizeB _) = canvasSizeO
+
+
 panZoomTransB :: PanZoomCamera
-              -> CanvasEvents
+              -> Observable MousePosition
+              -> Event MouseButtonEvent
+              -> Behavior CanvasSize
+              -> Event MouseScrollAmount
               -> MomentIO (Behavior Transformation)
-panZoomTransB cam events@(CanvasEvents mousePosO mouseButtonE _ canvasSizeO _ _) =
+panZoomTransB cam mousePosO mouseButtonE canvasSizeB mouseScrollE =
   do (_, dragE) <- liftMoment $ mouseDragEvents mouseButtonE mousePosO
      bCamState <- accumB (cam, cam) $
        unions [ panZoomClick <$> mouseButtonE
-              , panZoomDrag <$> observableBehavior canvasSizeO <@> dragE
-              , panZoomScrollEvent events
+              , panZoomDrag <$> canvasSizeB <@> dragE
+              , panZoomZoom <$> canvasSizeB
+                            <*> observableBehavior mousePosO
+                            <@> mouseScrollE
               ]
      return $ panZoomTrans <$> (snd <$> bCamState)
 
@@ -96,25 +109,23 @@ panZoomAxisDrag :: GL.GLint   -- ^ Original mouse coordinate
 panZoomAxisDrag oxp xp cw w = realToFrac $ fromIntegral (xp - oxp) * cw / fromIntegral w
 
 
-panZoomScrollEvent :: CanvasEvents
-                   -> Event (PanZoomState -> PanZoomState)
-panZoomScrollEvent events =
-  doZoom <$> observableBehavior (canvasSizeObservable events)
-         <*> observableBehavior (mousePosObservable events)
-         <@> mouseScrollEvent events
-  where doZoom s p z (cm, cs) = (cm, panZoomMouseZoom s p cs z)
-
+panZoomZoom :: CanvasSize
+            -> MousePosition     -- ^ Current mouse position
+            -> MouseScrollAmount -- ^ How much mouse wheel was turned
+            -> PanZoomState      -- ^ Current state
+            -> PanZoomState      -- ^ New camera state
+panZoomZoom cans mp msa (cso, cs) = (cso, panZoomMouseZoom cans mp msa cs)
 
 -- | Zoom a camera, keeping the point under the mouse still while zooming.
 panZoomMouseZoom :: CanvasSize
                  -> MousePosition     -- ^ Current mouse position
-                 -> PanZoomCamera     -- ^ Current state
                  -> MouseScrollAmount -- ^ How much mouse wheel was turned
+                 -> PanZoomCamera     -- ^ Current state
                  -> PanZoomCamera     -- ^ New camera state
 panZoomMouseZoom (CanvasSize wp hp)
                  (MousePosition mxp myp)
-                 (PanZoomCamera (L.V2 cx cy) cw ch b)
-                 (MouseScrollAmount z) =
+                 (MouseScrollAmount z)
+                 (PanZoomCamera (L.V2 cx cy) cw ch b) =
   PanZoomCamera (L.V2 cx' cy') (cw * factor) (ch * factor) b
   where
     factor = realToFrac $ 1 - 0.1 * z  -- Zoom factor
