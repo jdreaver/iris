@@ -62,9 +62,10 @@ panZoomTransB :: PanZoomCamera
               -> MomentIO (Behavior Transformation)
 panZoomTransB cam mousePosO mouseButtonE viewportB mouseScrollE =
   do (_, dragE) <- liftMoment $ mouseDragEvents mouseButtonE mousePosO
+     let dragFilteredE = filterClip viewportB mouseDragOriginPos dragE
      bCamState <- accumB (cam, cam) $
        unions [ panZoomClick <$> mouseButtonE
-              , panZoomDrag <$> viewportB <@> dragE
+              , panZoomDrag <$> viewportB <@> dragFilteredE
               , panZoomZoom <$> viewportB
                             <*> observableBehavior mousePosO
                             <@> mouseScrollE
