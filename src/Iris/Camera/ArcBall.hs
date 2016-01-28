@@ -26,14 +26,14 @@ data ArcBallCamera = ArcBallCamera
   }
 
 instance Camera ArcBallCamera where
-  cameraTrans    = arcBallCameraTrans
+  cameraTrans    = arcBallTrans
   camFromEventsB = arcBallFromCanvasEvents
 
 arcBallCamera :: ArcBallCamera
 arcBallCamera = ArcBallCamera (L.V3 0 0 0) 2 0 0 MouseButtonLeft
 
-arcBallCameraTrans :: ArcBallCamera -> Transformation
-arcBallCameraTrans (ArcBallCamera (L.V3 cx cy cz) w a e _) =
+arcBallTrans :: ArcBallCamera -> Transformation
+arcBallTrans (ArcBallCamera (L.V3 cx cy cz) w a e _) =
   foldl1' Iris.Transformation.apply [scale', rotElev, rotAzim, trans, identity]
   where trans    = translation (L.V3 (-cx) (-cy) (-cz))
         rotAzim  = rotateZ a
@@ -45,23 +45,23 @@ arcBallFromCanvasEvents :: ArcBallCamera
                         -> MomentIO (Behavior Transformation)
 arcBallFromCanvasEvents cam
   (CanvasEvents mousePosO mouseButtonE mouseScrollE canvasSizeO _ _) =
-  arcBallCameraTransB cam mousePosO mouseButtonE canvasSizeB mouseScrollE
+  arcBallTransB cam mousePosO mouseButtonE canvasSizeB mouseScrollE
   where (Observable canvasSizeB _) = canvasSizeO
 
-arcBallCameraTransB :: ArcBallCamera
-                    -> Observable MousePosition
-                    -> Event MouseButtonEvent
-                    -> Behavior CanvasSize
-                    -> Event MouseScrollAmount
-                    -> MomentIO (Behavior Transformation)
-arcBallCameraTransB cam mousePosO mouseButtonE canvasSizeB mouseScrollE =
+arcBallTransB :: ArcBallCamera
+              -> Observable MousePosition
+              -> Event MouseButtonEvent
+              -> Behavior CanvasSize
+              -> Event MouseScrollAmount
+              -> MomentIO (Behavior Transformation)
+arcBallTransB cam mousePosO mouseButtonE canvasSizeB mouseScrollE =
   do (_, dragE) <- liftMoment $ mouseDragEvents mouseButtonE mousePosO
      bCamState <- accumB (cam, cam) $
        unions [ arcBallClick <$> mouseButtonE
               , arcBallDrag <$> canvasSizeB <@> dragE
               , arcBallScrollEvent mouseScrollE
               ]
-     return $ arcBallCameraTrans <$> (snd <$> bCamState)
+     return $ arcBallTrans <$> (snd <$> bCamState)
 
 type ArcBallState = (ArcBallCamera, ArcBallCamera)
 
