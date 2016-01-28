@@ -3,6 +3,7 @@
 module Iris.Camera.ArcBall
        ( ArcBallCamera (..)
        , arcBallCamera
+       , arcBallTransB
        ) where
 
 import           Data.Fixed (mod')
@@ -73,9 +74,9 @@ arcBallClick (bn, Pressed) cs@(_, cam)
 arcBallClick _ cs = cs
 
 arcBallDrag :: Viewport -> MouseDrag -> ArcBallState -> ArcBallState
-arcBallDrag cs (MouseDrag opos pos bn) (ocam, cam) = (ocam, cam')
+arcBallDrag vp (MouseDrag opos pos bn) (ocam, cam) = (ocam, cam')
   where cam' = if bn == [arcBallDragButton cam] then newCam else cam
-        newCam = arcBallMouseRotate cs opos ocam pos cam
+        newCam = arcBallMouseRotate vp opos ocam pos cam
 
 
 -- | Rotates the arcball camera. This is not actually true arcball rotation.
@@ -90,7 +91,7 @@ arcBallMouseRotate :: Viewport
                    -> MousePosition -- ^ Current mouse position
                    -> ArcBallCamera -- ^ Current state
                    -> ArcBallCamera -- ^ New state
-arcBallMouseRotate (Viewport _ (GL.Size wp hp))
+arcBallMouseRotate (Viewport (GL.Position vxp vyp) (GL.Size vwp vhp))
                    (MousePosition oxp oyp)
                    ocs
                    (MousePosition xp yp)
@@ -98,8 +99,8 @@ arcBallMouseRotate (Viewport _ (GL.Size wp hp))
   cs { arcBallAzimuth = azim', arcBallElevation = elev' }
   where
     -- Compute the difference of azimuth and elevation
-    da = rotateDelta wp oxp xp
-    de = rotateDelta hp oyp yp
+    da = rotateDelta vwp (oxp - vxp) (xp - vxp)
+    de = rotateDelta vhp (oyp - vyp) (yp - vyp)
 
     -- Apply the differences
     a = arcBallAzimuth   ocs + da
