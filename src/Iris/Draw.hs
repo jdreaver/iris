@@ -50,7 +50,7 @@ data Viewport = Viewport
   } deriving (Show)
 
 -- | Determines if a given point is inside of a viewport.
-insideViewport :: Viewport -> GL.Position -> Bool
+insideViewport :: Viewport -> GL.GLint -> GL.GLint -> Bool
 insideViewport (Viewport (GL.Position px py) (GL.Size pw ph))
-               (GL.Position x y) =
+               x y =
   x >= px && x <= px + pw && y >= py && y <= py + ph

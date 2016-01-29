@@ -107,6 +107,6 @@ filterClip :: Behavior Viewport
            -> Event a
            -> Event a
 filterClip viewportB toMousePos event = event'
-  where toPos (MousePosition x y) = GL.Position x y
-        insideF vp x = insideViewport vp (toPos $ toMousePos x)
+  where toXY (MousePosition x y) = (x, y)
+        insideF vp x = uncurry (insideViewport vp) (toXY $ toMousePos x)
         event' = filterApply (insideF <$> viewportB) event
