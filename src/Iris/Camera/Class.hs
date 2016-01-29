@@ -9,11 +9,11 @@ module Iris.Camera.Class
        , mouseDragEvents
        , MouseDrag (..)
        , MouseDragBegin (..)
-       , filterClip
+       , filterClipE
+       , filterClipB
        ) where
 
 import qualified Data.Map.Strict as Map
-import qualified Graphics.Rendering.OpenGL as GL
 
 import           Iris.Backends
 import           Iris.Draw
@@ -102,11 +102,22 @@ dragStart _ = Nothing
 
 -- | Filters an event by checking if the mouse position is inside a given
 -- viewport.
-filterClip :: Behavior Viewport
+filterClipE :: Behavior Viewport
            -> (a -> MousePosition)
            -> Event a
            -> Event a
-filterClip viewportB toMousePos event = event'
+filterClipE viewportB toMousePos event = event'
   where toXY (MousePosition x y) = (x, y)
         insideF vp x = uncurry (insideViewport vp) (toXY $ toMousePos x)
         event' = filterApply (insideF <$> viewportB) event
+
+
+-- | Like filterClipE, except we take an outside Behavior MousePosition to
+-- filter the event with.
+filterClipB :: Behavior Viewport
+            -> Behavior MousePosition
+            -> Event a
+            -> Event a
+filterClipB viewportB mousePosB = whenE isInside
+  where insideViewport' vp (MousePosition x y) = insideViewport vp x y
+        isInside = insideViewport' <$> viewportB <*> mousePosB

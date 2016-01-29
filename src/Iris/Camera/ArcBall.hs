@@ -57,11 +57,13 @@ arcBallTransB :: ArcBallCamera
               -> MomentIO (Behavior Transformation)
 arcBallTransB cam mousePosO mouseButtonE viewportB mouseScrollE =
   do (_, dragE) <- liftMoment $ mouseDragEvents mouseButtonE mousePosO
-     let dragFilteredE = filterClip viewportB mouseDragOriginPos dragE
+     let dragFilteredE = filterClipE viewportB mouseDragOriginPos dragE
+         (Observable mousePosB _) = mousePosO
+         scrollFilteredE = filterClipB viewportB mousePosB mouseScrollE
      bCamState <- accumB (cam, cam) $
        unions [ arcBallClick <$> mouseButtonE
               , arcBallDrag <$> viewportB <@> dragFilteredE
-              , arcBallScrollEvent mouseScrollE
+              , arcBallScrollEvent scrollFilteredE
               ]
      return $ arcBallTrans <$> (snd <$> bCamState)
 
