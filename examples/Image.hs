@@ -33,7 +33,7 @@ main' canvas node =
                              , arcBallElevation = 30 * pi / 180
                              }
 
-     network <- compile $ makeScene canvas (pure node) (Just cam)
+     network <- compile $ sceneWithCamera canvas (pure node) cam
      actuate network
 
      W.mainLoop canvas

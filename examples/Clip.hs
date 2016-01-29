@@ -42,7 +42,7 @@ makeNetwork can =
      clip3 <- arcBallNode viewB3 events cube
      clip4 <- panZoomNode viewB4 events cube
      let scene = groupNode <$> sequenceA [clip1, clip2, clip3, clip4]
-     makeScene can scene (Nothing :: Maybe ArcBallCamera)
+     makeScene can scene
 
 
 -- | Create a Behavior for the viewport sizes. Each viewport takes up half of

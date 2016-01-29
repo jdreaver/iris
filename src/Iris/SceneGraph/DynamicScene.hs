@@ -5,6 +5,7 @@
 module Iris.SceneGraph.DynamicScene
        ( DrawNode (..)
        , makeScene
+       , sceneWithCamera
        , sceneRoot
        ) where
 
@@ -20,18 +21,31 @@ import           Iris.SceneGraph.DrawGraph
 
 type DynamicDrawNode = Behavior DrawNode
 
-makeScene :: (Canvas a, Camera c) =>
-             a ->
-             DynamicDrawNode ->
-             Maybe c ->
-             MomentIO ()
-makeScene win n maybeCam =
+makeScene :: (Canvas a)
+          => a
+          -> DynamicDrawNode
+          -> MomentIO ()
+makeScene win root =
   do events <- makeEvents win
+     makeScene' win events root
 
-     -- Initialize camera and attach event handlers
-     root <- maybe (return n) (attachCam events n) maybeCam
+sceneWithCamera :: (Canvas a, Camera c)
+                => a
+                -> DynamicDrawNode
+                -> c
+                -> MomentIO ()
+sceneWithCamera win n cam =
+  do events <- makeEvents win
+     root <- attachCam events n cam
+     makeScene' win events root
 
-     let root' = sceneRoot win <$> root
+makeScene' :: (Canvas a)
+           => a
+           -> CanvasEvents
+           -> DynamicDrawNode
+           -> MomentIO ()
+makeScene' win events root =
+  do let root' = sceneRoot win <$> root
          eDraw = drawGraph <$> root' <@ drawEvent events
      reactimate eDraw
 

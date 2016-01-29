@@ -47,7 +47,7 @@ main =
                              , panZoomWidth  = 10
                              , panZoomHeight = 7 }
 
-     network <- compile $ makeScene canvas (pure items) (Just cam)
+     network <- compile $ sceneWithCamera canvas (pure items) cam
      actuate network
 
      W.mainLoop canvas

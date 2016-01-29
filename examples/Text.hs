@@ -26,7 +26,7 @@ main =
                              , panZoomHeight = 5 }
          node' = transNode (translation (L.V3 (-1) 0 0)) node
 
-     network <- compile $ makeScene canvas (pure node') (Just cam)
+     network <- compile $ sceneWithCamera canvas (pure node') cam
      actuate network
 
      W.mainLoop canvas
