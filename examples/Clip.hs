@@ -33,32 +33,32 @@ main =
 
 makeNetwork :: (Canvas a) => a -> MomentIO ()
 makeNetwork can =
-  do (viewB1, viewB2) <- clipBehaviors can
+  do (viewB1, viewB2, viewB3, viewB4) <- clipBehaviors can
      events <- makeEvents can
-     let cam = arcBallCamera { arcBallWidth     = 6
-                             , arcBallAzimuth   = 30 * pi / 180
-                             , arcBallElevation = 30 * pi / 180
-                             }
-     camB1 <- cameraTransB cam events viewB1
-     camB2 <- cameraTransB cam events viewB2
      cube <- liftIO makeCube
-     let node1 = flip transNode cube <$> camB1
-         clip1 = clipperNode  <$> viewB1 <*> node1
-         node2 = flip transNode cube <$> camB2
-         clip2 = clipperNode  <$> viewB2 <*> node2
-         scene = groupNode <$> sequenceA [clip1, clip2]
+     clip1 <- arcBallNode viewB1 events cube
+     clip2 <- arcBallNode viewB2 events cube
+     clip3 <- arcBallNode viewB3 events cube
+     clip4 <- arcBallNode viewB4 events cube
+     let scene = groupNode <$> sequenceA [clip1, clip2, clip3, clip4]
      makeScene can scene (Nothing :: Maybe ArcBallCamera)
 
 
 -- | Create a Behavior for the viewport sizes. Each viewport takes up half of
 -- the screen.
-clipBehaviors :: (Canvas a) => a -> MomentIO (Behavior Viewport, Behavior Viewport)
+clipBehaviors :: (Canvas a)
+              => a
+              -> MomentIO (Behavior Viewport, Behavior Viewport,
+                           Behavior Viewport, Behavior Viewport)
 clipBehaviors c =
   do events <- makeEvents c
      let buffSizeB = observableBehavior $ framebufferSizeObservable events
-         f1 (FramebufferSize w h) = Viewport (GL.Position 0 0) (GL.Size (w `quot` 2) h)
-         f2 (FramebufferSize w h) = Viewport (GL.Position (w `quot` 2) 0) (GL.Size (w `quot` 2) h)
-     return (f1 <$> buffSizeB, f2 <$> buffSizeB)
+         sizeFunc w h = GL.Size (w `quot` 2) (h `quot` 2)
+         f1 (FramebufferSize w h) = Viewport (GL.Position 0 0) (sizeFunc w h)
+         f2 (FramebufferSize w h) = Viewport (GL.Position (w `quot` 2) 0) (sizeFunc w h)
+         f3 (FramebufferSize w h) = Viewport (GL.Position 0 (h `quot` 2)) (sizeFunc w h)
+         f4 (FramebufferSize w h) = Viewport (GL.Position (w `quot` 2) (h `quot` 2)) (sizeFunc w h)
+     return (f1 <$> buffSizeB, f2 <$> buffSizeB, f3 <$> buffSizeB, f4 <$> buffSizeB)
 
 cameraTransB :: ArcBallCamera
              -> CanvasEvents
@@ -66,3 +66,18 @@ cameraTransB :: ArcBallCamera
              -> MomentIO (Behavior Transformation)
 cameraTransB cam (CanvasEvents mousePosO mouseButtonE mouseScrollE _ _ _) viewportB =
   arcBallTransB cam mousePosO mouseButtonE viewportB mouseScrollE
+
+
+arcBallNode :: Behavior Viewport -- ^ Viewport for this scene
+            -> CanvasEvents
+            -> DrawNode          -- ^ Thing to draw
+            -> MomentIO (Behavior DrawNode)
+arcBallNode viewportB events item =
+  do let cam = arcBallCamera { arcBallWidth     = 6
+                             , arcBallAzimuth   = 30 * pi / 180
+                             , arcBallElevation = 30 * pi / 180
+                             }
+     camB <- cameraTransB cam events viewportB
+     let camNode = (`transNode` item) <$> camB
+         clipNode = clipperNode  <$> viewportB <*> camNode
+     return clipNode
