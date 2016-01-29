@@ -43,9 +43,9 @@ makeNetwork can =
      camB2 <- cameraTransB cam events viewB2
      cube <- liftIO makeCube
      let node1 = flip transNode cube <$> camB1
-         clip1 = clipperNode  <$> viewB1 <*> sequenceA [node1]
+         clip1 = clipperNode  <$> viewB1 <*> node1
          node2 = flip transNode cube <$> camB2
-         clip2 = clipperNode  <$> viewB2 <*> sequenceA [node2]
+         clip2 = clipperNode  <$> viewB2 <*> node2
          scene = groupNode <$> sequenceA [clip1, clip2]
      makeScene can scene (Nothing :: Maybe ArcBallCamera)
 

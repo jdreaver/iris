@@ -13,14 +13,14 @@ import           Iris.SceneGraph.DrawGraph
 
 -- | Create a node that clips the viewport to a given size, draws children, and
 -- then restores the original viewport size.
-clipperNode :: Viewport -> [DrawNode] -> DrawNode
-clipperNode v cs = DrawNode $ drawClipper v cs
+clipperNode :: Viewport -> DrawNode -> DrawNode
+clipperNode v child = DrawNode $ drawClipper v child
 
-drawClipper :: Viewport -> [DrawNode] -> DrawFunc
-drawClipper v' cs drawData =
+drawClipper :: Viewport -> DrawNode -> DrawFunc
+drawClipper v' (DrawNode childFunc) drawDat =
   do clip v'
-     drawChildren cs drawData
-     clip (viewport drawData)
+     childFunc drawDat
+     clip (viewport drawDat)
 
 -- | Run GL.viewport and GL.scissor with a given size
 clip :: Viewport -> IO ()

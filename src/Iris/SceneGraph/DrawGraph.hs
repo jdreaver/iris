@@ -3,6 +3,7 @@
 module Iris.SceneGraph.DrawGraph
        ( DrawNode (..)
        , DrawData (..)
+       , drawData
        , Viewport (..)
        , DrawFunc
        , drawChildren
