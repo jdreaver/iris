@@ -3,6 +3,7 @@
 module Iris.Camera.PanZoom
        ( PanZoomCamera (..)
        , panZoomCamera
+       , panZoomTransB
        ) where
 
 import           Data.List (foldl1')
@@ -127,7 +128,7 @@ panZoomMouseZoom :: Viewport
                  -> MouseScrollAmount -- ^ How much mouse wheel was turned
                  -> PanZoomCamera     -- ^ Current state
                  -> PanZoomCamera     -- ^ New camera state
-panZoomMouseZoom (Viewport _ (GL.Size wp hp))
+panZoomMouseZoom (Viewport (GL.Position vxp vyp) (GL.Size vwp vhp))
                  (MousePosition mxp myp)
                  (MouseScrollAmount z)
                  (PanZoomCamera (L.V2 cx cy) cw ch b) =
@@ -136,8 +137,8 @@ panZoomMouseZoom (Viewport _ (GL.Size wp hp))
     factor = realToFrac $ 1 - 0.1 * z  -- Zoom factor
 
     -- Translate center
-    mx  = mapAxisPixelToWorld wp mxp cw cx
-    my  = mapAxisPixelToWorld hp myp ch cy
+    mx  = mapAxisPixelToWorld vwp (mxp - vxp) cw cx
+    my  = mapAxisPixelToWorld vhp (myp - vyp) ch cy
     cx' = (cx - mx) * factor + mx
     cy' = (cy - my) * factor + my
 

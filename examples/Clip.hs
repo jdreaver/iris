@@ -1,7 +1,8 @@
 {-# LANGUAGE CPP #-}
 
--- | Shows how to use a clipper node to split the viewport, and how to use two
--- different cameras in the same scene.
+-- | Shows how to use a clipper node to split the viewport, and how to use
+-- different different cameras in the same scene. There are 3 arcball cameras,
+-- and one pan-zoom camera (the top-right camera), all using the same cube.
 
 module Main where
 
@@ -39,7 +40,7 @@ makeNetwork can =
      clip1 <- arcBallNode viewB1 events cube
      clip2 <- arcBallNode viewB2 events cube
      clip3 <- arcBallNode viewB3 events cube
-     clip4 <- arcBallNode viewB4 events cube
+     clip4 <- panZoomNode viewB4 events cube
      let scene = groupNode <$> sequenceA [clip1, clip2, clip3, clip4]
      makeScene can scene (Nothing :: Maybe ArcBallCamera)
 
@@ -60,24 +61,37 @@ clipBehaviors c =
          f4 (FramebufferSize w h) = Viewport (GL.Position (w `quot` 2) (h `quot` 2)) (sizeFunc w h)
      return (f1 <$> buffSizeB, f2 <$> buffSizeB, f3 <$> buffSizeB, f4 <$> buffSizeB)
 
-cameraTransB :: ArcBallCamera
-             -> CanvasEvents
-             -> Behavior Viewport
-             -> MomentIO (Behavior Transformation)
-cameraTransB cam (CanvasEvents mousePosO mouseButtonE mouseScrollE _ _ _) viewportB =
-  arcBallTransB cam mousePosO mouseButtonE viewportB mouseScrollE
-
-
 arcBallNode :: Behavior Viewport -- ^ Viewport for this scene
             -> CanvasEvents
             -> DrawNode          -- ^ Thing to draw
             -> MomentIO (Behavior DrawNode)
-arcBallNode viewportB events item =
+arcBallNode viewportB
+            (CanvasEvents mousePosO mouseButtonE mouseScrollE _ _ _)
+            item =
   do let cam = arcBallCamera { arcBallWidth     = 6
                              , arcBallAzimuth   = 30 * pi / 180
                              , arcBallElevation = 30 * pi / 180
                              }
-     camB <- cameraTransB cam events viewportB
-     let camNode = (`transNode` item) <$> camB
-         clipNode = clipperNode  <$> viewportB <*> camNode
-     return clipNode
+     camB <- arcBallTransB cam mousePosO mouseButtonE viewportB mouseScrollE
+     return $ makeNode camB viewportB item
+
+
+panZoomNode :: Behavior Viewport -- ^ Viewport for this scene
+            -> CanvasEvents
+            -> DrawNode          -- ^ Thing to draw
+            -> MomentIO (Behavior DrawNode)
+panZoomNode viewportB
+            (CanvasEvents mousePosO mouseButtonE mouseScrollE _ _ _)
+            item =
+  do let cam = panZoomCamera { panZoomWidth  = 6
+                             , panZoomHeight = 6
+                             }
+     camB <- panZoomTransB cam mousePosO mouseButtonE viewportB mouseScrollE
+     return $ makeNode camB viewportB item
+
+
+makeNode :: Behavior Transformation
+         -> Behavior Viewport
+         -> DrawNode
+         -> Behavior DrawNode
+makeNode camB viewportB item = clipperNode <$> viewportB <*> ((`transNode` item) <$> camB)
