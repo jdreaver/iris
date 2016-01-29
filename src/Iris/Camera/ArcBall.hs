@@ -106,7 +106,7 @@ arcBallMouseRotate (Viewport (GL.Position vxp vyp) (GL.Size vwp vhp))
 
     -- Apply the differences
     a = arcBallAzimuth   ocs + da
-    e = arcBallElevation ocs + de
+    e = arcBallElevation ocs - de
 
     -- Don't allow azimuth and elevation out of bounds
     azim' = mod' a (pi * 2)

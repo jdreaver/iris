@@ -22,7 +22,7 @@ import           Iris.Util
 
 main :: IO ()
 main =
-  do win <- W.makeWindow "Clipping" (480 * 2, 480)
+  do win <- W.makeWindow "Clipping" (860, 860)
      canvas <- W.initGLFW win
 
      network <- compile $ makeNetwork canvas

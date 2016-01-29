@@ -123,7 +123,8 @@ framebufferSize' win =
 cursorPos' :: GLFW.Window -> IO MousePosition
 cursorPos' w =
   do (x, y) <- GLFW.getCursorPos w
-     return $ MousePosition (floor x) (floor y)
+     (_, h) <- GLFW.getWindowSize w
+     return $ MousePosition (floor x) (fromIntegral h - floor y)
 
 
 -- | Convert from GLFW mouse buttons to iris mouse buttons
@@ -144,8 +145,10 @@ mousePosObservable' :: GLFW.Window -> IO (MomentIO (Observable MousePosition))
 mousePosObservable' win =
   do (addHandler, fire) <- newAddHandler
      let callback :: GLFW.CursorPosCallback
-         callback _ x y = fire pos
-           where pos = MousePosition (floor x) (floor y)
+         callback _ x y = do
+           (_, h) <- GLFW.getWindowSize win
+           let pos = MousePosition (floor x) (fromIntegral h - floor y)
+           fire pos
      liftIO $ GLFW.setCursorPosCallback win $ Just callback
      currentPos <- cursorPos' win
      return $ do e <- fromAddHandler addHandler

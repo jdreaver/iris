@@ -98,7 +98,7 @@ panZoomMouseDrag (Viewport _ (GL.Size wp hp))
                  ocs
                  (MousePosition xp yp)
                  cs =
-  cs { panZoomCenter = panZoomCenter ocs + L.V2 (-dxw) dyw }
+  cs { panZoomCenter = panZoomCenter ocs + L.V2 dxw dyw }
   where
     dxw = panZoomAxisDrag oxp xp (panZoomWidth cs) wp
     dyw = panZoomAxisDrag oyp yp (panZoomHeight cs) hp
@@ -111,7 +111,7 @@ panZoomAxisDrag :: GL.GLint   -- ^ Original mouse coordinate
                 -> GL.GLfloat -- ^ Camera width
                 -> GL.GLint   -- ^ Canvas width
                 -> GL.GLfloat -- ^ Change in camera width
-panZoomAxisDrag oxp xp cw w = realToFrac $ fromIntegral (xp - oxp) * cw / fromIntegral w
+panZoomAxisDrag oxp xp cw w = realToFrac $ fromIntegral (oxp - xp) * cw / fromIntegral w
 
 
 panZoomZoom :: Viewport
@@ -137,7 +137,7 @@ panZoomMouseZoom (Viewport _ (GL.Size wp hp))
 
     -- Translate center
     mx  = mapAxisPixelToWorld wp mxp cw cx
-    my  = mapAxisPixelToWorld hp (hp - myp) ch cy
+    my  = mapAxisPixelToWorld hp myp ch cy
     cx' = (cx - mx) * factor + mx
     cy' = (cy - my) * factor + my
 

@@ -30,6 +30,8 @@ class Canvas a where
 data FramebufferSize = FramebufferSize !GL.GLsizei !GL.GLsizei
   deriving (Show, Ord, Eq)
 
+-- | Used in events to relay the current mouse position in integer pixel
+-- coordinates. Note that the origin is assumed to be the lower-left corner!
 data MousePosition = MousePosition !GL.GLint !GL.GLint
   deriving (Show, Ord, Eq)
 
