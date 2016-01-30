@@ -16,8 +16,8 @@ module Iris.Camera.Class
 import qualified Data.Map.Strict as Map
 
 import           Iris.Backends
-import           Iris.Draw
 import           Iris.Mouse
+import           Iris.OpenGL (Viewport (..), insideViewport)
 import           Iris.Reactive
 import           Iris.Transformation
 

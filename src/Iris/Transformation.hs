@@ -14,7 +14,7 @@ module Iris.Transformation
 import qualified Graphics.Rendering.OpenGL as GL
 import qualified Linear as L
 
-import           Iris.Backends.Class
+import           Iris.OpenGL (Viewport (..))
 
 -- | Type used to represent a transformation on a plot item.
 type Transformation = L.M44 GL.GLfloat

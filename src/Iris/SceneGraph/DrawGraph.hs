@@ -4,7 +4,6 @@ module Iris.SceneGraph.DrawGraph
        ( DrawNode (..)
        , DrawData (..)
        , drawData
-       , Viewport (..)
        , DrawFunc
        , drawChildren
        , drawGraph
@@ -16,7 +15,7 @@ module Iris.SceneGraph.DrawGraph
 
 import qualified Graphics.Rendering.OpenGL as GL
 
-import           Iris.Draw
+import           Iris.OpenGL (Viewport (..))
 import           Iris.Transformation
 
 -- | DrawData is passed between and possible modified by nodes in the scene

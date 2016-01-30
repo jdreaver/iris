@@ -8,8 +8,6 @@ module Iris.Draw
        , disableAttrib
        , withAttrib
        , U.setUniform
-       , Viewport (..)
-       , insideViewport
        ) where
 
 import qualified Graphics.GLUtil as U
@@ -41,15 +39,3 @@ withAttrib prog name f =
      result <- f
      disableAttrib prog name
      return result
-
--- | Holds the position of the top-left corner and the width/height of a
--- viewport.
-data Viewport = Viewport
-  { viewportPos  :: !GL.Position
-  , viewportSize :: !GL.Size
-  } deriving (Show)
-
--- | Determines if a given point is inside of a viewport.
-insideViewport :: Viewport -> GL.GLint -> GL.GLint -> Bool
-insideViewport (Viewport (GL.Position px py) (GL.Size pw ph)) x y =
-  x >= px && x <= px + pw && y >= py && y <= py + ph

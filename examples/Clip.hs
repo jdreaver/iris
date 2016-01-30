@@ -15,6 +15,7 @@ import qualified Graphics.Rendering.OpenGL as GL
 import           Iris.Backends
 import qualified Iris.Backends.GLFW as W
 import           Iris.Camera
+import           Iris.OpenGL (Viewport (..))
 import           Iris.Reactive
 import           Iris.SceneGraph
 import           Iris.Transformation

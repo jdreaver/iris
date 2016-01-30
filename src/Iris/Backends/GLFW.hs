@@ -21,6 +21,7 @@ import           System.IO
 
 import           Iris.Backends.Class
 import           Iris.Mouse
+import           Iris.OpenGL (Viewport (..))
 import           Iris.Reactive
 
 data GLFWCanvas = GLFWCanvas

@@ -14,6 +14,7 @@ import qualified Linear as L
 import           Iris.Backends
 import           Iris.Camera.Class
 import           Iris.Mouse
+import           Iris.OpenGL (Viewport (..))
 import           Iris.Reactive
 import           Iris.Transformation
 

@@ -3,7 +3,6 @@
 module Iris.Backends.Class
        ( Canvas (..)
        , CanvasEvents (..)
-       , Viewport (..)
        , FramebufferSize (..)
        , MousePosition (..)
        , MouseScrollAmount (..)
@@ -11,8 +10,8 @@ module Iris.Backends.Class
 
 import qualified Graphics.Rendering.OpenGL as GL
 
-import           Iris.Draw
 import           Iris.Mouse
+import           Iris.OpenGL (Viewport (..))
 import           Iris.Reactive
 
 

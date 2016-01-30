@@ -33,6 +33,8 @@ library
                      , Iris.Draw
                      , Iris.Events
                      , Iris.Mouse
+                     , Iris.OpenGL
+                     , Iris.OpenGL.Viewport
                      , Iris.Reactive
                      , Iris.SceneGraph
                      , Iris.SceneGraph.Clipper

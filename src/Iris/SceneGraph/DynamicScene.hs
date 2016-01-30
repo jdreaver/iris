@@ -14,8 +14,8 @@ import qualified Graphics.Rendering.OpenGL as GL
 
 import           Iris.Backends
 import           Iris.Camera
+import           Iris.OpenGL (Viewport (..), clipViewport)
 import           Iris.Reactive
-import           Iris.SceneGraph.Clipper
 import           Iris.SceneGraph.DrawGraph
 
 
@@ -73,6 +73,6 @@ drawRoot win =
      GL.blendFunc $= (GL.SrcAlpha, GL.OneMinusSrcAlpha)
 
      (FramebufferSize fbw fbh) <- framebufferSize win
-     clip (Viewport (GL.Position 0 0) (GL.Size fbw fbh))
+     clipViewport (Viewport (GL.Position 0 0) (GL.Size fbw fbh))
 
      GL.clear [GL.ColorBuffer, GL.DepthBuffer]
