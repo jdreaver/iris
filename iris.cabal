@@ -29,8 +29,6 @@ library
                      , Iris.Camera.ArcBall
                      , Iris.Camera.Class
                      , Iris.Camera.PanZoom
-                     , Iris.Colors
-                     , Iris.Events
                      , Iris.Mouse
                      , Iris.OpenGL
                      , Iris.OpenGL.AsUniform
