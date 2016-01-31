@@ -30,11 +30,11 @@ library
                      , Iris.Camera.Class
                      , Iris.Camera.PanZoom
                      , Iris.Colors
-                     , Iris.Draw
                      , Iris.Events
                      , Iris.Mouse
                      , Iris.OpenGL
                      , Iris.OpenGL.AsUniform
+                     , Iris.OpenGL.BufferObjects
                      , Iris.OpenGL.Errors
                      , Iris.OpenGL.ShaderProgram
                      , Iris.OpenGL.Viewport

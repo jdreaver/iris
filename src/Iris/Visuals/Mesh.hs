@@ -27,16 +27,19 @@ import qualified Graphics.GLUtil as U
 import qualified Graphics.Rendering.OpenGL as GL
 import qualified Linear as L
 
-import Iris.Colors
-import Iris.Draw
-import Iris.SceneGraph
+import           Iris.Colors
+import           Iris.OpenGL (ShaderProgram, simpleShaderProgramBS,
+                              enableProgram, enableAttrib, setUniform,
+                              disableAttrib, bindVertexBuffer,
+                              bindElementBuffer)
+import           Iris.SceneGraph
 
 -- | Shader program and buffer objects for a mesh
-data MeshItem = MeshItem U.ShaderProgram MeshDataBuffer MeshColorBuffer
+data MeshItem = MeshItem ShaderProgram MeshDataBuffer MeshColorBuffer
 
 data MeshSpec = MeshSpec
-  { meshSpecData   :: MeshData
-  , meshSpecColors :: MeshColor
+  { meshSpecData   :: !MeshData
+  , meshSpecColors :: !MeshColor
   } deriving (Show)
 
 type MeshVectorColor = (V.Vector (L.V3 GL.GLfloat))
@@ -70,7 +73,7 @@ meshInit spec =
 
 makeMesh :: MeshSpec -> IO MeshItem
 makeMesh (MeshSpec md c) =
-  do prog <- U.simpleShaderProgramBS (vsSource c) (fsSource c)
+  do prog <- simpleShaderProgramBS (vsSource c) (fsSource c)
      vbuf <- meshBuffer md
      cbuf <- meshColorBuffer c
      return $ MeshItem prog vbuf cbuf
@@ -107,7 +110,7 @@ drawMesh (MeshItem prog meshData color') (DrawData t _) =
      disableColor prog color'
 
 
-bindMeshData :: U.ShaderProgram -> MeshDataBuffer -> IO ()
+bindMeshData :: ShaderProgram -> MeshDataBuffer -> IO ()
 bindMeshData p (VertexesBuffer _ vbo) = bindVertexBuffer p "coord3d" vbo 3
 bindMeshData p (FacesBuffer _ _ vb fb) = bindVertexBuffer p "coord3d" vb 3 >>
                                          bindElementBuffer fb
@@ -119,12 +122,12 @@ drawMeshData (FacesBuffer _ fs _ _) =
   U.drawIndexedTris (fromIntegral $ V.length fs)
 
 
-drawMeshColor :: U.ShaderProgram -> MeshColorBuffer -> IO ()
+drawMeshColor :: ShaderProgram -> MeshColorBuffer -> IO ()
 drawMeshColor p (ConstantColorBuffer c) = setUniform p "f_color" c
 drawMeshColor p (VectorColorBuffer _ cb) = enableAttrib p "v_color" >>
                                            bindVertexBuffer p "v_color" cb 3
 
-disableColor :: U.ShaderProgram -> MeshColorBuffer -> IO ()
+disableColor :: ShaderProgram -> MeshColorBuffer -> IO ()
 disableColor _ (ConstantColorBuffer _) = return ()
 disableColor p (VectorColorBuffer _ _) = disableAttrib p "v_color"
 

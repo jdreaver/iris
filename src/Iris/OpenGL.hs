@@ -6,6 +6,7 @@ module Iris.OpenGL
        ) where
 
 import Iris.OpenGL.AsUniform as X
+import Iris.OpenGL.BufferObjects as X
 import Iris.OpenGL.Errors as X
 import Iris.OpenGL.ShaderProgram as X
 import Iris.OpenGL.Viewport as X

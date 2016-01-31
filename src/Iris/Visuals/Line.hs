@@ -21,13 +21,15 @@ import qualified Graphics.GLUtil as U
 import qualified Graphics.Rendering.OpenGL as GL
 import qualified Linear as L
 
-import Iris.Colors
-import Iris.Draw
-import Iris.SceneGraph
+import           Iris.Colors
+import           Iris.OpenGL (ShaderProgram, simpleShaderProgramBS,
+                              enableProgram, enableAttrib, setUniform,
+                              disableAttrib, bindVertexBuffer)
+import           Iris.SceneGraph
 
 
 -- | Shader program and buffer objects for a line
-data LineItem = LineItem U.ShaderProgram GL.BufferObject LineVertices Color
+data LineItem = LineItem ShaderProgram GL.BufferObject LineVertices Color
 
 -- | Input vertices for a line buffer object
 type LineVertices = V.Vector (L.V3 GL.GLfloat)
@@ -48,7 +50,7 @@ lineInit spec =
 
 makeLine :: LineSpec -> IO LineItem
 makeLine (LineSpec verts' color') =
-  do prog <- U.simpleShaderProgramBS vsSource fsSource
+  do prog <- simpleShaderProgramBS vsSource fsSource
      vbuf <- U.fromSource GL.ArrayBuffer verts'
      return $ LineItem prog vbuf verts' color'
 

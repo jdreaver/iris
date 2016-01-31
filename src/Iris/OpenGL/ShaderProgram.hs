@@ -4,7 +4,7 @@
 
 module Iris.OpenGL.ShaderProgram
        ( ShaderProgram
-       , shaderProgram
+       , enableProgram
        , simpleShaderProgramBS
        , loadShaderProgramBS
        , setUniform
@@ -33,6 +33,10 @@ data ShaderProgram = ShaderProgram
   , shaderUniforms :: Map String (UniformLocation, VariableType)
   , shaderProgram  :: Program
   } deriving (Show)
+
+-- | Sets the current OpenGL shader program.
+enableProgram :: ShaderProgram -> IO ()
+enableProgram prog = currentProgram $= Just (shaderProgram prog)
 
 -- | Load a 'ShaderProgram' from vertex and fragment shader source
 -- strings. The active attributes and uniforms in the linked program

@@ -21,17 +21,20 @@ import           Graphics.Rendering.OpenGL (($=))
 import qualified Graphics.Rendering.OpenGL as GL
 import qualified Linear as L
 
-import           Iris.Draw
+import           Iris.OpenGL (ShaderProgram, simpleShaderProgramBS,
+                              enableProgram, enableAttrib, setUniform,
+                              disableAttrib, bindVertexBuffer,
+                              bindElementBuffer)
 import           Iris.SceneGraph
 
 data ImageItem = ImageItem
-  { imageProg         :: U.ShaderProgram
-  , imageTex          :: GL.TextureObject
-  , imageVertBuff     :: GL.BufferObject
-  , imageFaceBuff     :: GL.BufferObject
-  , imageTexCoordBuff :: GL.BufferObject
-  , imageVerts        :: ImageVerts
-  , imageFaces        :: ImageFaces
+  { imageProg         :: !ShaderProgram
+  , imageTex          :: !GL.TextureObject
+  , imageVertBuff     :: !GL.BufferObject
+  , imageFaceBuff     :: !GL.BufferObject
+  , imageTexCoordBuff :: !GL.BufferObject
+  , imageVerts        :: !ImageVerts
+  , imageFaces        :: !ImageFaces
   }
 
 -- | Specification for an ImageItem. This is used to construct the buffers for
@@ -52,7 +55,7 @@ imageInit spec =
 
 makeImage :: ImageSpec -> IO ImageItem
 makeImage (ImageSpec to verts) =
-  do prog <- U.simpleShaderProgramBS vsSource fsSource
+  do prog <- simpleShaderProgramBS vsSource fsSource
      vbo <- U.fromSource GL.ArrayBuffer verts
      fbo <- U.fromSource GL.ElementArrayBuffer faces
      tbo <- U.fromSource GL.ArrayBuffer texCoords
