@@ -37,6 +37,7 @@ library
                      , Iris.OpenGL.BufferObjects
                      , Iris.OpenGL.Errors
                      , Iris.OpenGL.ShaderProgram
+                     , Iris.OpenGL.Textures
                      , Iris.OpenGL.Viewport
                      , Iris.Reactive
                      , Iris.SceneGraph
@@ -54,12 +55,13 @@ library
   other-modules:       Iris.Backends.Class
   -- other-extensions:
   build-depends:       base >=4 && <5
+                     , array >= 0.5
                      , base-compat == 0.8.2
                      , bytestring == 0.10.*
                      , containers == 0.5.*
                      , freetype2 >= 0.1.1
                      , GLFW-b == 1.*
-                     , GLUtil >= 0.8.8
+                     , JuicyPixels >= 3.2
                      , linear >= 1.18
                      , OpenGL >= 2.12
                      , OpenGLRaw >= 2.4
@@ -79,12 +81,13 @@ test-suite tests
     type:             exitcode-stdio-1.0
     main-is:          Spec.hs
     build-depends:    base >=4 && <5
+                    , array >= 0.5
                     , base-compat == 0.8.2
                     , bytestring == 0.10.*
                     , containers == 0.5.*
                     , freetype2 >= 0.1.1
                     , GLFW-b == 1.*
-                    , GLUtil >= 0.8.8
+                    , JuicyPixels >= 3.2
                     , linear >= 1.18
                     , OpenGL >= 2.12
                     , OpenGLRaw >= 2.4

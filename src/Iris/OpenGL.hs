@@ -1,5 +1,6 @@
 -- | This module wraps a lot of raw OpenGL functions. A lot of this
--- functionality is inspired by Anthony Cowley's GLUtil package.
+-- functionality is inspired by Anthony Cowley's GLUtil package. In particular,
+-- the texture and AsUniform code is taken verbatim.
 
 module Iris.OpenGL
        ( module X
@@ -13,6 +14,7 @@ import Iris.OpenGL.AsUniform as X
 import Iris.OpenGL.BufferObjects as X
 import Iris.OpenGL.Errors as X
 import Iris.OpenGL.ShaderProgram as X
+import Iris.OpenGL.Textures as X
 import Iris.OpenGL.Viewport as X
 
 

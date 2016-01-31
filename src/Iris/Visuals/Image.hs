@@ -7,7 +7,7 @@ module Iris.Visuals.Image
        ( ImageItem (..)
        , ImageSpec (..)
        , ImageVerts
-       , U.readTexture
+       , readTexture
        , imageInit
        , imageFromFile
        , makeImage
@@ -16,7 +16,6 @@ module Iris.Visuals.Image
 
 import qualified Data.ByteString as BS
 import qualified Data.Vector.Storable as V
-import qualified Graphics.GLUtil as U
 import           Graphics.Rendering.OpenGL (($=))
 import qualified Graphics.Rendering.OpenGL as GL
 import qualified Linear as L
@@ -24,7 +23,8 @@ import qualified Linear as L
 import           Iris.OpenGL (ShaderProgram, simpleShaderProgramBS,
                               enableProgram, enableAttrib, setUniform,
                               disableAttrib, bindVertexBuffer,
-                              bindElementBuffer, fromVector, drawIndexedTris)
+                              bindElementBuffer, fromVector, drawIndexedTris,
+                              readTexture, texture2DWrap, withTextures2D)
 import           Iris.SceneGraph
 
 data ImageItem = ImageItem
@@ -63,11 +63,11 @@ makeImage (ImageSpec to verts) =
 
 imageFromFile :: FilePath -> IO (Either String GL.TextureObject)
 imageFromFile filePath =
-  do to <- U.readTexture filePath
+  do to <- readTexture filePath
      case to of
        (Left err)  -> return (Left err)
        (Right to') -> do GL.textureFilter GL.Texture2D $= ((GL.Linear', Nothing), GL.Linear')
-                         U.texture2DWrap $= (GL.Mirrored, GL.ClampToEdge)
+                         texture2DWrap $= (GL.Mirrored, GL.ClampToEdge)
                          return $ Right to'
 
 drawImage :: ImageItem -> DrawFunc
@@ -83,7 +83,7 @@ drawImage (ImageItem prog to vbo fbo tbo _ fs) (DrawData t _) =
 
      setUniform prog "mvp" t
 
-     U.withTextures2D [to] $
+     withTextures2D [to] $
        do setUniform prog "mytexture" (0 :: GL.GLint)
           drawIndexedTris (fromIntegral $ V.length fs)
 
