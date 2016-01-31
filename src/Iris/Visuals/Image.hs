@@ -24,7 +24,7 @@ import qualified Linear as L
 import           Iris.OpenGL (ShaderProgram, simpleShaderProgramBS,
                               enableProgram, enableAttrib, setUniform,
                               disableAttrib, bindVertexBuffer,
-                              bindElementBuffer)
+                              bindElementBuffer, fromVector, drawIndexedTris)
 import           Iris.SceneGraph
 
 data ImageItem = ImageItem
@@ -56,9 +56,9 @@ imageInit spec =
 makeImage :: ImageSpec -> IO ImageItem
 makeImage (ImageSpec to verts) =
   do prog <- simpleShaderProgramBS vsSource fsSource
-     vbo <- U.fromSource GL.ArrayBuffer verts
-     fbo <- U.fromSource GL.ElementArrayBuffer faces
-     tbo <- U.fromSource GL.ArrayBuffer texCoords
+     vbo <- fromVector GL.ArrayBuffer verts
+     fbo <- fromVector GL.ElementArrayBuffer faces
+     tbo <- fromVector GL.ArrayBuffer texCoords
      return $ ImageItem prog to vbo fbo tbo verts faces
 
 imageFromFile :: FilePath -> IO (Either String GL.TextureObject)
@@ -85,7 +85,7 @@ drawImage (ImageItem prog to vbo fbo tbo _ fs) (DrawData t _) =
 
      U.withTextures2D [to] $
        do setUniform prog "mytexture" (0 :: GL.GLint)
-          U.drawIndexedTris (fromIntegral $ V.length fs)
+          drawIndexedTris (fromIntegral $ V.length fs)
 
      disableAttrib prog "coord3d"
      disableAttrib prog "texcoord"

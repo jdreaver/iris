@@ -23,7 +23,6 @@ import           Prelude.Compat ((<$>))
 
 import qualified Data.ByteString as BS
 import qualified Data.Vector.Storable as V
-import qualified Graphics.GLUtil as U
 import qualified Graphics.Rendering.OpenGL as GL
 import qualified Linear as L
 
@@ -31,7 +30,7 @@ import           Iris.Colors
 import           Iris.OpenGL (ShaderProgram, simpleShaderProgramBS,
                               enableProgram, enableAttrib, setUniform,
                               disableAttrib, bindVertexBuffer,
-                              bindElementBuffer)
+                              bindElementBuffer, fromVector, drawIndexedTris)
 import           Iris.SceneGraph
 
 -- | Shader program and buffer objects for a mesh
@@ -81,17 +80,17 @@ makeMesh (MeshSpec md c) =
 
 meshBuffer :: MeshData -> IO MeshDataBuffer
 meshBuffer (Vertexes verts) =
-  do b <- U.fromSource GL.ArrayBuffer verts
+  do b <- fromVector GL.ArrayBuffer verts
      return $ VertexesBuffer verts b
 meshBuffer (Faces verts faces) =
-  do vb <- U.fromSource GL.ArrayBuffer verts
-     fb <- U.fromSource GL.ElementArrayBuffer faces
+  do vb <- fromVector GL.ArrayBuffer verts
+     fb <- fromVector GL.ElementArrayBuffer faces
      return $ FacesBuffer verts faces vb fb
 
 meshColorBuffer :: MeshColor -> IO MeshColorBuffer
 meshColorBuffer (ConstantMeshColor c) = return $ ConstantColorBuffer c
 meshColorBuffer (VectorMeshColor cv) = VectorColorBuffer cv <$>
-                                       U.fromSource GL.ArrayBuffer cv
+                                       fromVector GL.ArrayBuffer cv
 
 -- | Draw a given mesh item to the current OpenGL context
 drawMesh :: MeshItem -> DrawFunc
@@ -119,7 +118,7 @@ drawMeshData :: MeshDataBuffer -> IO ()
 drawMeshData (VertexesBuffer v _) =
   GL.drawArrays GL.Triangles 0 (fromIntegral $ V.length v * 3)
 drawMeshData (FacesBuffer _ fs _ _) =
-  U.drawIndexedTris (fromIntegral $ V.length fs)
+  drawIndexedTris (fromIntegral $ V.length fs)
 
 
 drawMeshColor :: ShaderProgram -> MeshColorBuffer -> IO ()

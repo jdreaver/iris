@@ -1,12 +1,17 @@
--- | Wrapper around OpenGL buffer objects.
+{-# LANGUAGE ScopedTypeVariables #-}
+
+-- | Wrapper around OpenGL buffer objects. A lot of code taken from GLUtil.
 
 module Iris.OpenGL.BufferObjects
        ( bindVertexBuffer
        , bindElementBuffer
+       , fromVector
        ) where
 
 
+import qualified Data.Vector.Storable as V
 import           Foreign.Ptr (wordPtrToPtr, Ptr)
+import           Foreign.Storable (Storable, sizeOf)
 import           Graphics.Rendering.OpenGL
 
 import           Iris.OpenGL.ShaderProgram (ShaderProgram, setAttrib)
@@ -30,3 +35,22 @@ bindVertexBuffer prog var buffer ndim =
 -- | Binds an element buffer.
 bindElementBuffer :: BufferObject -> IO ()
 bindElementBuffer buffer = bindBuffer ElementArrayBuffer $= Just buffer
+
+
+-- | Fill a buffer with data from a 'V.Vector'.
+fromVector :: forall a. Storable a
+           => BufferTarget
+           -> V.Vector a
+           -> IO BufferObject
+fromVector target v = V.unsafeWith v $ fromPtr target numBytes
+  where numBytes = fromIntegral $ V.length v * sizeOf (undefined :: a)
+
+
+-- | Allocate and fill a 'BufferObject' with the given number of bytes
+-- from the supplied pointer.
+fromPtr :: BufferTarget -> Int -> Ptr a -> IO BufferObject
+fromPtr target numBytes ptr =
+  do [buffer] <- genObjectNames 1
+     bindBuffer target $= Just buffer
+     bufferData target $= (fromIntegral numBytes, ptr, StaticDraw)
+     return buffer

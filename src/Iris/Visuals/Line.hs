@@ -17,14 +17,13 @@ module Iris.Visuals.Line
 
 import qualified Data.ByteString as BS
 import qualified Data.Vector.Storable as V
-import qualified Graphics.GLUtil as U
 import qualified Graphics.Rendering.OpenGL as GL
 import qualified Linear as L
 
 import           Iris.Colors
 import           Iris.OpenGL (ShaderProgram, simpleShaderProgramBS,
                               enableProgram, enableAttrib, setUniform,
-                              disableAttrib, bindVertexBuffer)
+                              disableAttrib, bindVertexBuffer, fromVector)
 import           Iris.SceneGraph
 
 
@@ -51,7 +50,7 @@ lineInit spec =
 makeLine :: LineSpec -> IO LineItem
 makeLine (LineSpec verts' color') =
   do prog <- simpleShaderProgramBS vsSource fsSource
-     vbuf <- U.fromSource GL.ArrayBuffer verts'
+     vbuf <- fromVector GL.ArrayBuffer verts'
      return $ LineItem prog vbuf verts' color'
 
 
