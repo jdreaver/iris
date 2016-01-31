@@ -62,7 +62,7 @@ library
                      , GLUtil >= 0.8.8
                      , linear >= 1.18
                      , OpenGL >= 2.12
-                     , OpenGLRaw >= 2.6
+                     , OpenGLRaw >= 2.4
                      , reactive-banana == 1.1.*
                      , stm == 2.4.*
                      , vector >= 0.10
@@ -87,7 +87,7 @@ test-suite tests
                     , GLUtil >= 0.8.8
                     , linear >= 1.18
                     , OpenGL >= 2.12
-                    , OpenGLRaw >= 2.6
+                    , OpenGLRaw >= 2.4
                     , reactive-banana == 1.1.*
                     , stm == 2.4.*
                     , vector >= 0.10

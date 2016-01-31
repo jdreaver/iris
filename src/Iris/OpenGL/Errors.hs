@@ -1,3 +1,5 @@
+{-# LANGUAGE DeriveDataTypeable #-}
+
 -- | Wrapper around OpenGL error printing functions.
 
 module Iris.OpenGL.Errors
