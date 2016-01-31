@@ -8,9 +8,6 @@ module Iris.OpenGL.AsUniform
        ( AsUniform (..)
        ) where
 
-
--- | Support for writing "Linear" types to uniform locations in shader
--- programs.
 import Foreign.Marshal.Array (withArray)
 import Foreign.Marshal.Utils (with)
 import Foreign.Ptr (Ptr, castPtr)
