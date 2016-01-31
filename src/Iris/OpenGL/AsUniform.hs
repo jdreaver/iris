@@ -12,7 +12,11 @@ import Foreign.Marshal.Array (withArray)
 import Foreign.Marshal.Utils (with)
 import Foreign.Ptr (Ptr, castPtr)
 import Graphics.Rendering.OpenGL
+#if MIN_VERSION_OpenGLRaw(3,0,0)
+import Graphics.GL.Core31
+#else
 import Graphics.Rendering.OpenGL.Raw.Core31
+#endif
 import Linear
 import Unsafe.Coerce (unsafeCoerce)
 

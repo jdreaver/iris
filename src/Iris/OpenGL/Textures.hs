@@ -209,6 +209,9 @@ instance HasGLType GLint where glType _ = GL.Int
 instance HasGLType Word8 where glType _ = GL.UnsignedByte
 instance HasGLType Word16 where glType _ = GL.UnsignedShort
 instance HasGLType Word32 where glType _ = GL.UnsignedInt
-instance HasGLType GLuint where glType _ = GL.UnsignedInt
 instance HasGLType Float where glType _ = GL.Float
+
+#if !MIN_VERSION_OpenGLRaw(3,0,0)
+instance HasGLType GLuint where glType _ = GL.UnsignedInt
 instance HasGLType GLfloat where glType _ = GL.Float
+#endif
