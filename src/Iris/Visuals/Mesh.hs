@@ -13,8 +13,12 @@ module Iris.Visuals.Mesh
        , MeshColor (..)
        , MeshVectorColor
        , MeshData (..)
+       , MeshDataBuffer (..)
        , meshSpec
        , meshInit
+       , meshBuffer
+       , bindMeshData
+       , drawMeshData
        ) where
 
 #if !MIN_VERSION_base(4,8,0)
