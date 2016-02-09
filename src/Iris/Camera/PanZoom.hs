@@ -4,6 +4,7 @@ module Iris.Camera.PanZoom
        ( PanZoomCamera (..)
        , panZoomCamera
        , panZoomTransB
+       , panZoomB
        ) where
 
 import           Data.List (foldl1')
@@ -63,6 +64,16 @@ panZoomTransB :: PanZoomCamera
               -> Event MouseScrollAmount
               -> MomentIO (Behavior Transformation)
 panZoomTransB cam mousePosO mouseButtonE viewportB mouseScrollE =
+  do camB <- panZoomB cam mousePosO mouseButtonE viewportB mouseScrollE
+     return $ panZoomTrans <$> camB
+
+panZoomB :: PanZoomCamera
+         -> Observable MousePosition
+         -> Event MouseButtonEvent
+         -> Behavior Viewport
+         -> Event MouseScrollAmount
+         -> MomentIO (Behavior PanZoomCamera)
+panZoomB cam mousePosO mouseButtonE viewportB mouseScrollE =
   do (_, dragE) <- liftMoment $ mouseDragEvents mouseButtonE mousePosO
      let dragFilteredE = filterClipE viewportB mouseDragOriginPos dragE
          (Observable mousePosB _) = mousePosO
@@ -72,7 +83,7 @@ panZoomTransB cam mousePosO mouseButtonE viewportB mouseScrollE =
               , panZoomDrag <$> viewportB <@> dragFilteredE
               , panZoomZoom <$> viewportB <*> mousePosB <@> scrollFilteredE
               ]
-     return $ panZoomTrans <$> (snd <$> bCamState)
+     return $ snd <$> bCamState
 
 -- | When we begin a drag, update the PanZoomState if the drag button is the
 -- same as the camera's drag button.

@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE OverloadedLists #-}
 {-# LANGUAGE OverloadedStrings #-}
 
@@ -12,7 +13,9 @@ import qualified Data.ByteString as BS
 import qualified Linear as L
 import qualified Graphics.Rendering.OpenGL as GL
 
+import           Iris.Backends
 import qualified Iris.Backends.GLFW as W
+import           Iris.Camera.PanZoom
 import           Iris.OpenGL
 import           Iris.Reactive
 import           Iris.SceneGraph
@@ -24,15 +27,24 @@ main =
   do win <- W.makeWindow "Mandelbrot set" (640, 640)
      canvas <- W.initGLFW win
 
-
-     let md = MandelbrotData (L.V2 (-0.5) 0) (L.V2 640 640) (L.V2 3 3) 300
-     item <- mandelbrotInit md
-
-     network <- compile $ makeScene canvas (pure item)
+     network <- compile $ makeNetwork canvas
      actuate network
 
      W.mainLoop canvas
 
+
+makeNetwork :: (Canvas a) => a -> MomentIO ()
+makeNetwork canvas =
+  do (CanvasEvents mousePosO mouseButtonE mouseScrollE viewportO _ _) <- makeEvents canvas
+     let cam = panZoomCamera { panZoomCenter = L.V2 (-0.5) 0
+                             , panZoomWidth  = 3
+                             , panZoomHeight = 3
+                             }
+         (Observable viewportB _) = viewportO
+     camB <- panZoomB cam mousePosO mouseButtonE viewportB mouseScrollE
+     let dataB = fromPanZoom <$> camB <*> viewportB
+     item <- liftIO $ mandelbrotInit dataB
+     makeScene canvas item
 
 data MandelbrotData = MandelbrotData
   { mandelbrotCenter     :: !(L.V2 GL.GLfloat)
@@ -41,7 +53,12 @@ data MandelbrotData = MandelbrotData
   , mandelbrotIters      :: !GL.GLint
   } deriving (Show)
 
-data MandelbrotItem = MandelbrotItem MandelbrotData ShaderProgram MeshDataBuffer
+fromPanZoom :: PanZoomCamera -> Viewport -> MandelbrotData
+fromPanZoom (PanZoomCamera center w h _) (Viewport _ (GL.Size rw rh)) =
+  MandelbrotData center res (L.V2 w h) 300
+  where res = L.V2 (fromIntegral rw) (fromIntegral rh)
+
+data MandelbrotItem = MandelbrotItem ShaderProgram MeshDataBuffer MandelbrotData
 
 meshFaceVerts :: MeshFaceVertices
 meshFaceVerts = [ L.V3 (-1) (-1) 0
@@ -123,17 +140,17 @@ fragSource = BS.intercalate "\n"
   ]
 
 
-mandelbrotInit :: MandelbrotData -> IO DrawNode
-mandelbrotInit mandelData =
+mandelbrotInit :: Behavior MandelbrotData -> IO (Behavior DrawNode)
+mandelbrotInit mandelDataB =
   do prog <- simpleShaderProgramBS vertSource fragSource
      mbuf <- meshBuffer (Faces meshFaceVerts meshFaceIndices)
-     let item = MandelbrotItem mandelData prog mbuf
-     return $ DrawNode (drawMandelbrot item)
+     let item = MandelbrotItem prog mbuf <$> mandelDataB
+     return $ DrawNode <$> (drawMandelbrot <$> item)
 
 drawMandelbrot :: MandelbrotItem -> DrawFunc
-drawMandelbrot (MandelbrotItem
+drawMandelbrot (MandelbrotItem prog meshData
                 (MandelbrotData cent res scale iter)
-                prog meshData) _ =
+               ) _ =
   do enableProgram prog
      enableAttrib prog "coord3d"
      bindMeshData prog meshData
