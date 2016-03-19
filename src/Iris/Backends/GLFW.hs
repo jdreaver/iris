@@ -190,7 +190,7 @@ windowSizeObservable' win =
          callback _ x y = h $ Viewport (GL.Position 0 0) size
            where size = GL.Size (fromIntegral x) (fromIntegral y)
      liftIO $ GLFW.setWindowSizeCallback win $ Just callback
-     return $ liftM asObservable sub
+     return $ fmap asObservable sub
 
 
 -- | Create an Observable for the framebuffer size using the GLFW framebuffer size
@@ -202,4 +202,4 @@ framebufferSizeObservable' win =
      let callback :: GLFW.FramebufferSizeCallback
          callback _ x y = h $ FramebufferSize (fromIntegral x) (fromIntegral y)
      liftIO $ GLFW.setFramebufferSizeCallback win $ Just callback
-     return $ liftM asObservable sub
+     return $ fmap asObservable sub
