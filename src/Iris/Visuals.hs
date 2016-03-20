@@ -2,7 +2,7 @@ module Iris.Visuals
        ( module X
        ) where
 
-
+import Iris.Visuals.Axis as X
 import Iris.Visuals.Line as X
 import Iris.Visuals.Image as X
 import Iris.Visuals.Mesh as X
